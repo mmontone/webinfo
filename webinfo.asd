@@ -15,4 +15,8 @@
                :drakma
                :cxml
                :xpath
-               :trivia))
+               :trivia
+               :access
+               :cl-forms
+               :cl-forms.who
+               :metabang-bind))
