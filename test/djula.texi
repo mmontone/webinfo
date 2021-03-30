@@ -1,0 +1,2080 @@
+@setfilename djula.info
+
+@dircategory Common Lisp
+@direntry
+* Djula: (djula). Common Lisp template system
+@end direntry
+
+@node Top
+@top Top
+@cindex djula
+
+@menu
+* Introduction::
+* Basics::
+* Usage::
+* Variables::
+* Tags::
+* Comments::
+* Verbatim::
+* Filters::
+* Template inheritance::
+* Internationalization::
+* Error handling::
+* Automatic HTML escaping::
+* Custom tag and filter libraries::
+* Variable Index::
+* Function Index::
+* Concept Index::
+@end menu
+
+@node Introduction
+@chapter Introduction
+@anchor{#introduction}
+Djula is an HTML templating system similar to Django templates for
+Common Lisp.
+
+Djula's template language is designed to strike a balance between power
+and ease. It's designed to feel comfortable to those used to working
+with HTML.
+
+Philosophy
+
+If you have a background in programming, or if you're used to languages
+which mix programming code directly into HTML, you'll want to bear in
+mind that the Djula template system is not simply Common Lisp code
+embedded into HTML. This is by design: the template system is meant to
+express presentation, not program logic.
+
+The Djula template system provides tags which function similarly to some
+programming constructs -- an @code{if} tag for boolean tests, a
+@code{for} tag for looping, etc. -- but these are not simply executed as
+the corresponding Lisp code, and the template system will not execute
+arbitrary Lisp expressions. Only the tags, filters and syntax listed
+below are supported by default (although you can add
+@code{your own extensions
+</howto/custom-template-tags>} to the template language as needed).
+
+@menu
+* Prerequisites::
+* Installation::
+@end menu
+
+@node Prerequisites
+@section Prerequisites
+@anchor{#prerequisites}
+TODO: list of Common Lisp compilers Djula works on.
+
+@node Installation
+@section Installation
+@anchor{#installation}
+Djula is available on Quicklisp:
+
+@verbatim
+(ql:quickload :djula)
+@end verbatim
+
+
+
+@node Basics
+@chapter Basics
+@anchor{#basics}
+
+A template is simply a text file. It can generate any text-based format
+(HTML, XML, CSV, etc.).
+
+A template contains @strong{variables}, which get replaced with values
+when the template is evaluated, and @strong{tags}, which control the
+logic of the template.
+
+Below is a minimal template that illustrates a few basics. Each element
+will be explained later in this document.
+
+@verbatim
+{% extends "base.html" %}
+
+{% block title %}{{ section.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ section.title }}</h1>
+
+{% for story in story_list %}
+<h2>
+  <a href="{{ story.url }}">
+    {{ story.headline|upper }}
+  </a>
+</h2>
+<p>{{ story.tease|truncatewords:100 }}</p>
+{% endfor %}
+{% endblock %}
+@end verbatim
+
+@node Usage
+@chapter Usage
+@anchor{#usage}
+@findex djula:add-template-directory
+@vindex djula:*current-store*
+@findex djula:compile-template*
+
+To render our templates, they need to be compiled first. We do that with
+the :cl@code{COMPILE-TEMPLATE*} function. For inheritance to work, we
+need to put all the templates in the same directory so that Djula can
+find them when resolving templates inheritance.
+
+Djula looks for templates in the :cl@code{*CURRENT-STORE*}. For our
+templates to be found, we have to add the template folder path the
+templates store. We can do that with the
+:cl@code{add-template-directory} function.
+
+Here is an example:
+
+@verbatim
+(add-template-directory (asdf:system-relative-pathname "webapp" "templates/"))
+
+(defparameter +base.html+ (djula:compile-template* "base.html"))
+
+(defparameter +welcome.html+ (djula:compile-template* "welcome.html"))
+
+(defparameter +contact.html+ (djula:compile-template* "contact.html"))
+@end verbatim
+
+Then we can render our compiled templates using the
+:cl@code{RENDER-TEMPLATE*} function:
+
+@verbatim
+(djula:render-template* +welcome.html+ s
+            :title "Ukeleles"
+            :project-name "Ukeleles"
+            :mode "welcome")
+@end verbatim
+
+@menu
+* Auto-reload::
+* API::
+@end menu
+
+@node Auto-reload
+@section Auto-reload
+@anchor{#auto-reload}
+By default, Djula automatically recompiles the templates when they
+change.
+
+If you want to disable this, use the :djula-prod @emph{feature}:
+
+@verbatim
+(push :djula-prod *features*)
+@end verbatim
+
+@node API
+@section API
+@anchor{#api}
+
+@node Variables
+@chapter Variables
+@anchor{#variables}
+@cindex variables
+Variables look like this: @code{@{@{ variable @}@}}. When the template
+engine encounters a variable, it evaluates that variable and replaces it
+with the result. Variable names consist of any combination of
+alphanumeric characters and the underscore (@code{"_"}). The dot
+(@code{"."}) also appears in variable sections, although that has a
+special meaning, as indicated below. Importantly, @emph{you cannot have
+spaces or punctuation characters in variable names.}
+
+Use a dot (@code{.}) to access attributes of a variable.
+
+Behind the scenes
+
+For accessing variables the @code{ACCESS} Common Lisp library is used:
+@url{https://github.com/AccelerationNet/access}
+In the above example, @code{@{@{ section.title @}@}} will be replaced
+with the @code{title} attribute of the @code{section} object.
+
+Note that "bar" in a template expression like @code{@{@{ foo.bar @}@}}
+will be interpreted as a literal string and not using the value of the
+variable "bar", if one exists in the template context.
+
+@menu
+* Default template variables::
+@end menu
+
+@node Default template variables
+@section Default template variables
+@anchor{#default-template-variables}
+You can use the @code{*default-template-arguments*} variable to store
+arguments that will be available for all templates. It is a plist, so
+use getf to add arguments, like this:
+
+@verbatim
+(setf (getf djula:*default-template-arguments* :foo) 'some-value)
+@end verbatim
+
+And now, you can access @code{@{@{ foo @}@}} in your template.
+
+This is useful when you have many templates that rely on the same set of
+variables. Use this variable to refactor your code when appropriate.
+
+Note that you could also write a function that wraps
+@code{render-template*} and uses a default list of variables plus other
+ones given as arguments:
+
+@verbatim
+(defun my-render-template (template stream &rest args)
+  (apply #'djula:render-template* template stream (list* :foo 'some-value args)))
+@end verbatim
+
+
+
+@node Tags
+@chapter Tags
+@anchor{#tags}
+
+@menu
+* Overview::
+* List of tags::
+* Custom tags::
+@end menu
+
+@node Overview
+@section Overview
+@anchor{#overview}
+Tags look like this: @code{@{% tag %@}}. Tags are more complex than
+variables: Some create text in the output, some control flow by
+performing loops or logic, and some load external information into the
+template to be used by later variables.
+
+Some tags require beginning and ending tags (i.e.
+@code{@{% tag %@} ... tag contents ... @{% endtag %@}}).
+
+Here are some of the more commonly used tags:
+
+@table @asis
+@item @code{for}
+
+Loop over each item in an array. For example, to display a list of
+athletes provided in @code{athlete-list}:
+
+@verbatim
+<ul>
+{% for athlete in athlete-list %}
+    <li>{{ athlete.name }}</li>
+{% endfor %}
+</ul>
+@end verbatim
+
+@item @code{if}, @code{else}
+
+Evaluates a variable, and if that variable is "true" the contents of the
+block are displayed:
+
+@verbatim
+{% if athlete-list %}
+    Number of athletes: {{ athlete-list|length }}
+{% else %}
+    No athletes.
+{% endif %}
+@end verbatim
+
+@item @code{block} and @code{extends}
+
+Set up @ref{#template-inheritance,template inheritance} (see below), a
+powerful way of cutting down on "boilerplate" in templates.
+
+@end table
+
+@node List of tags
+@section List of tags
+@anchor{#list-of-tags}
+Tags
+block
+
+@menu
+* block::
+* extends::
+* super::
+* comment::
+* cycle::
+* debug::
+* filter::
+* firstof::
+* for::
+* if::
+* Boolean operators::
+* ifchanged::
+* ifequal::
+* ifnotequal::
+* include::
+@end menu
+
+@node block
+@subsection block
+@anchor{#block}
+Defines a block that can be overridden by child templates.
+
+Sample usage:
+
+@verbatim
+{% block stylesheets %}
+   ...
+{% endblock %}
+@end verbatim
+
+See @code{Template inheritance} for more information.
+
+extends
+
+@node extends
+@subsection extends
+@anchor{#extends}
+Extends a template
+
+Sample usage:
+
+@verbatim
+{% extends "base.html" %}
+@end verbatim
+
+super
+
+@node super
+@subsection super
+@anchor{#super}
+Gets the content of the block from the parent template. You can pass the
+name of the block of the parent block you want to access. If no name is
+passed, then the current block's parent is used.
+
+Sample usage:
+
+@verbatim
+{% super "stylesheets" %}
+
+{% block stylesheets %}
+  {% super %}
+{% endblock %}
+@end verbatim
+
+comment
+
+@node comment
+@subsection comment
+@anchor{#comment}
+Ignores everything between @code{@{% comment %@}} and
+@code{@{% endcomment %@}}. An optional note may be inserted in the first
+tag. For example, this is useful when commenting out code for
+documenting why the code was disabled.
+
+Sample usage:
+
+@verbatim
+<p>Rendered text with {{ pub-date|date }}</p>
+{% comment "Optional note" %}
+    <p>Commented out text with {{ create-date|date }}</p>
+{% endcomment %}
+@end verbatim
+
+@code{comment} tags cannot be nested.
+
+cycle
+
+@node cycle
+@subsection cycle
+@anchor{#cycle}
+Produces one of its arguments each time this tag is encountered. The
+first argument is produced on the first encounter, the second argument
+on the second encounter, and so forth. Once all arguments are exhausted,
+the tag cycles to the first argument and produces it again.
+
+This tag is particularly useful in a loop:
+
+@verbatim
+{% for o in some-list %}
+    <tr class="{% cycle "row1" "row2" %}">
+        ...
+    </tr>
+{% endfor %}
+@end verbatim
+
+The first iteration produces HTML that refers to class @code{row1}, the
+second to @code{row2}, the third to @code{row1} again, and so on for
+each iteration of the loop.
+
+You can use variables, too. For example, if you have two template
+variables, @code{rowvalue1} and @code{rowvalue2}, you can alternate
+between their values like this:
+
+@verbatim
+{% for o in some-list %}
+    <tr class="{% cycle rowvalue1 rowvalue2 %}">
+        ...
+    </tr>
+{% endfor %}
+@end verbatim
+
+You can mix variables and strings:
+
+@verbatim
+{% for o in some-list %}
+    <tr class="{% cycle "row1" rowvalue2 "row3" %}">
+        ...
+    </tr>
+{% endfor %}
+@end verbatim
+
+You can use any number of values in a @code{cycle} tag, separated by
+spaces. Values enclosed in double quotes (@code{"}) are treated as
+string literals, while values without quotes are treated as template
+variables.
+
+debug
+
+@node debug
+@subsection debug
+@anchor{#debug}
+Outputs a whole load of debugging information
+
+filter
+
+@node filter
+@subsection filter
+@anchor{#filter}
+Filters the contents of the block through one or more filters. Multiple
+filters can be specified with pipes and filters can have arguments, just
+as in variable syntax.
+
+Note that the block includes @emph{all} the text between the
+@code{filter} and @code{endfilter} tags.
+
+Sample usage:
+
+@verbatim
+{% filter force-escape|lower %}
+    This text will be HTML-escaped, and will appear in all lowercase.
+{% endfilter %}
+@end verbatim
+
+Note
+The @code{escape} and @code{safe} filters are not acceptable arguments.
+Instead, use the @code{autoescape} tag to manage autoescaping for blocks
+of template code.
+firstof
+
+@node firstof
+@subsection firstof
+@anchor{#firstof}
+Outputs the first argument variable that is not @code{False}. Outputs
+nothing if all the passed variables are @code{False}.
+
+Sample usage:
+
+@verbatim
+{% firstof var1 var2 var3 %}
+@end verbatim
+
+You can also use a literal string as a fallback value in case all passed
+variables are False:
+
+@verbatim
+{% firstof var1 var2 var3 "fallback value" %}
+@end verbatim
+
+for
+
+@node for
+@subsection for
+@anchor{#for}
+Loops over each item in an array, making the item available in a context
+variable. For example, to display a list of athletes provided in
+@code{athlete-list}:
+
+@verbatim
+<ul>
+{% for athlete in athlete-list %}
+    <li>{{ athlete.name }}</li>
+{% endfor %}
+</ul>
+@end verbatim
+
+If you need to loop over an association list, you can unpack the values
+in each sublist into individual variables. For example, if your context
+contains a list of (x . y) coordinates called @code{points}, you could
+use the following to output the list of points:
+
+@verbatim
+{% for (x . y) in points %}
+    There is a point at {{ x }},{{ y }}
+{% endfor %}
+@end verbatim
+
+This can also be useful if you need to access the items in a hash-table.
+For example, if your context contained a hash-table named @code{data},
+the following would display the keys and values of the hash-table:
+
+@verbatim
+{% for (key . value) in data.items %}
+    {{ key }}: {{ value }}
+{% endfor %}
+@end verbatim
+
+The for loop sets a number of variables available within the loop:
+
+@multitable {@code{forloop.revcounter0}} {For nested loops, this is the loop surrounding the current one} 
+@headitem 
+Variable
+ @tab Description
+@item 
+@code{forloop.counter}
+ @tab The current iteration of the loop (1-indexed)
+@item 
+@code{forloop.counter0}
+ @tab The current iteration of the loop (0-indexed)
+@item 
+@code{forloop.revcounter}
+ @tab The number of iterations from the end of the loop (1-indexed)
+@item 
+@code{forloop.revcounter0}
+ @tab The number of iterations from the end of the loop (0-indexed)
+@item 
+@code{forloop.first}
+ @tab True if this is the first time through the loop
+@item 
+@code{forloop.last}
+ @tab True if this is the last time through the loop
+@item 
+@code{forloop.parentloop}
+ @tab For nested loops, this is the loop surrounding the current one
+@end multitable
+
+if
+
+@node if
+@subsection if
+@anchor{#if}
+The @code{@{% if %@}} tag evaluates a variable, and if that variable is
+"true" (i.e. exists, is not empty, and is not a false boolean value) the
+contents of the block are output:
+
+@verbatim
+{% if athlete-list %}
+    Number of athletes: {{ athlete-list|length }}
+{% else %}
+    No athletes.
+{% endif %}
+@end verbatim
+
+In the above, if @code{athlete-list} is not empty, the number of
+athletes will be displayed by the @code{@{@{ athlete-list|length @}@}}
+variable.
+
+@node Boolean operators
+@subsection Boolean operators
+@anchor{#boolean-operators}
+@code{if} tags may use @code{and}, @code{or} or @code{not} to test a
+number of variables or to negate a given variable:
+
+@verbatim
+{% if athlete-list and coach-list %}
+    Both athletes and coaches are available.
+{% endif %}
+
+{% if not athlete-list %}
+    There are no athletes.
+{% endif %}
+
+{% if athlete-list or coach-list %}
+    There are some athletes or some coaches.
+{% endif %}
+
+{% if not athlete-list or coach-list %}
+    There are no athletes or there are some coaches (OK, so
+    writing English translations of boolean logic sounds
+    stupid; it's not our fault).
+{% endif %}
+
+{% if athlete-list and not coach-list %}
+    There are some athletes and absolutely no coaches.
+{% endif %}
+@end verbatim
+
+Use of both @code{and} and @code{or} clauses within the same tag is
+allowed, with @code{and} having higher precedence than @code{or} e.g.:
+
+@verbatim
+{% if athlete-list and coach-list or cheerleader-list %}
+@end verbatim
+
+will be interpreted like:
+
+@verbatim
+(if (or (athlete-list and coach-list) cheerleader-list) ..)
+@end verbatim
+
+Use of actual parentheses in the @code{if} tag is invalid syntax. If you
+need them to indicate precedence, you should use nested @code{if} tags.
+
+ifchanged
+
+@node ifchanged
+@subsection ifchanged
+@anchor{#ifchanged}
+Check if a value has changed from the last iteration of a loop.
+
+The @code{@{% ifchanged %@}} block tag is used within a loop.
+
+If given one or more variables, check whether any variable has changed.
+
+For example, the following shows the date every time it changes, while
+showing the hour if either the hour or the date has changed:
+
+@verbatim
+{% for date in days %}
+    {% ifchanged date.date %} {{ date.date }} {% endifchanged %}
+    {% ifchanged date.hour date.date %}
+        {{ date.hour }}
+    {% endifchanged %}
+{% endfor %}
+@end verbatim
+
+The @code{ifchanged} tag can also take an optional @code{@{% else %@}}
+clause that will be displayed if the value has not changed:
+
+@verbatim
+{% for match in matches %}
+    <div style="background-color:
+        {% ifchanged match.ballot-id %}
+            {% cycle "red" "blue" %}
+        {% else %}
+            gray
+        {% endifchanged %}
+    ">{{ match }}</div>
+{% endfor %}
+@end verbatim
+
+ifequal
+
+@node ifequal
+@subsection ifequal
+@anchor{#ifequal}
+Output the contents of the block if the two arguments equal each other.
+
+Example:
+
+@verbatim
+{% ifequal user.pk comment.user-id %}
+    ...
+{% endifequal %}
+@end verbatim
+
+As in the @code{if} tag, an @code{@{% else %@}} clause is optional.
+
+The arguments can be hard-coded strings, so the following is valid:
+
+@verbatim
+{% ifequal user.username "adrian" %}
+    ...
+{% endifequal %}
+@end verbatim
+
+An alternative to the @code{ifequal} tag is to use the @code{if} tag and
+the @code{==} operator.
+
+ifnotequal
+
+@node ifnotequal
+@subsection ifnotequal
+@anchor{#ifnotequal}
+Just like @code{ifequal}, except it tests that the two arguments are not
+equal.
+
+An alternative to the @code{ifnotequal} tag is to use the @code{if} tag
+and the @code{!=} operator.
+
+include
+
+@node include
+@subsection include
+@anchor{#include}
+Loads a template and renders it with the current context. This is a way
+of "including" other templates within a template.
+
+The template name can either be a variable or a hard-coded (quoted)
+string, in either single or double quotes.
+
+This example includes the contents of the template
+@code{"foo/bar.html"}:
+
+@verbatim
+{% include "foo/bar.html" %}
+@end verbatim
+
+A set of parameters can also be added, which become available as context
+variables when the included template is rendered:
+
+@verbatim
+{% include "user.html" :user record.creator %}
+{% include "user.html" :user record.updater %}
+@end verbatim
+
+@node Custom tags
+@section Custom tags
+@anchor{#custom-tags}
+TODO
+
+@node Comments
+@chapter Comments
+@anchor{#comments}
+To comment-out part of a line in a template, use the comment syntax:
+@code{@{# #@}}.
+
+For example, this template would render as @code{'hello'}:
+
+@verbatim
+{# greeting #}hello
+@end verbatim
+
+A comment can contain any template code, invalid or not. For example:
+
+@verbatim
+{# {% if foo %}bar{% else %} #}
+@end verbatim
+
+If you need to comment out a multiline portion of the template, see the
+@code{comment} tag.
+
+@node Verbatim
+@chapter Verbatim
+@anchor{#verbatim}
+If you want to leave some portion of text unprocessed by Djula, use the
+verbatim syntax: @code{@{$ $@}}.
+
+For example, this template would render as
+@code{'this is @{@{verbatim@}@}'}:
+
+@verbatim
+{$ this is {{verbatim}} $}
+@end verbatim
+
+
+
+@node Filters
+@chapter Filters
+@anchor{#filters}
+
+@menu
+* Overview of filters::
+* List of filters::
+* Custom filters::
+@end menu
+
+@node Overview of filters
+@section Overview of filters
+@anchor{#overview-1}
+You can modify variables for display by using @strong{filters}.
+
+Filters look like this: @code{@{@{ name|lower @}@}}. This displays the
+value of the @code{@{@{ name @}@}} variable after being filtered through
+the @code{lower} filter, which converts text to lowercase. Use a pipe
+(@code{|}) to apply a filter.
+
+Filters can be "chained." The output of one filter is applied to the
+next. @code{@{@{ text|escape|linebreaks @}@}} is a common idiom for
+escaping text contents, then converting line breaks to @code{<p>} tags.
+
+Some filters take arguments. A filter argument looks like this:
+@code{@{@{ bio|truncatewords:30 @}@}}. This will display the first 30
+words of the @code{bio} variable.
+
+Filter arguments that contain spaces must be quoted; for example, to
+join a list with commas and spaced you'd use
+@code{@{@{ list|join:", " @}@}}.
+
+Djula provides about thirty built-in template filters. You can read all
+about them in the
+@code{built-in filter reference <ref-templates-builtins-filters>}. To
+give you a taste of what's available, here are some of the more commonly
+used template filters:
+
+@node List of filters
+@section List of filters
+@anchor{#list-of-filters}
+Filters
+add
+
+@menu
+* add::
+* addslashes::
+* capfirst::
+* cut::
+* date::
+* time::
+* datetime::
+* default::
+* reverse::
+* divisibleby::
+* sort::
+* first::
+* join::
+* last::
+* length::
+* length_is::
+* linebreaks::
+* linebreaksbr::
+* lower::
+* make_list::
+* safe escape::
+* slice::
+* force-escape::
+* format::
+* replace  with::
+* rest::
+* scan::
+* time::
+* truncatechars::
+* upper::
+* urlencode::
+* escape::
+* escapejs::
+* filesizeformat::
+@end menu
+
+@node add
+@subsection add
+@anchor{#add}
+Adds the argument to the value.
+
+For example:
+
+@verbatim
+{{ value|add:2 }}
+@end verbatim
+
+If @code{value} is @code{4}, then the output will be @code{6}.
+
+addslashes
+
+@node addslashes
+@subsection addslashes
+@anchor{#addslashes}
+Adds slashes before quotes. Useful for escaping strings in CSV, for
+example.
+
+For example:
+
+@verbatim
+{{ value|addslashes }}
+@end verbatim
+
+If @code{value} is @code{"I'm using Djula"}, the output will be
+@code{"I\'m using Djula"}.
+
+capfirst
+
+@node capfirst
+@subsection capfirst
+@anchor{#capfirst}
+Capitalizes the first character of the value. If the first character is
+not a letter, this filter has no effect.
+
+For example:
+
+@verbatim
+{{ value|capfirst }}
+@end verbatim
+
+If @code{value} is @code{"djula"}, the output will be @code{"Djula"}.
+
+center
+cut
+
+@node cut
+@subsection cut
+@anchor{#cut}
+Removes all values of arg from the given string.
+
+For example:
+
+@verbatim
+{{ value|cut:" " }}
+@end verbatim
+
+If @code{value} is @code{"String with spaces"}, the output will be
+@code{"Stringwithspaces"}.
+
+date
+
+@node date
+@subsection date
+@anchor{#date}
+Formats a date
+
+@table @asis
+@item Example::
+
+@{@{ date-today | date @}@}
+
+@end table
+
+A LOCAL-TIME format spec can be provided:
+
+@verbatim
+(defvar timestamp 3752179200)
+{{ timestamp | date:(:year "/" (:month 2) "/" (:day 2)) }} ;; shows 2018/11/26
+@end verbatim
+
+@node datetime
+@subsection datetime
+@anchor{#datetime}
+Formats a date and time
+
+Example:
+
+@verbatim
+{{ time-now | datetime }}
+@end verbatim
+
+default
+
+@node default
+@subsection default
+@anchor{#default}
+If value evaluates to @code{False}, uses the given default. Otherwise,
+uses the value.
+
+For example:
+
+@verbatim
+{{ value|default "nothing" }}
+@end verbatim
+
+If @code{value} is @code{""} (the empty string), the output will be
+@code{nothing}.
+
+default_if_none
+reverse
+
+@node reverse
+@subsection reverse
+@anchor{#reverse}
+Takes a list and returns that list reversed.
+
+For example:
+
+@verbatim
+{{ list | reverse }}
+@end verbatim
+
+@node divisibleby
+@subsection divisibleby
+@anchor{#divisibleby}
+Returns @code{True} if the value is divisible by the argument.
+
+For example:
+
+@verbatim
+{{ value|divisibleby:"3" }}
+@end verbatim
+
+If @code{value} is @code{21}, the output would be @code{True}.
+
+sort
+
+@node sort
+@subsection sort
+@anchor{#sort}
+Takes a list and returns that list sorted.
+
+For example:
+
+@verbatim
+{{ list | sort }}
+@end verbatim
+
+escape
+
+@node escape
+@subsection escape
+@anchor{#escape}
+Escapes a string's HTML. Specifically, it makes these replacements:
+
+@itemize
+@item
+@code{<} is converted to @code{&lt;}
+@item
+@code{>} is converted to @code{&gt;}
+@item
+@code{'} (single quote) is converted to @code{&#39;}
+@item
+@code{"} (double quote) is converted to @code{&quot;}
+@item
+@code{&} is converted to @code{&amp;}
+@end itemize
+
+The escaping is only applied when the string is output, so it does not
+matter where in a chained sequence of filters you put @code{escape}: it
+will always be applied as though it were the last filter. If you want
+escaping to be applied immediately, use the @code{force-escape} filter.
+
+Applying @code{escape} to a variable that would normally have
+auto-escaping applied to the result will only result in one round of
+escaping being done. So it is safe to use this function even in
+auto-escaping environments. If you want multiple escaping passes to be
+applied, use the @code{force-escape} filter.
+
+For example, you can apply @code{escape} to fields when
+@code{autoescape} is off:
+
+@verbatim
+{% autoescape off %}
+{{ title|escape }}
+{% endautoescape %}
+@end verbatim
+
+escapejs
+
+@node escapejs
+@subsection escapejs
+@anchor{#escapejs}
+Escapes characters for use in JavaScript strings. This does @emph{not}
+make the string safe for use in HTML, but does protect you from syntax
+errors when using templates to generate JavaScript/JSON.
+
+For example:
+
+@verbatim
+{{ value|escapejs }}
+@end verbatim
+
+If @code{value} is
+@code{"testing\r\njavascript \'string" <b>escaping</b>"}, the output
+will be
+@code{"testing\\u000D\\u000Ajavascript \\u0027string\\u0022 \\u003Cb\\u003Eescaping\\u003C/b\\u003E"}.
+
+filesizeformat
+
+@node filesizeformat
+@subsection filesizeformat
+@anchor{#filesizeformat}
+Formats the value like a 'human-readable' file size (i.e.
+@code{'13 KB'}, @code{'4.1 MB'}, @code{'102 bytes'}, etc).
+
+For example:
+
+@verbatim
+{{ value|filesizeformat }}
+@end verbatim
+
+If @code{value} is 123456789, the output would be @code{117.7 MB}.
+
+File sizes and SI units
+
+Strictly speaking, @code{filesizeformat} does not conform to the
+International System of Units which recommends using KiB, MiB, GiB, etc.
+when byte sizes are calculated in powers of 1024 (which is the case
+here). Instead, Djula uses traditional unit names (KB, MB, GB, etc.)
+corresponding to names that are more commonly used.
+first
+
+@node first
+@subsection first
+@anchor{#first}
+Returns the first item in a list.
+
+For example:
+
+@verbatim
+{{ value|first }}
+@end verbatim
+
+If @code{value} is the list @code{("a" "b" "c")}, the output will be
+@code{"a"}.
+
+join
+
+@node join
+@subsection join
+@anchor{#join}
+Joins a list with a string.
+
+For example:
+
+@verbatim
+{{ value|join:" // " }}
+@end verbatim
+
+If @code{value} is the list @code{("a" "b" "c")}, the output will be the
+string @code{"a // b // c"}.
+
+last
+
+@node last
+@subsection last
+@anchor{#last}
+Returns the last item in a list.
+
+For example:
+
+@verbatim
+{{ value|last }}
+@end verbatim
+
+If @code{value} is the list @code{("a" "b" "c" "d")}, the output will be
+the string @code{"d"}.
+
+length
+
+@node length
+@subsection length
+@anchor{#length}
+Returns the length of the value. This works for both strings and lists.
+
+For example:
+
+@verbatim
+{{ value|length }}
+@end verbatim
+
+If @code{value} is @code{("a" "b" "c" "d")} or @code{"abcd"}, the output
+will be @code{4}.
+
+length_is
+
+@node length_is
+@subsection length_is
+@anchor{#length_is}
+Returns @code{True} if the value's length is the argument, or
+@code{False} otherwise.
+
+For example:
+
+@verbatim
+{{ value|length_is:"4" }}
+@end verbatim
+
+If @code{value} is @code{['a', 'b', 'c', 'd']} or @code{"abcd"}, the
+output will be @code{True}.
+
+@quotation
+linebreaks
+@end quotation
+
+@node linebreaks
+@subsection linebreaks
+@anchor{#linebreaks}
+Replaces line breaks in plain text with appropriate HTML; a single
+newline becomes an HTML line break (@code{<br />}) and a new line
+followed by a blank line becomes a paragraph break (@code{</p>}).
+
+For example:
+
+@verbatim
+{{ value|linebreaks }}
+@end verbatim
+
+If @code{value} is @code{Joel\nis a slug}, the output will be
+@code{<p>Joel<br />is a slug</p>}.
+
+linebreaksbr
+
+@node linebreaksbr
+@subsection linebreaksbr
+@anchor{#linebreaksbr}
+Converts all newlines in a piece of plain text to HTML line breaks
+(@code{<br />}).
+
+For example:
+
+@verbatim
+{{ value|linebreaksbr }}
+@end verbatim
+
+If @code{value} is @code{Joel\nis a slug}, the output will be
+@code{Joel<br />is a slug}.
+
+linenumbers
+lower
+
+@node lower
+@subsection lower
+@anchor{#lower}
+Converts a string into all lowercase.
+
+For example:
+
+@verbatim
+{{ value|lower }}
+@end verbatim
+
+If @code{value} is @code{Still MAD At Yoko}, the output will be
+@code{still mad at yoko}.
+
+make_list
+
+@node make_list
+@subsection make_list
+@anchor{#make_list}
+Returns the value turned into a list. For a string, it's a list of
+characters. For an integer, the argument is cast into an unicode string
+before creating a list.
+
+For example:
+
+@verbatim
+{{ value|make_list }}
+@end verbatim
+
+If @code{value} is the string @code{"Joel"}, the output would be the
+list @code{['J', 'o', 'e', 'l']}. If @code{value} is @code{123}, the
+output will be the list @code{['1', '2', '3']}.
+
+safe
+
+@node safe escape
+@subsection safe, escape
+@anchor{#safe-escape}
+Marks a string as not requiring further HTML escaping prior to output.
+When autoescaping is off, this filter has no effect.
+
+Note
+If you are chaining filters, a filter applied after @code{safe} can make
+the contents unsafe again. For example, the following code prints the
+variable as is, unescaped:
+
+@verbatim
+{{ var|safe|escape }}
+@end verbatim
+
+safeseq
+slice
+
+@node slice
+@subsection slice
+@anchor{#slice}
+Returns a slice of a sequence (i.e. lists, vectors, strings)
+
+Uses the Common Lisp @code{cl-slice} library.
+
+Syntax:
+
+@verbatim
+{{ seq | slice: slices }}
+@end verbatim
+
+Each @code{slice} selects a subset of subscripts along the corresponding
+axis.
+
+@itemize
+@item
+A nonnegative integer selects the corresponding index, while a negative
+integer selects an index counting backwards from the last index:
+
+@verbatim
+{{ list | slice: 4 }}
+@end verbatim
+
+@end itemize
+
+if the list is @code{(1 2 3 4 5 6)} it will output @code{(5)}
+
+* @code{(start . end)} to select a range. When @code{end} is @code{NIL},
+the last index is included. Each boundary is resolved according to the
+other rules if applicable, so you can use negative integers:
+
+@verbatim
+{{ string | slice: (0 . 5) }}
+{{ string | slice: (5 . nil) }}
+@end verbatim
+
+if the string is @code{"Hello world"} is will output @code{Hello} and
+@code{world}.
+
+slugify
+force-escape
+
+@node force-escape
+@subsection force-escape
+@anchor{#force-escape}
+Forces escaping HTML characters (@code{<, >, ', \, &}):
+
+@verbatim
+{{ value | force-escape }}
+@end verbatim
+
+It calls @code{djula::escape-for-html}.
+
+format
+
+@node format
+@subsection format
+@anchor{#format}
+Formats the variable according to the argument, a string formatting
+specifier. This specifier uses Common Lisp string formatting syntax
+
+For example:
+
+@verbatim
+{{ value | format:"~:d" }}
+@end verbatim
+
+If @code{value} is @code{1000000}, the output will be @code{1,000,000}.
+
+striptags
+
+@node replace  with
+@subsection replace ... with
+@anchor{#replace-...-with}
+The @code{replace} and the @code{with} filters work together:
+
+@verbatim
+{{ value | replace:regexp | with:string }}
+@end verbatim
+
+This will replace all occurences of the regexp in "value" with a new
+string, using @code{ppcre:regex-replace-all}.
+
+rest
+
+@node rest
+@subsection rest
+@anchor{#rest}
+Returns the @code{rest} of a list (aka @code{cdr}).
+
+For example:
+
+@verbatim
+{{ values|rest }}
+@end verbatim
+
+If @code{values} is the list @code{("a" "b" "c")}, the output will be
+@code{("b" "c")}.
+
+scan
+
+@node scan
+@subsection scan
+@anchor{#scan}
+Extracts and displays a regexp from the value:
+
+@verbatim
+{{ value | scan:regexp }}
+@end verbatim
+
+This will display only the text that matches the regexp (using
+@code{ppcre:scan-to-strings}).
+
+time
+
+@node time
+@subsection time
+@anchor{#time-1}
+Formats a time according to the given format.
+
+For example:
+
+@verbatim
+{{ value | time }}
+@end verbatim
+
+truncatechars
+
+@node truncatechars
+@subsection truncatechars
+@anchor{#truncatechars}
+Truncates a string if it is longer than the specified number of
+characters. Truncated strings will end with the
+:cl:symbol:@emph{ELLISION-STRING}, which defaults to "...".
+
+@strong{Argument:} Number of characters to truncate to
+
+For example:
+
+@verbatim
+{{ value|truncatechars:9 }}
+@end verbatim
+
+If @code{value} is @code{"Joel is a slug"}, the output will be
+@code{"Joel i..."}.
+
+truncatechars_html
+upper
+
+@node upper
+@subsection upper
+@anchor{#upper}
+Converts a string into all uppercase.
+
+For example:
+
+@verbatim
+{{ value|upper }}
+@end verbatim
+
+If @code{value} is @code{"Joel is a slug"}, the output will be
+@code{"JOEL IS A SLUG"}.
+
+urlencode
+
+@node urlencode
+@subsection urlencode
+@anchor{#urlencode}
+Escapes a value for use in a URL.
+
+For example:
+
+@verbatim
+{{ value|urlencode }}
+@end verbatim
+
+If @code{value} is @code{"http://www.example.org/foo?a=b&c=d"}, the
+output will be @code{"http%3A//www.example.org/foo%3Fa%3Db%26c%3Dd"}.
+
+An optional argument containing the characters which should not be
+escaped can be provided.
+
+If not provided, the '/' character is assumed safe. An empty string can
+be provided when @emph{all} characters should be escaped. For example:
+
+@verbatim
+{{ value|urlencode:"" }}
+@end verbatim
+
+If @code{value} is @code{"http://www.example.org/"}, the output will be
+@code{"http%3A%2F%2Fwww.example.org%2F"}.
+
+@node Custom filters
+@section Custom filters
+@anchor{#custom-filters}
+Use the @code{def-filter} macro. Its general form is:
+
+@verbatim
+(def-filter :myfilter-name (value arg)
+   (body))
+@end verbatim
+
+It always takes the variable's value as argument, and it can have one
+required or optional argument. For example, this is how those built-in
+filters are defined:
+
+@verbatim
+(def-filter :capfirst (val)
+  (string-capitalize (princ-to-string val)))
+@end verbatim
+
+This is all there is to it. Once written, you can use it in your
+templates. You can define a filter wherever you want and there is no
+need to register it or to import it in your templates.
+
+Here's a filter with a required argument:
+
+@verbatim
+(def-filter :add (it n)
+  (+ it (parse-integer n)))
+@end verbatim
+
+and with an optional one:
+
+@verbatim
+(def-filter :datetime (it &optional format)
+  (let ((timestamp …))))
+@end verbatim
+
+When you need to pass a second argument, make your filter return a
+lambda function and chain it with the @code{with} filter:
+
+@verbatim
+(def-filter :replace (it regex)
+   (lambda (replace)
+     (ppcre:regex-replace-all regex it replace)))
+
+(def-filter :with (it replace)
+   (funcall it replace))
+@end verbatim
+
+Now we can write:
+
+@verbatim
+{{ value | replace:foo | with:bar }}
+@end verbatim
+
+Errors are handled by the macro, but you can handle them and return a
+@code{template-error} condition:
+
+@verbatim
+(def-filter :handle-error-filter (it)
+   (handler-case
+         (do-something)
+     (condition (e)
+       (template-error "There was an error executing this filter: ~A" e))))
+@end verbatim
+
+
+
+@node Template inheritance
+@chapter Template inheritance
+@anchor{#template-inheritance}
+The most powerful -- and thus the most complex -- part of Djula's
+template engine is template inheritance. Template inheritance allows you
+to build a base "skeleton" template that contains all the common
+elements of your site and defines @strong{blocks} that child templates
+can override.
+
+It's easiest to understand template inheritance by starting with an
+example:
+
+@verbatim
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css" />
+    <title>{% block title %}My amazing site{% endblock %}</title>
+</head>
+
+<body>
+    <div id="sidebar">
+        {% block sidebar %}
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/blog/">Blog</a></li>
+        </ul>
+        {% endblock %}
+    </div>
+
+    <div id="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
+@end verbatim
+
+This template, which we'll call @code{base.html}, defines a simple HTML
+skeleton document that you might use for a simple two-column page. It's
+the job of "child" templates to fill the empty blocks with content.
+
+In this example, the @code{block} tag defines three blocks that child
+templates can fill in. All the @code{block} tag does is to tell the
+template engine that a child template may override those portions of the
+template.
+
+A child template might look like this:
+
+@verbatim
+{% extends "base.html" %}
+
+{% block title %}My amazing blog{% endblock %}
+
+{% block content %}
+{% for entry in blog_entries %}
+    <h2>{{ entry.title }}</h2>
+    <p>{{ entry.body }}</p>
+{% endfor %}
+{% endblock %}
+@end verbatim
+
+The @code{extends} tag is the key here. It tells the template engine
+that this template "extends" another template. When the template system
+evaluates this template, first it locates the parent -- in this case,
+"base.html".
+
+At that point, the template engine will notice the three @code{block}
+tags in @code{base.html} and replace those blocks with the contents of
+the child template. Depending on the value of @code{blog_entries}, the
+output might look like:
+
+@verbatim
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css" />
+    <title>My amazing blog</title>
+</head>
+
+<body>
+    <div id="sidebar">
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/blog/">Blog</a></li>
+        </ul>
+    </div>
+
+    <div id="content">
+        <h2>Entry one</h2>
+        <p>This is my first entry.</p>
+
+        <h2>Entry two</h2>
+        <p>This is my second entry.</p>
+    </div>
+</body>
+</html>
+@end verbatim
+
+Note that since the child template didn't define the @code{sidebar}
+block, the value from the parent template is used instead. Content
+within a @code{@{% block %@}} tag in a parent template is always used as
+a fallback.
+
+You can use as many levels of inheritance as needed. One common way of
+using inheritance is the following three-level approach:
+
+@itemize
+@item
+Create a @code{base.html} template that holds the main look-and-feel of
+your site.
+@item
+Create a @code{base_SECTIONNAME.html} template for each "section" of
+your site. For example, @code{base_news.html}, @code{base_sports.html}.
+These templates all extend @code{base.html} and include section-specific
+styles/design.
+@item
+Create individual templates for each type of page, such as a news
+article or blog entry. These templates extend the appropriate section
+template.
+@end itemize
+
+This approach maximizes code reuse and makes it easy to add items to
+shared content areas, such as section-wide navigation.
+
+Here are some tips for working with inheritance:
+
+@itemize
+@item
+If you use @code{@{% extends %@}<extends>} in a template, it must be the
+first template tag in that template. Template inheritance won't work,
+otherwise.
+@item
+More @code{@{% block %@}<block>} tags in your base templates are better.
+Remember, child templates don't have to define all parent blocks, so you
+can fill in reasonable defaults in a number of blocks, then only define
+the ones you need later. It's better to have more hooks than fewer
+hooks.
+@item
+If you find yourself duplicating content in a number of templates, it
+probably means you should move that content to a @code{@{% block %@}} in
+a parent template.
+@item
+If you need to get the content of the block from the parent template,
+the @code{@{@{ block.super @}@}} variable will do the trick. This is
+useful if you want to add to the contents of a parent block instead of
+completely overriding it. Data inserted using
+@code{@{@{ block.super @}@}} will not be automatically escaped (see the
+@uref{,next section}), since it was already escaped, if necessary, in
+the parent template.
+@item
+For extra readability, you can optionally give a @emph{name} to your
+@code{@{% endblock %@}} tag. For example:
+
+@verbatim
+{% block content %}
+...
+{% endblock content %}
+@end verbatim
+
+In larger templates, this technique helps you see which
+@code{@{% block %@}} tags are being closed.
+
+@end itemize
+
+Finally, note that you can't define multiple @code{block} tags with the
+same name in the same template. This limitation exists because a block
+tag works in "both" directions. That is, a block tag doesn't just
+provide a hole to fill --it also defines the content that fills the hole
+in the @emph{parent}. If there were two similarly-named @code{block}
+tags in a template, that template's parent wouldn't know which one of
+the blocks' content to use.
+
+
+
+@node Internationalization
+@chapter Internationalization
+@anchor{#internationalization}
+
+@menu
+* Syntax::
+* Internationalization tags::
+* Internationalization filters::
+* Choosing language::
+* Backends::
+@end menu
+
+@node Syntax
+@section Syntax
+@anchor{#syntax}
+The easiest way to translate a string or variable is to enclose it
+between @code{@{_} and @code{_@}}:
+
+@verbatim
+{_ var _}
+{_ "hello" _}
+@end verbatim
+
+@node Internationalization tags
+@section Internationalization tags
+@anchor{#tags-1}
+trans
+
+@menu
+* trans::
+@end menu
+
+@node Internationalization filters
+@section Internationalization filters
+@anchor{#filters-1}
+urlencode
+
+@menu
+* trans::
+@end menu
+
+@node trans
+@subsection trans
+@anchor{#trans-1}
+Translates a variable or string.
+
+For example:
+
+@verbatim
+{{ var | trans }}
+{{ "my string" |  trans }}
+@end verbatim
+
+@node Choosing language
+@section Choosing language
+@anchor{#choosing-language}
+To choose the language to use, set the :cl@code{*CURRENT-LANGUAGE*}
+variable.
+
+For example:
+
+@verbatim
+(let ((djula:*current-language* :es))
+   (djula:render-template* +translation.html+))
+@end verbatim
+
+@node Backends
+@section Backends
+@anchor{#backends}
+Djula supports two backends for doing translations:
+@uref{https://github.com/arielnetworks/cl-locale,cl-locale} and
+@uref{https://github.com/copyleft/gettext,gettext}
+
+Please have a look at the demo and the documentation of those packages
+to figure out how to use them.
+
+@node Error handling
+@chapter Error handling
+@anchor{#error-handling}
+Djula catches errors and barfs them to the template output by default.
+
+That is controlled via the :cl@code{*CATCH-TEMPLATE-ERRORS-P*}. If
+changed to @code{NIL}, then errors are not caught anymore and are
+debuggable from the lisp listener.
+
+Djula provides more or less verbosity in template errors. Verbosity is
+controlled via the variable :cl@code{*VERBOSE-ERRORS-P*}.
+
+Also, there's a fancy page to display errors, which can be disabled if
+desired. That is controlled via the variable
+:cl@code{*FANCY-ERROR-TEMPLATE-P*}
+
+@menu
+* Djula API::
+@end menu
+
+@node Djula API
+@section Djula API
+@anchor{#api-2}
+Djula external symbols documentation
+
+
+
+@node Automatic HTML escaping
+@chapter Automatic HTML escaping
+@anchor{#automatic-html-escaping}
+When generating HTML from templates, there's always a risk that a
+variable will include characters that affect the resulting HTML. For
+example, consider this template fragment:
+
+@verbatim
+Hello, {{ name }}.
+@end verbatim
+
+At first, this seems like a harmless way to display a user's name, but
+consider what would happen if the user entered their name as this:
+
+@verbatim
+<script>alert('hello')</script>
+@end verbatim
+
+With this name value, the template would be rendered as:
+
+@verbatim
+Hello, <script>alert('hello')</script>
+@end verbatim
+
+...which means the browser would pop-up a JavaScript alert box!
+
+Similarly, what if the name contained a @code{'<'} symbol, like this?
+
+@verbatim
+<b>username
+@end verbatim
+
+That would result in a rendered template like this:
+
+@verbatim
+Hello, <b>username
+@end verbatim
+
+...which, in turn, would result in the remainder of the Web page being
+bolded!
+
+Clearly, user-submitted data shouldn't be trusted blindly and inserted
+directly into your Web pages, because a malicious user could use this
+kind of hole to do potentially bad things. This type of security exploit
+is called a
+@uref{http://en.wikipedia.org/wiki/Cross-site_scripting,Cross Site
+Scripting} (XSS) attack.
+
+To avoid this problem, you have two options:
+
+@itemize
+@item
+One, you can make sure to run each untrusted variable through the
+@code{escape} filter (documented below), which converts potentially
+harmful HTML characters to unharmful ones. This was the default solution
+in Django for its first few years, but the problem is that it puts the
+onus on @emph{you}, the developer / template author, to ensure you're
+escaping everything. It's easy to forget to escape data.
+@item
+Two, you can take advantage of Django's automatic HTML escaping. The
+remainder of this section describes how auto-escaping works.
+@end itemize
+
+By default in Django, every template automatically escapes the output of
+every variable tag. Specifically, these five characters are escaped:
+
+@itemize
+@item
+@code{<} is converted to @code{&lt;}
+@item
+@code{>} is converted to @code{&gt;}
+@item
+@code{'} (single quote) is converted to @code{&#39;}
+@item
+@code{"} (double quote) is converted to @code{&quot;}
+@item
+@code{&} is converted to @code{&amp;}
+@end itemize
+
+Again, we stress that this behavior is on by default. If you're using
+Django's template system, you're protected.
+
+@menu
+* How to turn it off::
+* Notes::
+* String literals and automatic escaping::
+@end menu
+
+@node How to turn it off
+@section How to turn it off
+@anchor{#how-to-turn-it-off}
+If you don't want data to be auto-escaped, on a per-site, per-template
+level or per-variable level, you can turn it off in several ways.
+
+Why would you want to turn it off? Because sometimes, template variables
+contain data that you @emph{intend} to be rendered as raw HTML, in which
+case you don't want their contents to be escaped. For example, you might
+store a blob of HTML in your database and want to embed that directly
+into your template. Or, you might be using Django's template system to
+produce text that is @emph{not} HTML -- like an email message, for
+instance.
+
+@node For individual variables
+@subsection For individual variables
+@anchor{#for-individual-variables}
+To disable auto-escaping for an individual variable, use the @code{safe}
+filter:
+
+@verbatim
+This will be escaped: {{ data }}
+This will not be escaped: {{ data|safe }}
+@end verbatim
+
+Think of @emph{safe} as shorthand for @emph{safe from further escaping}
+or @emph{can be safely interpreted as HTML}. In this example, if
+@code{data} contains @code{'<b>'}, the output will be:
+
+@verbatim
+This will be escaped: &lt;b&gt;
+This will not be escaped: <b>
+@end verbatim
+
+@node For template blocks
+@subsubsection For template blocks
+@anchor{#for-template-blocks}
+To control auto-escaping for a template, wrap the template (or just a
+particular section of the template) in the @code{autoescape} tag, like
+so:
+
+@verbatim
+{% autoescape off %}
+    Hello {{ name }}
+{% endautoescape %}
+@end verbatim
+
+The @code{autoescape} tag takes either @code{on} or @code{off} as its
+argument. At times, you might want to force auto-escaping when it would
+otherwise be disabled. Here is an example template:
+
+@verbatim
+Auto-escaping is on by default. Hello {{ name }}
+
+{% autoescape off %}
+    This will not be auto-escaped: {{ data }}.
+
+    Nor this: {{ other_data }}
+    {% autoescape on %}
+        Auto-escaping applies again: {{ name }}
+    {% endautoescape %}
+{% endautoescape %}
+@end verbatim
+
+The auto-escaping tag passes its effect onto templates that extend the
+current one as well as templates included via the @code{include} tag,
+just like all block tags. For example:
+
+@verbatim
+# base.html
+
+{% autoescape off %}
+<h1>{% block title %}{% endblock %}</h1>
+{% block content %}
+{% endblock %}
+{% endautoescape %}
+
+
+# child.html
+
+{% extends "base.html" %}
+{% block title %}This & that{% endblock %}
+{% block content %}{{ greeting }}{% endblock %}
+@end verbatim
+
+Because auto-escaping is turned off in the base template, it will also
+be turned off in the child template, resulting in the following rendered
+HTML when the @code{greeting} variable contains the string
+@code{<b>Hello!</b>}:
+
+@verbatim
+<h1>This & that</h1>
+<b>Hello!</b>
+@end verbatim
+
+@node Notes
+@section Notes
+@anchor{#notes}
+Generally, template authors don't need to worry about auto-escaping very
+much. Developers on the Python side (people writing views and custom
+filters) need to think about the cases in which data shouldn't be
+escaped, and mark data appropriately, so things Just Work in the
+template.
+
+If you're creating a template that might be used in situations where
+you're not sure whether auto-escaping is enabled, then add an
+@code{escape} filter to any variable that needs escaping. When
+auto-escaping is on, there's no danger of the @code{escape} filter
+@emph{double-escaping} data -- the @code{escape} filter does not affect
+auto-escaped variables.
+
+@node String literals and automatic escaping
+@section String literals and automatic escaping
+@anchor{#string-literals-and-automatic-escaping}
+As we mentioned earlier, filter arguments can be strings:
+
+@verbatim
+{{ data|default:"This is a string literal." }}
+@end verbatim
+
+All string literals are inserted @strong{without} any automatic escaping
+into the template -- they act as if they were all passed through the
+@code{safe} filter. The reasoning behind this is that the template
+author is in control of what goes into the string literal, so they can
+make sure the text is correctly escaped when the template is written.
+
+This means you would write :
+
+@verbatim
+{{ data|default:"3 &lt; 2" }}
+@end verbatim
+
+...rather than :
+
+@verbatim
+{{ data|default:"3 < 2" }}  <-- Bad! Don't do this.
+@end verbatim
+
+This doesn't affect what happens to data coming from the variable
+itself. The variable's contents are still automatically escaped, if
+necessary, because they're beyond the control of the template author.
+
+
+
+@node Custom tag and filter libraries
+@chapter Custom tag and filter libraries
+@anchor{#custom-tag-and-filter-libraries}
+Certain applications provide custom tag and filter libraries. To access
+them in a template, use the @code{load} tag:
+
+@verbatim
+{% load comments %}
+
+{% comment_form for blogs.entries entry.id with is_public yes %}
+@end verbatim
+
+In the above, the @code{load} tag loads the @code{comments} tag library,
+which then makes the @code{comment_form} tag available for use. Consult
+the documentation area in your admin to find the list of custom
+libraries in your installation.
+
+The @code{load} tag can take multiple library names, separated by
+spaces. Example:
+
+@verbatim
+{% load comments i18n %}
+@end verbatim
+
+See @code{/howto/custom-template-tags} for information on writing your
+own custom template libraries.
+
+@menu
+* Custom libraries and template inheritance::
+@end menu
+
+@node Custom libraries and template inheritance
+@section Custom libraries and template inheritance
+@anchor{#custom-libraries-and-template-inheritance}
+When you load a custom tag or filter library, the tags/filters are only
+made available to the current template -- not any parent or child
+templates along the template-inheritance path.
+
+For example, if a template @code{foo.html} has
+@code{@{% load comments %@}}, a child template (e.g., one that has
+@code{@{% extends "foo.html" %@}}) will @emph{not} have access to the
+comments template tags and filters. The child template is responsible
+for its own @code{@{% load comments %@}}.
+
+This is a feature for the sake of maintainability and sanity.
+
+
+
+@node Variable Index
+@unnumbered Variable Index
+
+@printindex vr
+
+@node Function Index
+@unnumbered Function Index
+
+@printindex fn
+
+@node Concept Index
+@unnumbered Concept Index
+
+@printindex cp

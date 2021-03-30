@@ -1,0 +1,2174 @@
+<?xml version="1.0"?>
+<!DOCTYPE texinfo PUBLIC "-//GNU//DTD TexinfoML V6.6//EN" "http://www.gnu.org/software/texinfo/dtd/6.6/texinfo.dtd">
+<texinfo xml:lang="en">
+<filename file="djula.xml"></filename>
+<setfilename file="djula.info" spaces=" ">djula.info</setfilename>
+
+<dircategory spaces=" ">Common Lisp</dircategory>
+<direntry endspaces=" ">
+<menuentry leadingtext="* "><menutitle separator=": ">Djula</menutitle><menunode separator=". ">(djula)</menunode><menudescription><pre xml:space="preserve">Common Lisp template system
+</pre></menudescription></menuentry></direntry>
+
+<node name="Top" spaces=" "><nodename>Top</nodename><nodenext automatic="on">Introduction</nodenext></node>
+<top spaces=" "><sectiontitle>Top</sectiontitle>
+<cindex index="cp" spaces=" "><indexterm index="cp" number="1">djula</indexterm></cindex>
+
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Introduction</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Basics</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Usage</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Variables</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Tags</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Comments</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Verbatim</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Filters</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Template inheritance</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Internationalization</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Error handling</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Automatic HTML escaping</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Custom tag and filter libraries</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Variable Index</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Function Index</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Concept Index</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+</top>
+<node name="Introduction" spaces=" "><nodename>Introduction</nodename><nodenext automatic="on">Basics</nodenext><nodeprev automatic="on">Top</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Introduction</sectiontitle>
+<anchor name="_0023introduction">#introduction</anchor>
+<para>Djula is an HTML templating system similar to Django templates for
+Common Lisp.
+</para>
+<para>Djula&textrsquo;s template language is designed to strike a balance between power
+and ease. It&textrsquo;s designed to feel comfortable to those used to working
+with HTML.
+</para>
+<para>Philosophy
+</para>
+<para>If you have a background in programming, or if you&textrsquo;re used to languages
+which mix programming code directly into HTML, you&textrsquo;ll want to bear in
+mind that the Djula template system is not simply Common Lisp code
+embedded into HTML. This is by design: the template system is meant to
+express presentation, not program logic.
+</para>
+<para>The Djula template system provides tags which function similarly to some
+programming constructs &textndash; an <code>if</code> tag for boolean tests, a
+<code>for</code> tag for looping, etc. &textndash; but these are not simply executed as
+the corresponding Lisp code, and the template system will not execute
+arbitrary Lisp expressions. Only the tags, filters and syntax listed
+below are supported by default (although you can add
+<code>your own extensions
+&lt;/howto/custom-template-tags&gt;</code> to the template language as needed).
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Prerequisites</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Installation</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="Prerequisites" spaces=" "><nodename>Prerequisites</nodename><nodenext automatic="on">Installation</nodenext><nodeup automatic="on">Introduction</nodeup></node>
+<section spaces=" "><sectiontitle>Prerequisites</sectiontitle>
+<anchor name="_0023prerequisites">#prerequisites</anchor>
+<para>TODO: list of Common Lisp compilers Djula works on.
+</para>
+</section>
+<node name="Installation" spaces=" "><nodename>Installation</nodename><nodeprev automatic="on">Prerequisites</nodeprev><nodeup automatic="on">Introduction</nodeup></node>
+<section spaces=" "><sectiontitle>Installation</sectiontitle>
+<anchor name="_0023installation">#installation</anchor>
+<para>Djula is available on Quicklisp:
+</para>
+<verbatim xml:space="preserve">
+(ql:quickload :djula)
+</verbatim>
+
+
+
+</section>
+</chapter>
+<node name="Basics" spaces=" "><nodename>Basics</nodename><nodenext automatic="on">Usage</nodenext><nodeprev automatic="on">Introduction</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Basics</sectiontitle>
+<anchor name="_0023basics">#basics</anchor>
+
+<para>A template is simply a text file. It can generate any text-based format
+(HTML, XML, CSV, etc.).
+</para>
+<para>A template contains <strong>variables</strong>, which get replaced with values
+when the template is evaluated, and <strong>tags</strong>, which control the
+logic of the template.
+</para>
+<para>Below is a minimal template that illustrates a few basics. Each element
+will be explained later in this document.
+</para>
+<verbatim xml:space="preserve">
+{% extends &quot;base.html&quot; %}
+
+{% block title %}{{ section.title }}{% endblock %}
+
+{% block content %}
+&lt;h1&gt;{{ section.title }}&lt;/h1&gt;
+
+{% for story in story_list %}
+&lt;h2&gt;
+  &lt;a href=&quot;{{ story.url }}&quot;&gt;
+    {{ story.headline|upper }}
+  &lt;/a&gt;
+&lt;/h2&gt;
+&lt;p&gt;{{ story.tease|truncatewords:100 }}&lt;/p&gt;
+{% endfor %}
+{% endblock %}
+</verbatim>
+
+</chapter>
+<node name="Usage" spaces=" "><nodename>Usage</nodename><nodenext automatic="on">Variables</nodenext><nodeprev automatic="on">Basics</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Usage</sectiontitle>
+<anchor name="_0023usage">#usage</anchor>
+<findex index="fn" spaces=" "><indexterm index="fn" number="1">djula:add-template-directory</indexterm></findex>
+<vindex index="vr" spaces=" "><indexterm index="vr" number="1">djula:*current-store*</indexterm></vindex>
+<findex index="fn" spaces=" "><indexterm index="fn" number="2">djula:compile-template*</indexterm></findex>
+
+<para>To render our templates, they need to be compiled first. We do that with
+the :cl<code>COMPILE-TEMPLATE*</code> function. For inheritance to work, we
+need to put all the templates in the same directory so that Djula can
+find them when resolving templates inheritance.
+</para>
+<para>Djula looks for templates in the :cl<code>*CURRENT-STORE*</code>. For our
+templates to be found, we have to add the template folder path the
+templates store. We can do that with the
+:cl<code>add-template-directory</code> function.
+</para>
+<para>Here is an example:
+</para>
+<verbatim xml:space="preserve">
+(add-template-directory (asdf:system-relative-pathname &quot;webapp&quot; &quot;templates/&quot;))
+
+(defparameter +base.html+ (djula:compile-template* &quot;base.html&quot;))
+
+(defparameter +welcome.html+ (djula:compile-template* &quot;welcome.html&quot;))
+
+(defparameter +contact.html+ (djula:compile-template* &quot;contact.html&quot;))
+</verbatim>
+
+<para>Then we can render our compiled templates using the
+:cl<code>RENDER-TEMPLATE*</code> function:
+</para>
+<verbatim xml:space="preserve">
+(djula:render-template* +welcome.html+ s
+            :title &quot;Ukeleles&quot;
+            :project-name &quot;Ukeleles&quot;
+            :mode &quot;welcome&quot;)
+</verbatim>
+
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Auto-reload</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">API</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="Auto_002dreload" spaces=" "><nodename>Auto-reload</nodename><nodenext automatic="on">API</nodenext><nodeup automatic="on">Usage</nodeup></node>
+<section spaces=" "><sectiontitle>Auto-reload</sectiontitle>
+<anchor name="_0023auto_002dreload">#auto-reload</anchor>
+<para>By default, Djula automatically recompiles the templates when they
+change.
+</para>
+<para>If you want to disable this, use the :djula-prod <emph>feature</emph>:
+</para>
+<verbatim xml:space="preserve">
+(push :djula-prod *features*)
+</verbatim>
+
+</section>
+<node name="API" spaces=" "><nodename>API</nodename><nodeprev automatic="on">Auto-reload</nodeprev><nodeup automatic="on">Usage</nodeup></node>
+<section spaces=" "><sectiontitle>API</sectiontitle>
+<anchor name="_0023api">#api</anchor>
+
+</section>
+</chapter>
+<node name="Variables" spaces=" "><nodename>Variables</nodename><nodenext automatic="on">Tags</nodenext><nodeprev automatic="on">Usage</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Variables</sectiontitle>
+<anchor name="_0023variables">#variables</anchor>
+<cindex index="cp" spaces=" "><indexterm index="cp" number="2">variables</indexterm></cindex>
+<para>Variables look like this: <code>&lbrace;&lbrace; variable &rbrace;&rbrace;</code>. When the template
+engine encounters a variable, it evaluates that variable and replaces it
+with the result. Variable names consist of any combination of
+alphanumeric characters and the underscore (<code>&quot;_&quot;</code>). The dot
+(<code>&quot;.&quot;</code>) also appears in variable sections, although that has a
+special meaning, as indicated below. Importantly, <emph>you cannot have
+spaces or punctuation characters in variable names.</emph>
+</para>
+<para>Use a dot (<code>.</code>) to access attributes of a variable.
+</para>
+<para>Behind the scenes
+</para>
+<para>For accessing variables the <code>ACCESS</code> Common Lisp library is used:
+<url><urefurl>https://github.com/AccelerationNet/access</urefurl></url>
+In the above example, <code>&lbrace;&lbrace; section.title &rbrace;&rbrace;</code> will be replaced
+with the <code>title</code> attribute of the <code>section</code> object.
+</para>
+<para>Note that &quot;bar&quot; in a template expression like <code>&lbrace;&lbrace; foo.bar &rbrace;&rbrace;</code>
+will be interpreted as a literal string and not using the value of the
+variable &quot;bar&quot;, if one exists in the template context.
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Default template variables</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="Default-template-variables" spaces=" "><nodename>Default template variables</nodename><nodeup automatic="on">Variables</nodeup></node>
+<section spaces=" "><sectiontitle>Default template variables</sectiontitle>
+<anchor name="_0023default_002dtemplate_002dvariables">#default-template-variables</anchor>
+<para>You can use the <code>*default-template-arguments*</code> variable to store
+arguments that will be available for all templates. It is a plist, so
+use getf to add arguments, like this:
+</para>
+<verbatim xml:space="preserve">
+(setf (getf djula:*default-template-arguments* :foo) 'some-value)
+</verbatim>
+
+<para>And now, you can access <code>&lbrace;&lbrace; foo &rbrace;&rbrace;</code> in your template.
+</para>
+<para>This is useful when you have many templates that rely on the same set of
+variables. Use this variable to refactor your code when appropriate.
+</para>
+<para>Note that you could also write a function that wraps
+<code>render-template*</code> and uses a default list of variables plus other
+ones given as arguments:
+</para>
+<verbatim xml:space="preserve">
+(defun my-render-template (template stream &amp;rest args)
+  (apply #'djula:render-template* template stream (list* :foo 'some-value args)))
+</verbatim>
+
+
+
+</section>
+</chapter>
+<node name="Tags" spaces=" "><nodename>Tags</nodename><nodenext automatic="on">Comments</nodenext><nodeprev automatic="on">Variables</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Tags</sectiontitle>
+<anchor name="_0023tags">#tags</anchor>
+
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Overview</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">List of tags</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Custom tags</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="Overview" spaces=" "><nodename>Overview</nodename><nodenext automatic="on">List of tags</nodenext><nodeup automatic="on">Tags</nodeup></node>
+<section spaces=" "><sectiontitle>Overview</sectiontitle>
+<anchor name="_0023overview">#overview</anchor>
+<para>Tags look like this: <code>&lbrace;% tag %&rbrace;</code>. Tags are more complex than
+variables: Some create text in the output, some control flow by
+performing loops or logic, and some load external information into the
+template to be used by later variables.
+</para>
+<para>Some tags require beginning and ending tags (i.e.
+<code>&lbrace;% tag %&rbrace; ... tag contents ... &lbrace;% endtag %&rbrace;</code>).
+</para>
+<para>Here are some of the more commonly used tags:
+</para>
+<table commandarg="asis" spaces=" " endspaces=" ">
+<tableentry><tableterm><item spaces=" "><itemformat command="asis"><code>for</code></itemformat></item>
+</tableterm><tableitem>
+<para>Loop over each item in an array. For example, to display a list of
+athletes provided in <code>athlete-list</code>:
+</para>
+<verbatim xml:space="preserve">
+&lt;ul&gt;
+{% for athlete in athlete-list %}
+    &lt;li&gt;{{ athlete.name }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+</verbatim>
+
+</tableitem></tableentry><tableentry><tableterm><item spaces=" "><itemformat command="asis"><code>if</code>, <code>else</code></itemformat></item>
+</tableterm><tableitem>
+<para>Evaluates a variable, and if that variable is &quot;true&quot; the contents of the
+block are displayed:
+</para>
+<verbatim xml:space="preserve">
+{% if athlete-list %}
+    Number of athletes: {{ athlete-list|length }}
+{% else %}
+    No athletes.
+{% endif %}
+</verbatim>
+
+</tableitem></tableentry><tableentry><tableterm><item spaces=" "><itemformat command="asis"><code>block</code> and <code>extends</code></itemformat></item>
+</tableterm><tableitem>
+<para>Set up <ref label="_0023template_002dinheritance"><xrefnodename>#template-inheritance</xrefnodename><xrefinfoname>template inheritance</xrefinfoname></ref> (see below), a
+powerful way of cutting down on &quot;boilerplate&quot; in templates.
+</para>
+</tableitem></tableentry></table>
+
+</section>
+<node name="List-of-tags" spaces=" "><nodename>List of tags</nodename><nodenext automatic="on">Custom tags</nodenext><nodeprev automatic="on">Overview</nodeprev><nodeup automatic="on">Tags</nodeup></node>
+<section spaces=" "><sectiontitle>List of tags</sectiontitle>
+<anchor name="_0023list_002dof_002dtags">#list-of-tags</anchor>
+<para>Tags
+block
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">block</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">extends</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">super</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">comment</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">cycle</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">debug</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">filter</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">firstof</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">for</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">if</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Boolean operators</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">ifchanged</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">ifequal</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">ifnotequal</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">include</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="block" spaces=" "><nodename>block</nodename><nodenext automatic="on">extends</nodenext><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>block</sectiontitle>
+<anchor name="_0023block">#block</anchor>
+<para>Defines a block that can be overridden by child templates.
+</para>
+<para>Sample usage:
+</para>
+<verbatim xml:space="preserve">
+{% block stylesheets %}
+   ...
+{% endblock %}
+</verbatim>
+
+<para>See <code>Template inheritance</code> for more information.
+</para>
+<para>extends
+</para>
+</subsection>
+<node name="extends" spaces=" "><nodename>extends</nodename><nodenext automatic="on">super</nodenext><nodeprev automatic="on">block</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>extends</sectiontitle>
+<anchor name="_0023extends">#extends</anchor>
+<para>Extends a template
+</para>
+<para>Sample usage:
+</para>
+<verbatim xml:space="preserve">
+{% extends &quot;base.html&quot; %}
+</verbatim>
+
+<para>super
+</para>
+</subsection>
+<node name="super" spaces=" "><nodename>super</nodename><nodenext automatic="on">comment</nodenext><nodeprev automatic="on">extends</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>super</sectiontitle>
+<anchor name="_0023super">#super</anchor>
+<para>Gets the content of the block from the parent template. You can pass the
+name of the block of the parent block you want to access. If no name is
+passed, then the current block&textrsquo;s parent is used.
+</para>
+<para>Sample usage:
+</para>
+<verbatim xml:space="preserve">
+{% super &quot;stylesheets&quot; %}
+
+{% block stylesheets %}
+  {% super %}
+{% endblock %}
+</verbatim>
+
+<para>comment
+</para>
+</subsection>
+<node name="comment" spaces=" "><nodename>comment</nodename><nodenext automatic="on">cycle</nodenext><nodeprev automatic="on">super</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>comment</sectiontitle>
+<anchor name="_0023comment">#comment</anchor>
+<para>Ignores everything between <code>&lbrace;% comment %&rbrace;</code> and
+<code>&lbrace;% endcomment %&rbrace;</code>. An optional note may be inserted in the first
+tag. For example, this is useful when commenting out code for
+documenting why the code was disabled.
+</para>
+<para>Sample usage:
+</para>
+<verbatim xml:space="preserve">
+&lt;p&gt;Rendered text with {{ pub-date|date }}&lt;/p&gt;
+{% comment &quot;Optional note&quot; %}
+    &lt;p&gt;Commented out text with {{ create-date|date }}&lt;/p&gt;
+{% endcomment %}
+</verbatim>
+
+<para><code>comment</code> tags cannot be nested.
+</para>
+<para>cycle
+</para>
+</subsection>
+<node name="cycle" spaces=" "><nodename>cycle</nodename><nodenext automatic="on">debug</nodenext><nodeprev automatic="on">comment</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>cycle</sectiontitle>
+<anchor name="_0023cycle">#cycle</anchor>
+<para>Produces one of its arguments each time this tag is encountered. The
+first argument is produced on the first encounter, the second argument
+on the second encounter, and so forth. Once all arguments are exhausted,
+the tag cycles to the first argument and produces it again.
+</para>
+<para>This tag is particularly useful in a loop:
+</para>
+<verbatim xml:space="preserve">
+{% for o in some-list %}
+    &lt;tr class=&quot;{% cycle &quot;row1&quot; &quot;row2&quot; %}&quot;&gt;
+        ...
+    &lt;/tr&gt;
+{% endfor %}
+</verbatim>
+
+<para>The first iteration produces HTML that refers to class <code>row1</code>, the
+second to <code>row2</code>, the third to <code>row1</code> again, and so on for
+each iteration of the loop.
+</para>
+<para>You can use variables, too. For example, if you have two template
+variables, <code>rowvalue1</code> and <code>rowvalue2</code>, you can alternate
+between their values like this:
+</para>
+<verbatim xml:space="preserve">
+{% for o in some-list %}
+    &lt;tr class=&quot;{% cycle rowvalue1 rowvalue2 %}&quot;&gt;
+        ...
+    &lt;/tr&gt;
+{% endfor %}
+</verbatim>
+
+<para>You can mix variables and strings:
+</para>
+<verbatim xml:space="preserve">
+{% for o in some-list %}
+    &lt;tr class=&quot;{% cycle &quot;row1&quot; rowvalue2 &quot;row3&quot; %}&quot;&gt;
+        ...
+    &lt;/tr&gt;
+{% endfor %}
+</verbatim>
+
+<para>You can use any number of values in a <code>cycle</code> tag, separated by
+spaces. Values enclosed in double quotes (<code>&quot;</code>) are treated as
+string literals, while values without quotes are treated as template
+variables.
+</para>
+<para>debug
+</para>
+</subsection>
+<node name="debug" spaces=" "><nodename>debug</nodename><nodenext automatic="on">filter</nodenext><nodeprev automatic="on">cycle</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>debug</sectiontitle>
+<anchor name="_0023debug">#debug</anchor>
+<para>Outputs a whole load of debugging information
+</para>
+<para>filter
+</para>
+</subsection>
+<node name="filter" spaces=" "><nodename>filter</nodename><nodenext automatic="on">firstof</nodenext><nodeprev automatic="on">debug</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>filter</sectiontitle>
+<anchor name="_0023filter">#filter</anchor>
+<para>Filters the contents of the block through one or more filters. Multiple
+filters can be specified with pipes and filters can have arguments, just
+as in variable syntax.
+</para>
+<para>Note that the block includes <emph>all</emph> the text between the
+<code>filter</code> and <code>endfilter</code> tags.
+</para>
+<para>Sample usage:
+</para>
+<verbatim xml:space="preserve">
+{% filter force-escape|lower %}
+    This text will be HTML-escaped, and will appear in all lowercase.
+{% endfilter %}
+</verbatim>
+
+<para>Note
+The <code>escape</code> and <code>safe</code> filters are not acceptable arguments.
+Instead, use the <code>autoescape</code> tag to manage autoescaping for blocks
+of template code.
+firstof
+</para>
+</subsection>
+<node name="firstof" spaces=" "><nodename>firstof</nodename><nodenext automatic="on">for</nodenext><nodeprev automatic="on">filter</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>firstof</sectiontitle>
+<anchor name="_0023firstof">#firstof</anchor>
+<para>Outputs the first argument variable that is not <code>False</code>. Outputs
+nothing if all the passed variables are <code>False</code>.
+</para>
+<para>Sample usage:
+</para>
+<verbatim xml:space="preserve">
+{% firstof var1 var2 var3 %}
+</verbatim>
+
+<para>You can also use a literal string as a fallback value in case all passed
+variables are False:
+</para>
+<verbatim xml:space="preserve">
+{% firstof var1 var2 var3 &quot;fallback value&quot; %}
+</verbatim>
+
+<para>for
+</para>
+</subsection>
+<node name="for" spaces=" "><nodename>for</nodename><nodenext automatic="on">if</nodenext><nodeprev automatic="on">firstof</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>for</sectiontitle>
+<anchor name="_0023for">#for</anchor>
+<para>Loops over each item in an array, making the item available in a context
+variable. For example, to display a list of athletes provided in
+<code>athlete-list</code>:
+</para>
+<verbatim xml:space="preserve">
+&lt;ul&gt;
+{% for athlete in athlete-list %}
+    &lt;li&gt;{{ athlete.name }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+</verbatim>
+
+<para>If you need to loop over an association list, you can unpack the values
+in each sublist into individual variables. For example, if your context
+contains a list of (x . y) coordinates called <code>points</code>, you could
+use the following to output the list of points:
+</para>
+<verbatim xml:space="preserve">
+{% for (x . y) in points %}
+    There is a point at {{ x }},{{ y }}
+{% endfor %}
+</verbatim>
+
+<para>This can also be useful if you need to access the items in a hash-table.
+For example, if your context contained a hash-table named <code>data</code>,
+the following would display the keys and values of the hash-table:
+</para>
+<verbatim xml:space="preserve">
+{% for (key . value) in data.items %}
+    {{ key }}: {{ value }}
+{% endfor %}
+</verbatim>
+
+<para>The for loop sets a number of variables available within the loop:
+</para>
+<multitable spaces=" " endspaces=" "><columnprototypes><columnprototype bracketed="on"><code>forloop.revcounter0</code></columnprototype> <columnprototype bracketed="on">For nested loops, this is the loop surrounding the current one</columnprototype></columnprototypes>
+<thead><row><entry command="headitem"> 
+<para>Variable
+ </para></entry><entry command="tab" spaces=" "><para>Description
+</para></entry></row></thead><tbody><row><entry command="item"> 
+<para><code>forloop.counter</code>
+ </para></entry><entry command="tab" spaces=" "><para>The current iteration of the loop (1-indexed)
+</para></entry></row><row><entry command="item"> 
+<para><code>forloop.counter0</code>
+ </para></entry><entry command="tab" spaces=" "><para>The current iteration of the loop (0-indexed)
+</para></entry></row><row><entry command="item"> 
+<para><code>forloop.revcounter</code>
+ </para></entry><entry command="tab" spaces=" "><para>The number of iterations from the end of the loop (1-indexed)
+</para></entry></row><row><entry command="item"> 
+<para><code>forloop.revcounter0</code>
+ </para></entry><entry command="tab" spaces=" "><para>The number of iterations from the end of the loop (0-indexed)
+</para></entry></row><row><entry command="item"> 
+<para><code>forloop.first</code>
+ </para></entry><entry command="tab" spaces=" "><para>True if this is the first time through the loop
+</para></entry></row><row><entry command="item"> 
+<para><code>forloop.last</code>
+ </para></entry><entry command="tab" spaces=" "><para>True if this is the last time through the loop
+</para></entry></row><row><entry command="item"> 
+<para><code>forloop.parentloop</code>
+ </para></entry><entry command="tab" spaces=" "><para>For nested loops, this is the loop surrounding the current one
+</para></entry></row></tbody></multitable>
+
+<para>if
+</para>
+</subsection>
+<node name="if" spaces=" "><nodename>if</nodename><nodenext automatic="on">Boolean operators</nodenext><nodeprev automatic="on">for</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>if</sectiontitle>
+<anchor name="_0023if">#if</anchor>
+<para>The <code>&lbrace;% if %&rbrace;</code> tag evaluates a variable, and if that variable is
+&quot;true&quot; (i.e. exists, is not empty, and is not a false boolean value) the
+contents of the block are output:
+</para>
+<verbatim xml:space="preserve">
+{% if athlete-list %}
+    Number of athletes: {{ athlete-list|length }}
+{% else %}
+    No athletes.
+{% endif %}
+</verbatim>
+
+<para>In the above, if <code>athlete-list</code> is not empty, the number of
+athletes will be displayed by the <code>&lbrace;&lbrace; athlete-list|length &rbrace;&rbrace;</code>
+variable.
+</para>
+</subsection>
+<node name="Boolean-operators" spaces=" "><nodename>Boolean operators</nodename><nodenext automatic="on">ifchanged</nodenext><nodeprev automatic="on">if</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>Boolean operators</sectiontitle>
+<anchor name="_0023boolean_002doperators">#boolean-operators</anchor>
+<para><code>if</code> tags may use <code>and</code>, <code>or</code> or <code>not</code> to test a
+number of variables or to negate a given variable:
+</para>
+<verbatim xml:space="preserve">
+{% if athlete-list and coach-list %}
+    Both athletes and coaches are available.
+{% endif %}
+
+{% if not athlete-list %}
+    There are no athletes.
+{% endif %}
+
+{% if athlete-list or coach-list %}
+    There are some athletes or some coaches.
+{% endif %}
+
+{% if not athlete-list or coach-list %}
+    There are no athletes or there are some coaches (OK, so
+    writing English translations of boolean logic sounds
+    stupid; it's not our fault).
+{% endif %}
+
+{% if athlete-list and not coach-list %}
+    There are some athletes and absolutely no coaches.
+{% endif %}
+</verbatim>
+
+<para>Use of both <code>and</code> and <code>or</code> clauses within the same tag is
+allowed, with <code>and</code> having higher precedence than <code>or</code> e.g.:
+</para>
+<verbatim xml:space="preserve">
+{% if athlete-list and coach-list or cheerleader-list %}
+</verbatim>
+
+<para>will be interpreted like:
+</para>
+<verbatim xml:space="preserve">
+(if (or (athlete-list and coach-list) cheerleader-list) ..)
+</verbatim>
+
+<para>Use of actual parentheses in the <code>if</code> tag is invalid syntax. If you
+need them to indicate precedence, you should use nested <code>if</code> tags.
+</para>
+<para>ifchanged
+</para>
+</subsection>
+<node name="ifchanged" spaces=" "><nodename>ifchanged</nodename><nodenext automatic="on">ifequal</nodenext><nodeprev automatic="on">Boolean operators</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>ifchanged</sectiontitle>
+<anchor name="_0023ifchanged">#ifchanged</anchor>
+<para>Check if a value has changed from the last iteration of a loop.
+</para>
+<para>The <code>&lbrace;% ifchanged %&rbrace;</code> block tag is used within a loop.
+</para>
+<para>If given one or more variables, check whether any variable has changed.
+</para>
+<para>For example, the following shows the date every time it changes, while
+showing the hour if either the hour or the date has changed:
+</para>
+<verbatim xml:space="preserve">
+{% for date in days %}
+    {% ifchanged date.date %} {{ date.date }} {% endifchanged %}
+    {% ifchanged date.hour date.date %}
+        {{ date.hour }}
+    {% endifchanged %}
+{% endfor %}
+</verbatim>
+
+<para>The <code>ifchanged</code> tag can also take an optional <code>&lbrace;% else %&rbrace;</code>
+clause that will be displayed if the value has not changed:
+</para>
+<verbatim xml:space="preserve">
+{% for match in matches %}
+    &lt;div style=&quot;background-color:
+        {% ifchanged match.ballot-id %}
+            {% cycle &quot;red&quot; &quot;blue&quot; %}
+        {% else %}
+            gray
+        {% endifchanged %}
+    &quot;&gt;{{ match }}&lt;/div&gt;
+{% endfor %}
+</verbatim>
+
+<para>ifequal
+</para>
+</subsection>
+<node name="ifequal" spaces=" "><nodename>ifequal</nodename><nodenext automatic="on">ifnotequal</nodenext><nodeprev automatic="on">ifchanged</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>ifequal</sectiontitle>
+<anchor name="_0023ifequal">#ifequal</anchor>
+<para>Output the contents of the block if the two arguments equal each other.
+</para>
+<para>Example:
+</para>
+<verbatim xml:space="preserve">
+{% ifequal user.pk comment.user-id %}
+    ...
+{% endifequal %}
+</verbatim>
+
+<para>As in the <code>if</code> tag, an <code>&lbrace;% else %&rbrace;</code> clause is optional.
+</para>
+<para>The arguments can be hard-coded strings, so the following is valid:
+</para>
+<verbatim xml:space="preserve">
+{% ifequal user.username &quot;adrian&quot; %}
+    ...
+{% endifequal %}
+</verbatim>
+
+<para>An alternative to the <code>ifequal</code> tag is to use the <code>if</code> tag and
+the <code>==</code> operator.
+</para>
+<para>ifnotequal
+</para>
+</subsection>
+<node name="ifnotequal" spaces=" "><nodename>ifnotequal</nodename><nodenext automatic="on">include</nodenext><nodeprev automatic="on">ifequal</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>ifnotequal</sectiontitle>
+<anchor name="_0023ifnotequal">#ifnotequal</anchor>
+<para>Just like <code>ifequal</code>, except it tests that the two arguments are not
+equal.
+</para>
+<para>An alternative to the <code>ifnotequal</code> tag is to use the <code>if</code> tag
+and the <code>!=</code> operator.
+</para>
+<para>include
+</para>
+</subsection>
+<node name="include" spaces=" "><nodename>include</nodename><nodeprev automatic="on">ifnotequal</nodeprev><nodeup automatic="on">List of tags</nodeup></node>
+<subsection spaces=" "><sectiontitle>include</sectiontitle>
+<anchor name="_0023include">#include</anchor>
+<para>Loads a template and renders it with the current context. This is a way
+of &quot;including&quot; other templates within a template.
+</para>
+<para>The template name can either be a variable or a hard-coded (quoted)
+string, in either single or double quotes.
+</para>
+<para>This example includes the contents of the template
+<code>&quot;foo/bar.html&quot;</code>:
+</para>
+<verbatim xml:space="preserve">
+{% include &quot;foo/bar.html&quot; %}
+</verbatim>
+
+<para>A set of parameters can also be added, which become available as context
+variables when the included template is rendered:
+</para>
+<verbatim xml:space="preserve">
+{% include &quot;user.html&quot; :user record.creator %}
+{% include &quot;user.html&quot; :user record.updater %}
+</verbatim>
+
+</subsection>
+</section>
+<node name="Custom-tags" spaces=" "><nodename>Custom tags</nodename><nodeprev automatic="on">List of tags</nodeprev><nodeup automatic="on">Tags</nodeup></node>
+<section spaces=" "><sectiontitle>Custom tags</sectiontitle>
+<anchor name="_0023custom_002dtags">#custom-tags</anchor>
+<para>TODO
+</para>
+</section>
+</chapter>
+<node name="Comments" spaces=" "><nodename>Comments</nodename><nodenext automatic="on">Verbatim</nodenext><nodeprev automatic="on">Tags</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Comments</sectiontitle>
+<anchor name="_0023comments">#comments</anchor>
+<para>To comment-out part of a line in a template, use the comment syntax:
+<code>&lbrace;# #&rbrace;</code>.
+</para>
+<para>For example, this template would render as <code>'hello'</code>:
+</para>
+<verbatim xml:space="preserve">
+{# greeting #}hello
+</verbatim>
+
+<para>A comment can contain any template code, invalid or not. For example:
+</para>
+<verbatim xml:space="preserve">
+{# {% if foo %}bar{% else %} #}
+</verbatim>
+
+<para>If you need to comment out a multiline portion of the template, see the
+<code>comment</code> tag.
+</para>
+</chapter>
+<node name="Verbatim" spaces=" "><nodename>Verbatim</nodename><nodenext automatic="on">Filters</nodenext><nodeprev automatic="on">Comments</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Verbatim</sectiontitle>
+<anchor name="_0023verbatim">#verbatim</anchor>
+<para>If you want to leave some portion of text unprocessed by Djula, use the
+verbatim syntax: <code>&lbrace;$ $&rbrace;</code>.
+</para>
+<para>For example, this template would render as
+<code>'this is &lbrace;&lbrace;verbatim&rbrace;&rbrace;'</code>:
+</para>
+<verbatim xml:space="preserve">
+{$ this is {{verbatim}} $}
+</verbatim>
+
+
+
+</chapter>
+<node name="Filters" spaces=" "><nodename>Filters</nodename><nodenext automatic="on">Template inheritance</nodenext><nodeprev automatic="on">Verbatim</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Filters</sectiontitle>
+<anchor name="_0023filters">#filters</anchor>
+
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Overview of filters</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">List of filters</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Custom filters</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="Overview-of-filters" spaces=" "><nodename>Overview of filters</nodename><nodenext automatic="on">List of filters</nodenext><nodeup automatic="on">Filters</nodeup></node>
+<section spaces=" "><sectiontitle>Overview of filters</sectiontitle>
+<anchor name="_0023overview_002d1">#overview-1</anchor>
+<para>You can modify variables for display by using <strong>filters</strong>.
+</para>
+<para>Filters look like this: <code>&lbrace;&lbrace; name|lower &rbrace;&rbrace;</code>. This displays the
+value of the <code>&lbrace;&lbrace; name &rbrace;&rbrace;</code> variable after being filtered through
+the <code>lower</code> filter, which converts text to lowercase. Use a pipe
+(<code>|</code>) to apply a filter.
+</para>
+<para>Filters can be &quot;chained.&quot; The output of one filter is applied to the
+next. <code>&lbrace;&lbrace; text|escape|linebreaks &rbrace;&rbrace;</code> is a common idiom for
+escaping text contents, then converting line breaks to <code>&lt;p&gt;</code> tags.
+</para>
+<para>Some filters take arguments. A filter argument looks like this:
+<code>&lbrace;&lbrace; bio|truncatewords:30 &rbrace;&rbrace;</code>. This will display the first 30
+words of the <code>bio</code> variable.
+</para>
+<para>Filter arguments that contain spaces must be quoted; for example, to
+join a list with commas and spaced you&textrsquo;d use
+<code>&lbrace;&lbrace; list|join:&quot;, &quot; &rbrace;&rbrace;</code>.
+</para>
+<para>Djula provides about thirty built-in template filters. You can read all
+about them in the
+<code>built-in filter reference &lt;ref-templates-builtins-filters&gt;</code>. To
+give you a taste of what&textrsquo;s available, here are some of the more commonly
+used template filters:
+</para>
+</section>
+<node name="List-of-filters" spaces=" "><nodename>List of filters</nodename><nodenext automatic="on">Custom filters</nodenext><nodeprev automatic="on">Overview of filters</nodeprev><nodeup automatic="on">Filters</nodeup></node>
+<section spaces=" "><sectiontitle>List of filters</sectiontitle>
+<anchor name="_0023list_002dof_002dfilters">#list-of-filters</anchor>
+<para>Filters
+add
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">add</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">addslashes</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">capfirst</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">cut</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">date</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">time</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">datetime</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">default</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">reverse</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">divisibleby</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">sort</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">first</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">join</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">last</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">length</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">length_is</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">linebreaks</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">linebreaksbr</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">lower</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">make_list</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">safe escape</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">slice</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">force-escape</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">format</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">replace  with</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">rest</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">scan</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">time</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">truncatechars</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">upper</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">urlencode</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">escape</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">escapejs</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">filesizeformat</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="add" spaces=" "><nodename>add</nodename><nodenext automatic="on">addslashes</nodenext><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>add</sectiontitle>
+<anchor name="_0023add">#add</anchor>
+<para>Adds the argument to the value.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|add:2 }}
+</verbatim>
+
+<para>If <code>value</code> is <code>4</code>, then the output will be <code>6</code>.
+</para>
+<para>addslashes
+</para>
+</subsection>
+<node name="addslashes" spaces=" "><nodename>addslashes</nodename><nodenext automatic="on">capfirst</nodenext><nodeprev automatic="on">add</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>addslashes</sectiontitle>
+<anchor name="_0023addslashes">#addslashes</anchor>
+<para>Adds slashes before quotes. Useful for escaping strings in CSV, for
+example.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|addslashes }}
+</verbatim>
+
+<para>If <code>value</code> is <code>&quot;I'm using Djula&quot;</code>, the output will be
+<code>&quot;I\'m using Djula&quot;</code>.
+</para>
+<para>capfirst
+</para>
+</subsection>
+<node name="capfirst" spaces=" "><nodename>capfirst</nodename><nodenext automatic="on">cut</nodenext><nodeprev automatic="on">addslashes</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>capfirst</sectiontitle>
+<anchor name="_0023capfirst">#capfirst</anchor>
+<para>Capitalizes the first character of the value. If the first character is
+not a letter, this filter has no effect.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|capfirst }}
+</verbatim>
+
+<para>If <code>value</code> is <code>&quot;djula&quot;</code>, the output will be <code>&quot;Djula&quot;</code>.
+</para>
+<para>center
+cut
+</para>
+</subsection>
+<node name="cut" spaces=" "><nodename>cut</nodename><nodenext automatic="on">date</nodenext><nodeprev automatic="on">capfirst</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>cut</sectiontitle>
+<anchor name="_0023cut">#cut</anchor>
+<para>Removes all values of arg from the given string.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|cut:&quot; &quot; }}
+</verbatim>
+
+<para>If <code>value</code> is <code>&quot;String with spaces&quot;</code>, the output will be
+<code>&quot;Stringwithspaces&quot;</code>.
+</para>
+<para>date
+</para>
+</subsection>
+<node name="date" spaces=" "><nodename>date</nodename><nodenext automatic="on">datetime</nodenext><nodeprev automatic="on">cut</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>date</sectiontitle>
+<anchor name="_0023date">#date</anchor>
+<para>Formats a date
+</para>
+<table commandarg="asis" spaces=" " endspaces=" ">
+<tableentry><tableterm><item spaces=" "><itemformat command="asis">Example::</itemformat></item>
+</tableterm><tableitem>
+<para>&lbrace;&lbrace; date-today | date &rbrace;&rbrace;
+</para>
+</tableitem></tableentry></table>
+
+<para>A LOCAL-TIME format spec can be provided:
+</para>
+<verbatim xml:space="preserve">
+(defvar timestamp 3752179200)
+{{ timestamp | date:(:year &quot;/&quot; (:month 2) &quot;/&quot; (:day 2)) }} ;; shows 2018/11/26
+</verbatim>
+
+</subsection>
+<node name="datetime" spaces=" "><nodename>datetime</nodename><nodenext automatic="on">default</nodenext><nodeprev automatic="on">date</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>datetime</sectiontitle>
+<anchor name="_0023datetime">#datetime</anchor>
+<para>Formats a date and time
+</para>
+<para>Example:
+</para>
+<verbatim xml:space="preserve">
+{{ time-now | datetime }}
+</verbatim>
+
+<para>default
+</para>
+</subsection>
+<node name="default" spaces=" "><nodename>default</nodename><nodenext automatic="on">reverse</nodenext><nodeprev automatic="on">datetime</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>default</sectiontitle>
+<anchor name="_0023default">#default</anchor>
+<para>If value evaluates to <code>False</code>, uses the given default. Otherwise,
+uses the value.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|default &quot;nothing&quot; }}
+</verbatim>
+
+<para>If <code>value</code> is <code>&quot;&quot;</code> (the empty string), the output will be
+<code>nothing</code>.
+</para>
+<para>default_if_none
+reverse
+</para>
+</subsection>
+<node name="reverse" spaces=" "><nodename>reverse</nodename><nodenext automatic="on">divisibleby</nodenext><nodeprev automatic="on">default</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>reverse</sectiontitle>
+<anchor name="_0023reverse">#reverse</anchor>
+<para>Takes a list and returns that list reversed.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ list | reverse }}
+</verbatim>
+
+</subsection>
+<node name="divisibleby" spaces=" "><nodename>divisibleby</nodename><nodenext automatic="on">sort</nodenext><nodeprev automatic="on">reverse</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>divisibleby</sectiontitle>
+<anchor name="_0023divisibleby">#divisibleby</anchor>
+<para>Returns <code>True</code> if the value is divisible by the argument.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|divisibleby:&quot;3&quot; }}
+</verbatim>
+
+<para>If <code>value</code> is <code>21</code>, the output would be <code>True</code>.
+</para>
+<para>sort
+</para>
+</subsection>
+<node name="sort" spaces=" "><nodename>sort</nodename><nodenext automatic="on">escape</nodenext><nodeprev automatic="on">divisibleby</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>sort</sectiontitle>
+<anchor name="_0023sort">#sort</anchor>
+<para>Takes a list and returns that list sorted.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ list | sort }}
+</verbatim>
+
+<para>escape
+</para>
+</subsection>
+<node name="escape" spaces=" "><nodename>escape</nodename><nodenext automatic="on">escapejs</nodenext><nodeprev automatic="on">sort</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>escape</sectiontitle>
+<anchor name="_0023escape">#escape</anchor>
+<para>Escapes a string&textrsquo;s HTML. Specifically, it makes these replacements:
+</para>
+<itemize commandarg="bullet" endspaces=" "><itemprepend>&bullet;</itemprepend>
+<listitem><prepend>&bullet;</prepend>
+<para><code>&lt;</code> is converted to <code>&amp;lt;</code>
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para><code>&gt;</code> is converted to <code>&amp;gt;</code>
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para><code>'</code> (single quote) is converted to <code>&amp;#39;</code>
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para><code>&quot;</code> (double quote) is converted to <code>&amp;quot;</code>
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para><code>&amp;</code> is converted to <code>&amp;amp;</code>
+</para></listitem></itemize>
+
+<para>The escaping is only applied when the string is output, so it does not
+matter where in a chained sequence of filters you put <code>escape</code>: it
+will always be applied as though it were the last filter. If you want
+escaping to be applied immediately, use the <code>force-escape</code> filter.
+</para>
+<para>Applying <code>escape</code> to a variable that would normally have
+auto-escaping applied to the result will only result in one round of
+escaping being done. So it is safe to use this function even in
+auto-escaping environments. If you want multiple escaping passes to be
+applied, use the <code>force-escape</code> filter.
+</para>
+<para>For example, you can apply <code>escape</code> to fields when
+<code>autoescape</code> is off:
+</para>
+<verbatim xml:space="preserve">
+{% autoescape off %}
+{{ title|escape }}
+{% endautoescape %}
+</verbatim>
+
+<para>escapejs
+</para>
+</subsection>
+<node name="escapejs" spaces=" "><nodename>escapejs</nodename><nodenext automatic="on">filesizeformat</nodenext><nodeprev automatic="on">escape</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>escapejs</sectiontitle>
+<anchor name="_0023escapejs">#escapejs</anchor>
+<para>Escapes characters for use in JavaScript strings. This does <emph>not</emph>
+make the string safe for use in HTML, but does protect you from syntax
+errors when using templates to generate JavaScript/JSON.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|escapejs }}
+</verbatim>
+
+<para>If <code>value</code> is
+<code>&quot;testing\r\njavascript \'string&quot; &lt;b&gt;escaping&lt;/b&gt;&quot;</code>, the output
+will be
+<code>&quot;testing\\u000D\\u000Ajavascript \\u0027string\\u0022 \\u003Cb\\u003Eescaping\\u003C/b\\u003E&quot;</code>.
+</para>
+<para>filesizeformat
+</para>
+</subsection>
+<node name="filesizeformat" spaces=" "><nodename>filesizeformat</nodename><nodenext automatic="on">first</nodenext><nodeprev automatic="on">escapejs</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>filesizeformat</sectiontitle>
+<anchor name="_0023filesizeformat">#filesizeformat</anchor>
+<para>Formats the value like a &textrsquo;human-readable&textrsquo; file size (i.e.
+<code>'13 KB'</code>, <code>'4.1 MB'</code>, <code>'102 bytes'</code>, etc).
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|filesizeformat }}
+</verbatim>
+
+<para>If <code>value</code> is 123456789, the output would be <code>117.7 MB</code>.
+</para>
+<para>File sizes and SI units
+</para>
+<para>Strictly speaking, <code>filesizeformat</code> does not conform to the
+International System of Units which recommends using KiB, MiB, GiB, etc.
+when byte sizes are calculated in powers of 1024 (which is the case
+here). Instead, Djula uses traditional unit names (KB, MB, GB, etc.)
+corresponding to names that are more commonly used.
+first
+</para>
+</subsection>
+<node name="first" spaces=" "><nodename>first</nodename><nodenext automatic="on">join</nodenext><nodeprev automatic="on">filesizeformat</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>first</sectiontitle>
+<anchor name="_0023first">#first</anchor>
+<para>Returns the first item in a list.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|first }}
+</verbatim>
+
+<para>If <code>value</code> is the list <code>(&quot;a&quot; &quot;b&quot; &quot;c&quot;)</code>, the output will be
+<code>&quot;a&quot;</code>.
+</para>
+<para>join
+</para>
+</subsection>
+<node name="join" spaces=" "><nodename>join</nodename><nodenext automatic="on">last</nodenext><nodeprev automatic="on">first</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>join</sectiontitle>
+<anchor name="_0023join">#join</anchor>
+<para>Joins a list with a string.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|join:&quot; // &quot; }}
+</verbatim>
+
+<para>If <code>value</code> is the list <code>(&quot;a&quot; &quot;b&quot; &quot;c&quot;)</code>, the output will be the
+string <code>&quot;a // b // c&quot;</code>.
+</para>
+<para>last
+</para>
+</subsection>
+<node name="last" spaces=" "><nodename>last</nodename><nodenext automatic="on">length</nodenext><nodeprev automatic="on">join</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>last</sectiontitle>
+<anchor name="_0023last">#last</anchor>
+<para>Returns the last item in a list.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|last }}
+</verbatim>
+
+<para>If <code>value</code> is the list <code>(&quot;a&quot; &quot;b&quot; &quot;c&quot; &quot;d&quot;)</code>, the output will be
+the string <code>&quot;d&quot;</code>.
+</para>
+<para>length
+</para>
+</subsection>
+<node name="length" spaces=" "><nodename>length</nodename><nodenext automatic="on">length_is</nodenext><nodeprev automatic="on">last</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>length</sectiontitle>
+<anchor name="_0023length">#length</anchor>
+<para>Returns the length of the value. This works for both strings and lists.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|length }}
+</verbatim>
+
+<para>If <code>value</code> is <code>(&quot;a&quot; &quot;b&quot; &quot;c&quot; &quot;d&quot;)</code> or <code>&quot;abcd&quot;</code>, the output
+will be <code>4</code>.
+</para>
+<para>length_is
+</para>
+</subsection>
+<node name="length_005fis" spaces=" "><nodename>length_is</nodename><nodenext automatic="on">linebreaks</nodenext><nodeprev automatic="on">length</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>length_is</sectiontitle>
+<anchor name="_0023length_005fis">#length_is</anchor>
+<para>Returns <code>True</code> if the value&textrsquo;s length is the argument, or
+<code>False</code> otherwise.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|length_is:&quot;4&quot; }}
+</verbatim>
+
+<para>If <code>value</code> is <code>['a', 'b', 'c', 'd']</code> or <code>&quot;abcd&quot;</code>, the
+output will be <code>True</code>.
+</para>
+<quotation endspaces=" ">
+<para>linebreaks
+</para></quotation>
+
+</subsection>
+<node name="linebreaks" spaces=" "><nodename>linebreaks</nodename><nodenext automatic="on">linebreaksbr</nodenext><nodeprev automatic="on">length_is</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>linebreaks</sectiontitle>
+<anchor name="_0023linebreaks">#linebreaks</anchor>
+<para>Replaces line breaks in plain text with appropriate HTML; a single
+newline becomes an HTML line break (<code>&lt;br /&gt;</code>) and a new line
+followed by a blank line becomes a paragraph break (<code>&lt;/p&gt;</code>).
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|linebreaks }}
+</verbatim>
+
+<para>If <code>value</code> is <code>Joel\nis a slug</code>, the output will be
+<code>&lt;p&gt;Joel&lt;br /&gt;is a slug&lt;/p&gt;</code>.
+</para>
+<para>linebreaksbr
+</para>
+</subsection>
+<node name="linebreaksbr" spaces=" "><nodename>linebreaksbr</nodename><nodenext automatic="on">lower</nodenext><nodeprev automatic="on">linebreaks</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>linebreaksbr</sectiontitle>
+<anchor name="_0023linebreaksbr">#linebreaksbr</anchor>
+<para>Converts all newlines in a piece of plain text to HTML line breaks
+(<code>&lt;br /&gt;</code>).
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|linebreaksbr }}
+</verbatim>
+
+<para>If <code>value</code> is <code>Joel\nis a slug</code>, the output will be
+<code>Joel&lt;br /&gt;is a slug</code>.
+</para>
+<para>linenumbers
+lower
+</para>
+</subsection>
+<node name="lower" spaces=" "><nodename>lower</nodename><nodenext automatic="on">make_list</nodenext><nodeprev automatic="on">linebreaksbr</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>lower</sectiontitle>
+<anchor name="_0023lower">#lower</anchor>
+<para>Converts a string into all lowercase.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|lower }}
+</verbatim>
+
+<para>If <code>value</code> is <code>Still MAD At Yoko</code>, the output will be
+<code>still mad at yoko</code>.
+</para>
+<para>make_list
+</para>
+</subsection>
+<node name="make_005flist" spaces=" "><nodename>make_list</nodename><nodenext automatic="on">safe escape</nodenext><nodeprev automatic="on">lower</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>make_list</sectiontitle>
+<anchor name="_0023make_005flist">#make_list</anchor>
+<para>Returns the value turned into a list. For a string, it&textrsquo;s a list of
+characters. For an integer, the argument is cast into an unicode string
+before creating a list.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|make_list }}
+</verbatim>
+
+<para>If <code>value</code> is the string <code>&quot;Joel&quot;</code>, the output would be the
+list <code>['J', 'o', 'e', 'l']</code>. If <code>value</code> is <code>123</code>, the
+output will be the list <code>['1', '2', '3']</code>.
+</para>
+<para>safe
+</para>
+</subsection>
+<node name="safe-escape" spaces=" "><nodename>safe escape</nodename><nodenext automatic="on">slice</nodenext><nodeprev automatic="on">make_list</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>safe, escape</sectiontitle>
+<anchor name="_0023safe_002descape">#safe-escape</anchor>
+<para>Marks a string as not requiring further HTML escaping prior to output.
+When autoescaping is off, this filter has no effect.
+</para>
+<para>Note
+If you are chaining filters, a filter applied after <code>safe</code> can make
+the contents unsafe again. For example, the following code prints the
+variable as is, unescaped:
+</para>
+<verbatim xml:space="preserve">
+{{ var|safe|escape }}
+</verbatim>
+
+<para>safeseq
+slice
+</para>
+</subsection>
+<node name="slice" spaces=" "><nodename>slice</nodename><nodenext automatic="on">force-escape</nodenext><nodeprev automatic="on">safe escape</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>slice</sectiontitle>
+<anchor name="_0023slice">#slice</anchor>
+<para>Returns a slice of a sequence (i.e. lists, vectors, strings)
+</para>
+<para>Uses the Common Lisp <code>cl-slice</code> library.
+</para>
+<para>Syntax:
+</para>
+<verbatim xml:space="preserve">
+{{ seq | slice: slices }}
+</verbatim>
+
+<para>Each <code>slice</code> selects a subset of subscripts along the corresponding
+axis.
+</para>
+<itemize commandarg="bullet" endspaces=" "><itemprepend>&bullet;</itemprepend>
+<listitem><prepend>&bullet;</prepend>
+<para>A nonnegative integer selects the corresponding index, while a negative
+integer selects an index counting backwards from the last index:
+</para>
+<verbatim xml:space="preserve">
+{{ list | slice: 4 }}
+</verbatim>
+
+</listitem></itemize>
+
+<para>if the list is <code>(1 2 3 4 5 6)</code> it will output <code>(5)</code>
+</para>
+<para>* <code>(start . end)</code> to select a range. When <code>end</code> is <code>NIL</code>,
+the last index is included. Each boundary is resolved according to the
+other rules if applicable, so you can use negative integers:
+</para>
+<verbatim xml:space="preserve">
+{{ string | slice: (0 . 5) }}
+{{ string | slice: (5 . nil) }}
+</verbatim>
+
+<para>if the string is <code>&quot;Hello world&quot;</code> is will output <code>Hello</code> and
+<code>world</code>.
+</para>
+<para>slugify
+force-escape
+</para>
+</subsection>
+<node name="force_002descape" spaces=" "><nodename>force-escape</nodename><nodenext automatic="on">format</nodenext><nodeprev automatic="on">slice</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>force-escape</sectiontitle>
+<anchor name="_0023force_002descape">#force-escape</anchor>
+<para>Forces escaping HTML characters (<code>&lt;, &gt;, ', \, &amp;</code>):
+</para>
+<verbatim xml:space="preserve">
+{{ value | force-escape }}
+</verbatim>
+
+<para>It calls <code>djula::escape-for-html</code>.
+</para>
+<para>format
+</para>
+</subsection>
+<node name="format" spaces=" "><nodename>format</nodename><nodenext automatic="on">replace  with</nodenext><nodeprev automatic="on">force-escape</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>format</sectiontitle>
+<anchor name="_0023format">#format</anchor>
+<para>Formats the variable according to the argument, a string formatting
+specifier. This specifier uses Common Lisp string formatting syntax
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value | format:&quot;~:d&quot; }}
+</verbatim>
+
+<para>If <code>value</code> is <code>1000000</code>, the output will be <code>1,000,000</code>.
+</para>
+<para>striptags
+</para>
+</subsection>
+<node name="replace-with" spaces=" "><nodename>replace  with</nodename><nodenext automatic="on">rest</nodenext><nodeprev automatic="on">format</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>replace ... with</sectiontitle>
+<anchor name="_0023replace_002d_002e_002e_002e_002dwith">#replace-...-with</anchor>
+<para>The <code>replace</code> and the <code>with</code> filters work together:
+</para>
+<verbatim xml:space="preserve">
+{{ value | replace:regexp | with:string }}
+</verbatim>
+
+<para>This will replace all occurences of the regexp in &quot;value&quot; with a new
+string, using <code>ppcre:regex-replace-all</code>.
+</para>
+<para>rest
+</para>
+</subsection>
+<node name="rest" spaces=" "><nodename>rest</nodename><nodenext automatic="on">scan</nodenext><nodeprev automatic="on">replace  with</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>rest</sectiontitle>
+<anchor name="_0023rest">#rest</anchor>
+<para>Returns the <code>rest</code> of a list (aka <code>cdr</code>).
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ values|rest }}
+</verbatim>
+
+<para>If <code>values</code> is the list <code>(&quot;a&quot; &quot;b&quot; &quot;c&quot;)</code>, the output will be
+<code>(&quot;b&quot; &quot;c&quot;)</code>.
+</para>
+<para>scan
+</para>
+</subsection>
+<node name="scan" spaces=" "><nodename>scan</nodename><nodenext automatic="on">time</nodenext><nodeprev automatic="on">rest</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>scan</sectiontitle>
+<anchor name="_0023scan">#scan</anchor>
+<para>Extracts and displays a regexp from the value:
+</para>
+<verbatim xml:space="preserve">
+{{ value | scan:regexp }}
+</verbatim>
+
+<para>This will display only the text that matches the regexp (using
+<code>ppcre:scan-to-strings</code>).
+</para>
+<para>time
+</para>
+</subsection>
+<node name="time" spaces=" "><nodename>time</nodename><nodenext automatic="on">truncatechars</nodenext><nodeprev automatic="on">scan</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>time</sectiontitle>
+<anchor name="_0023time_002d1">#time-1</anchor>
+<para>Formats a time according to the given format.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value | time }}
+</verbatim>
+
+<para>truncatechars
+</para>
+</subsection>
+<node name="truncatechars" spaces=" "><nodename>truncatechars</nodename><nodenext automatic="on">upper</nodenext><nodeprev automatic="on">time</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>truncatechars</sectiontitle>
+<anchor name="_0023truncatechars">#truncatechars</anchor>
+<para>Truncates a string if it is longer than the specified number of
+characters. Truncated strings will end with the
+:cl:symbol:<emph>ELLISION-STRING</emph>, which defaults to &quot;...&quot;.
+</para>
+<para><strong>Argument:</strong> Number of characters to truncate to
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|truncatechars:9 }}
+</verbatim>
+
+<para>If <code>value</code> is <code>&quot;Joel is a slug&quot;</code>, the output will be
+<code>&quot;Joel i...&quot;</code>.
+</para>
+<para>truncatechars_html
+upper
+</para>
+</subsection>
+<node name="upper" spaces=" "><nodename>upper</nodename><nodenext automatic="on">urlencode</nodenext><nodeprev automatic="on">truncatechars</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>upper</sectiontitle>
+<anchor name="_0023upper">#upper</anchor>
+<para>Converts a string into all uppercase.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|upper }}
+</verbatim>
+
+<para>If <code>value</code> is <code>&quot;Joel is a slug&quot;</code>, the output will be
+<code>&quot;JOEL IS A SLUG&quot;</code>.
+</para>
+<para>urlencode
+</para>
+</subsection>
+<node name="urlencode" spaces=" "><nodename>urlencode</nodename><nodenext automatic="on">escape</nodenext><nodeprev automatic="on">upper</nodeprev><nodeup automatic="on">List of filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>urlencode</sectiontitle>
+<anchor name="_0023urlencode">#urlencode</anchor>
+<para>Escapes a value for use in a URL.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|urlencode }}
+</verbatim>
+
+<para>If <code>value</code> is <code>&quot;http://www.example.org/foo?a=b&amp;c=d&quot;</code>, the
+output will be <code>&quot;http%3A//www.example.org/foo%3Fa%3Db%26c%3Dd&quot;</code>.
+</para>
+<para>An optional argument containing the characters which should not be
+escaped can be provided.
+</para>
+<para>If not provided, the &textrsquo;/&textrsquo; character is assumed safe. An empty string can
+be provided when <emph>all</emph> characters should be escaped. For example:
+</para>
+<verbatim xml:space="preserve">
+{{ value|urlencode:&quot;&quot; }}
+</verbatim>
+
+<para>If <code>value</code> is <code>&quot;http://www.example.org/&quot;</code>, the output will be
+<code>&quot;http%3A%2F%2Fwww.example.org%2F&quot;</code>.
+</para>
+</subsection>
+</section>
+<node name="Custom-filters" spaces=" "><nodename>Custom filters</nodename><nodeprev automatic="on">List of filters</nodeprev><nodeup automatic="on">Filters</nodeup></node>
+<section spaces=" "><sectiontitle>Custom filters</sectiontitle>
+<anchor name="_0023custom_002dfilters">#custom-filters</anchor>
+<para>Use the <code>def-filter</code> macro. Its general form is:
+</para>
+<verbatim xml:space="preserve">
+(def-filter :myfilter-name (value arg)
+   (body))
+</verbatim>
+
+<para>It always takes the variable&textrsquo;s value as argument, and it can have one
+required or optional argument. For example, this is how those built-in
+filters are defined:
+</para>
+<verbatim xml:space="preserve">
+(def-filter :capfirst (val)
+  (string-capitalize (princ-to-string val)))
+</verbatim>
+
+<para>This is all there is to it. Once written, you can use it in your
+templates. You can define a filter wherever you want and there is no
+need to register it or to import it in your templates.
+</para>
+<para>Here&textrsquo;s a filter with a required argument:
+</para>
+<verbatim xml:space="preserve">
+(def-filter :add (it n)
+  (+ it (parse-integer n)))
+</verbatim>
+
+<para>and with an optional one:
+</para>
+<verbatim xml:space="preserve">
+(def-filter :datetime (it &amp;optional format)
+  (let ((timestamp …))))
+</verbatim>
+
+<para>When you need to pass a second argument, make your filter return a
+lambda function and chain it with the <code>with</code> filter:
+</para>
+<verbatim xml:space="preserve">
+(def-filter :replace (it regex)
+   (lambda (replace)
+     (ppcre:regex-replace-all regex it replace)))
+
+(def-filter :with (it replace)
+   (funcall it replace))
+</verbatim>
+
+<para>Now we can write:
+</para>
+<verbatim xml:space="preserve">
+{{ value | replace:foo | with:bar }}
+</verbatim>
+
+<para>Errors are handled by the macro, but you can handle them and return a
+<code>template-error</code> condition:
+</para>
+<verbatim xml:space="preserve">
+(def-filter :handle-error-filter (it)
+   (handler-case
+         (do-something)
+     (condition (e)
+       (template-error &quot;There was an error executing this filter: ~A&quot; e))))
+</verbatim>
+
+
+
+</section>
+</chapter>
+<node name="Template-inheritance" spaces=" "><nodename>Template inheritance</nodename><nodenext automatic="on">Internationalization</nodenext><nodeprev automatic="on">Filters</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Template inheritance</sectiontitle>
+<anchor name="_0023template_002dinheritance">#template-inheritance</anchor>
+<para>The most powerful &textndash; and thus the most complex &textndash; part of Djula&textrsquo;s
+template engine is template inheritance. Template inheritance allows you
+to build a base &quot;skeleton&quot; template that contains all the common
+elements of your site and defines <strong>blocks</strong> that child templates
+can override.
+</para>
+<para>It&textrsquo;s easiest to understand template inheritance by starting with an
+example:
+</para>
+<verbatim xml:space="preserve">
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot; /&gt;
+    &lt;title&gt;{% block title %}My amazing site{% endblock %}&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;div id=&quot;sidebar&quot;&gt;
+        {% block sidebar %}
+        &lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;/&quot;&gt;Home&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;/blog/&quot;&gt;Blog&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+        {% endblock %}
+    &lt;/div&gt;
+
+    &lt;div id=&quot;content&quot;&gt;
+        {% block content %}{% endblock %}
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</verbatim>
+
+<para>This template, which we&textrsquo;ll call <code>base.html</code>, defines a simple HTML
+skeleton document that you might use for a simple two-column page. It&textrsquo;s
+the job of &quot;child&quot; templates to fill the empty blocks with content.
+</para>
+<para>In this example, the <code>block</code> tag defines three blocks that child
+templates can fill in. All the <code>block</code> tag does is to tell the
+template engine that a child template may override those portions of the
+template.
+</para>
+<para>A child template might look like this:
+</para>
+<verbatim xml:space="preserve">
+{% extends &quot;base.html&quot; %}
+
+{% block title %}My amazing blog{% endblock %}
+
+{% block content %}
+{% for entry in blog_entries %}
+    &lt;h2&gt;{{ entry.title }}&lt;/h2&gt;
+    &lt;p&gt;{{ entry.body }}&lt;/p&gt;
+{% endfor %}
+{% endblock %}
+</verbatim>
+
+<para>The <code>extends</code> tag is the key here. It tells the template engine
+that this template &quot;extends&quot; another template. When the template system
+evaluates this template, first it locates the parent &textndash; in this case,
+&quot;base.html&quot;.
+</para>
+<para>At that point, the template engine will notice the three <code>block</code>
+tags in <code>base.html</code> and replace those blocks with the contents of
+the child template. Depending on the value of <code>blog_entries</code>, the
+output might look like:
+</para>
+<verbatim xml:space="preserve">
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot; /&gt;
+    &lt;title&gt;My amazing blog&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;div id=&quot;sidebar&quot;&gt;
+        &lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;/&quot;&gt;Home&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;/blog/&quot;&gt;Blog&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/div&gt;
+
+    &lt;div id=&quot;content&quot;&gt;
+        &lt;h2&gt;Entry one&lt;/h2&gt;
+        &lt;p&gt;This is my first entry.&lt;/p&gt;
+
+        &lt;h2&gt;Entry two&lt;/h2&gt;
+        &lt;p&gt;This is my second entry.&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</verbatim>
+
+<para>Note that since the child template didn&textrsquo;t define the <code>sidebar</code>
+block, the value from the parent template is used instead. Content
+within a <code>&lbrace;% block %&rbrace;</code> tag in a parent template is always used as
+a fallback.
+</para>
+<para>You can use as many levels of inheritance as needed. One common way of
+using inheritance is the following three-level approach:
+</para>
+<itemize commandarg="bullet" endspaces=" "><itemprepend>&bullet;</itemprepend>
+<listitem><prepend>&bullet;</prepend>
+<para>Create a <code>base.html</code> template that holds the main look-and-feel of
+your site.
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para>Create a <code>base_SECTIONNAME.html</code> template for each &quot;section&quot; of
+your site. For example, <code>base_news.html</code>, <code>base_sports.html</code>.
+These templates all extend <code>base.html</code> and include section-specific
+styles/design.
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para>Create individual templates for each type of page, such as a news
+article or blog entry. These templates extend the appropriate section
+template.
+</para></listitem></itemize>
+
+<para>This approach maximizes code reuse and makes it easy to add items to
+shared content areas, such as section-wide navigation.
+</para>
+<para>Here are some tips for working with inheritance:
+</para>
+<itemize commandarg="bullet" endspaces=" "><itemprepend>&bullet;</itemprepend>
+<listitem><prepend>&bullet;</prepend>
+<para>If you use <code>&lbrace;% extends %&rbrace;&lt;extends&gt;</code> in a template, it must be the
+first template tag in that template. Template inheritance won&textrsquo;t work,
+otherwise.
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para>More <code>&lbrace;% block %&rbrace;&lt;block&gt;</code> tags in your base templates are better.
+Remember, child templates don&textrsquo;t have to define all parent blocks, so you
+can fill in reasonable defaults in a number of blocks, then only define
+the ones you need later. It&textrsquo;s better to have more hooks than fewer
+hooks.
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para>If you find yourself duplicating content in a number of templates, it
+probably means you should move that content to a <code>&lbrace;% block %&rbrace;</code> in
+a parent template.
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para>If you need to get the content of the block from the parent template,
+the <code>&lbrace;&lbrace; block.super &rbrace;&rbrace;</code> variable will do the trick. This is
+useful if you want to add to the contents of a parent block instead of
+completely overriding it. Data inserted using
+<code>&lbrace;&lbrace; block.super &rbrace;&rbrace;</code> will not be automatically escaped (see the
+<uref><urefdesc>next section</urefdesc></uref>), since it was already escaped, if necessary, in
+the parent template.
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para>For extra readability, you can optionally give a <emph>name</emph> to your
+<code>&lbrace;% endblock %&rbrace;</code> tag. For example:
+</para>
+<verbatim xml:space="preserve">
+{% block content %}
+...
+{% endblock content %}
+</verbatim>
+
+<para>In larger templates, this technique helps you see which
+<code>&lbrace;% block %&rbrace;</code> tags are being closed.
+</para>
+</listitem></itemize>
+
+<para>Finally, note that you can&textrsquo;t define multiple <code>block</code> tags with the
+same name in the same template. This limitation exists because a block
+tag works in &quot;both&quot; directions. That is, a block tag doesn&textrsquo;t just
+provide a hole to fill &textndash;it also defines the content that fills the hole
+in the <emph>parent</emph>. If there were two similarly-named <code>block</code>
+tags in a template, that template&textrsquo;s parent wouldn&textrsquo;t know which one of
+the blocks&textrsquo; content to use.
+</para>
+
+
+</chapter>
+<node name="Internationalization" spaces=" "><nodename>Internationalization</nodename><nodenext automatic="on">Error handling</nodenext><nodeprev automatic="on">Template inheritance</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Internationalization</sectiontitle>
+<anchor name="_0023internationalization">#internationalization</anchor>
+
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Syntax</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Internationalization tags</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Internationalization filters</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Choosing language</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Backends</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="Syntax" spaces=" "><nodename>Syntax</nodename><nodenext automatic="on">Internationalization tags</nodenext><nodeup automatic="on">Internationalization</nodeup></node>
+<section spaces=" "><sectiontitle>Syntax</sectiontitle>
+<anchor name="_0023syntax">#syntax</anchor>
+<para>The easiest way to translate a string or variable is to enclose it
+between <code>&lbrace;_</code> and <code>_&rbrace;</code>:
+</para>
+<verbatim xml:space="preserve">
+{_ var _}
+{_ &quot;hello&quot; _}
+</verbatim>
+
+</section>
+<node name="Internationalization-tags" spaces=" "><nodename>Internationalization tags</nodename><nodenext automatic="on">Internationalization filters</nodenext><nodeprev automatic="on">Syntax</nodeprev><nodeup automatic="on">Internationalization</nodeup></node>
+<section spaces=" "><sectiontitle>Internationalization tags</sectiontitle>
+<anchor name="_0023tags_002d1">#tags-1</anchor>
+<para>trans
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">trans</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+</section>
+<node name="Internationalization-filters" spaces=" "><nodename>Internationalization filters</nodename><nodenext automatic="on">Choosing language</nodenext><nodeprev automatic="on">Internationalization tags</nodeprev><nodeup automatic="on">Internationalization</nodeup></node>
+<section spaces=" "><sectiontitle>Internationalization filters</sectiontitle>
+<anchor name="_0023filters_002d1">#filters-1</anchor>
+<para>urlencode
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">trans</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="trans" spaces=" "><nodename>trans</nodename><nodeup automatic="on">Internationalization filters</nodeup></node>
+<subsection spaces=" "><sectiontitle>trans</sectiontitle>
+<anchor name="_0023trans_002d1">#trans-1</anchor>
+<para>Translates a variable or string.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+{{ var | trans }}
+{{ &quot;my string&quot; |  trans }}
+</verbatim>
+
+</subsection>
+</section>
+<node name="Choosing-language" spaces=" "><nodename>Choosing language</nodename><nodenext automatic="on">Backends</nodenext><nodeprev automatic="on">Internationalization filters</nodeprev><nodeup automatic="on">Internationalization</nodeup></node>
+<section spaces=" "><sectiontitle>Choosing language</sectiontitle>
+<anchor name="_0023choosing_002dlanguage">#choosing-language</anchor>
+<para>To choose the language to use, set the :cl<code>*CURRENT-LANGUAGE*</code>
+variable.
+</para>
+<para>For example:
+</para>
+<verbatim xml:space="preserve">
+(let ((djula:*current-language* :es))
+   (djula:render-template* +translation.html+))
+</verbatim>
+
+</section>
+<node name="Backends" spaces=" "><nodename>Backends</nodename><nodeprev automatic="on">Choosing language</nodeprev><nodeup automatic="on">Internationalization</nodeup></node>
+<section spaces=" "><sectiontitle>Backends</sectiontitle>
+<anchor name="_0023backends">#backends</anchor>
+<para>Djula supports two backends for doing translations:
+<uref><urefurl>https://github.com/arielnetworks/cl-locale</urefurl><urefdesc>cl-locale</urefdesc></uref> and
+<uref><urefurl>https://github.com/copyleft/gettext</urefurl><urefdesc>gettext</urefdesc></uref>
+</para>
+<para>Please have a look at the demo and the documentation of those packages
+to figure out how to use them.
+</para>
+</section>
+</chapter>
+<node name="Error-handling" spaces=" "><nodename>Error handling</nodename><nodenext automatic="on">Automatic HTML escaping</nodenext><nodeprev automatic="on">Internationalization</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Error handling</sectiontitle>
+<anchor name="_0023error_002dhandling">#error-handling</anchor>
+<para>Djula catches errors and barfs them to the template output by default.
+</para>
+<para>That is controlled via the :cl<code>*CATCH-TEMPLATE-ERRORS-P*</code>. If
+changed to <code>NIL</code>, then errors are not caught anymore and are
+debuggable from the lisp listener.
+</para>
+<para>Djula provides more or less verbosity in template errors. Verbosity is
+controlled via the variable :cl<code>*VERBOSE-ERRORS-P*</code>.
+</para>
+<para>Also, there&textrsquo;s a fancy page to display errors, which can be disabled if
+desired. That is controlled via the variable
+:cl<code>*FANCY-ERROR-TEMPLATE-P*</code>
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Djula API</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="Djula-API" spaces=" "><nodename>Djula API</nodename><nodeup automatic="on">Error handling</nodeup></node>
+<section spaces=" "><sectiontitle>Djula API</sectiontitle>
+<anchor name="_0023api_002d2">#api-2</anchor>
+<para>Djula external symbols documentation
+</para>
+
+
+</section>
+</chapter>
+<node name="Automatic-HTML-escaping" spaces=" "><nodename>Automatic HTML escaping</nodename><nodenext automatic="on">Custom tag and filter libraries</nodenext><nodeprev automatic="on">Error handling</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Automatic HTML escaping</sectiontitle>
+<anchor name="_0023automatic_002dhtml_002descaping">#automatic-html-escaping</anchor>
+<para>When generating HTML from templates, there&textrsquo;s always a risk that a
+variable will include characters that affect the resulting HTML. For
+example, consider this template fragment:
+</para>
+<verbatim xml:space="preserve">
+Hello, {{ name }}.
+</verbatim>
+
+<para>At first, this seems like a harmless way to display a user&textrsquo;s name, but
+consider what would happen if the user entered their name as this:
+</para>
+<verbatim xml:space="preserve">
+&lt;script&gt;alert('hello')&lt;/script&gt;
+</verbatim>
+
+<para>With this name value, the template would be rendered as:
+</para>
+<verbatim xml:space="preserve">
+Hello, &lt;script&gt;alert('hello')&lt;/script&gt;
+</verbatim>
+
+<para>...which means the browser would pop-up a JavaScript alert box!
+</para>
+<para>Similarly, what if the name contained a <code>'&lt;'</code> symbol, like this?
+</para>
+<verbatim xml:space="preserve">
+&lt;b&gt;username
+</verbatim>
+
+<para>That would result in a rendered template like this:
+</para>
+<verbatim xml:space="preserve">
+Hello, &lt;b&gt;username
+</verbatim>
+
+<para>...which, in turn, would result in the remainder of the Web page being
+bolded!
+</para>
+<para>Clearly, user-submitted data shouldn&textrsquo;t be trusted blindly and inserted
+directly into your Web pages, because a malicious user could use this
+kind of hole to do potentially bad things. This type of security exploit
+is called a
+<uref><urefurl>http://en.wikipedia.org/wiki/Cross-site_scripting</urefurl><urefdesc>Cross Site
+Scripting</urefdesc></uref> (XSS) attack.
+</para>
+<para>To avoid this problem, you have two options:
+</para>
+<itemize commandarg="bullet" endspaces=" "><itemprepend>&bullet;</itemprepend>
+<listitem><prepend>&bullet;</prepend>
+<para>One, you can make sure to run each untrusted variable through the
+<code>escape</code> filter (documented below), which converts potentially
+harmful HTML characters to unharmful ones. This was the default solution
+in Django for its first few years, but the problem is that it puts the
+onus on <emph>you</emph>, the developer / template author, to ensure you&textrsquo;re
+escaping everything. It&textrsquo;s easy to forget to escape data.
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para>Two, you can take advantage of Django&textrsquo;s automatic HTML escaping. The
+remainder of this section describes how auto-escaping works.
+</para></listitem></itemize>
+
+<para>By default in Django, every template automatically escapes the output of
+every variable tag. Specifically, these five characters are escaped:
+</para>
+<itemize commandarg="bullet" endspaces=" "><itemprepend>&bullet;</itemprepend>
+<listitem><prepend>&bullet;</prepend>
+<para><code>&lt;</code> is converted to <code>&amp;lt;</code>
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para><code>&gt;</code> is converted to <code>&amp;gt;</code>
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para><code>'</code> (single quote) is converted to <code>&amp;#39;</code>
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para><code>&quot;</code> (double quote) is converted to <code>&amp;quot;</code>
+</para></listitem><listitem><prepend>&bullet;</prepend>
+<para><code>&amp;</code> is converted to <code>&amp;amp;</code>
+</para></listitem></itemize>
+
+<para>Again, we stress that this behavior is on by default. If you&textrsquo;re using
+Django&textrsquo;s template system, you&textrsquo;re protected.
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">How to turn it off</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">Notes</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry leadingtext="* "><menunode separator="::">String literals and automatic escaping</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="How-to-turn-it-off" spaces=" "><nodename>How to turn it off</nodename><nodenext automatic="on">Notes</nodenext><nodeup automatic="on">Automatic HTML escaping</nodeup></node>
+<section spaces=" "><sectiontitle>How to turn it off</sectiontitle>
+<anchor name="_0023how_002dto_002dturn_002dit_002doff">#how-to-turn-it-off</anchor>
+<para>If you don&textrsquo;t want data to be auto-escaped, on a per-site, per-template
+level or per-variable level, you can turn it off in several ways.
+</para>
+<para>Why would you want to turn it off? Because sometimes, template variables
+contain data that you <emph>intend</emph> to be rendered as raw HTML, in which
+case you don&textrsquo;t want their contents to be escaped. For example, you might
+store a blob of HTML in your database and want to embed that directly
+into your template. Or, you might be using Django&textrsquo;s template system to
+produce text that is <emph>not</emph> HTML &textndash; like an email message, for
+instance.
+</para>
+<node name="For-individual-variables" spaces=" "><nodename>For individual variables</nodename><nodeup automatic="on">How to turn it off</nodeup></node>
+<subsection spaces=" "><sectiontitle>For individual variables</sectiontitle>
+<anchor name="_0023for_002dindividual_002dvariables">#for-individual-variables</anchor>
+<para>To disable auto-escaping for an individual variable, use the <code>safe</code>
+filter:
+</para>
+<verbatim xml:space="preserve">
+This will be escaped: {{ data }}
+This will not be escaped: {{ data|safe }}
+</verbatim>
+
+<para>Think of <emph>safe</emph> as shorthand for <emph>safe from further escaping</emph>
+or <emph>can be safely interpreted as HTML</emph>. In this example, if
+<code>data</code> contains <code>'&lt;b&gt;'</code>, the output will be:
+</para>
+<verbatim xml:space="preserve">
+This will be escaped: &amp;lt;b&amp;gt;
+This will not be escaped: &lt;b&gt;
+</verbatim>
+
+<node name="For-template-blocks" spaces=" "><nodename>For template blocks</nodename><nodeup automatic="on">For individual variables</nodeup></node>
+<subsubsection spaces=" "><sectiontitle>For template blocks</sectiontitle>
+<anchor name="_0023for_002dtemplate_002dblocks">#for-template-blocks</anchor>
+<para>To control auto-escaping for a template, wrap the template (or just a
+particular section of the template) in the <code>autoescape</code> tag, like
+so:
+</para>
+<verbatim xml:space="preserve">
+{% autoescape off %}
+    Hello {{ name }}
+{% endautoescape %}
+</verbatim>
+
+<para>The <code>autoescape</code> tag takes either <code>on</code> or <code>off</code> as its
+argument. At times, you might want to force auto-escaping when it would
+otherwise be disabled. Here is an example template:
+</para>
+<verbatim xml:space="preserve">
+Auto-escaping is on by default. Hello {{ name }}
+
+{% autoescape off %}
+    This will not be auto-escaped: {{ data }}.
+
+    Nor this: {{ other_data }}
+    {% autoescape on %}
+        Auto-escaping applies again: {{ name }}
+    {% endautoescape %}
+{% endautoescape %}
+</verbatim>
+
+<para>The auto-escaping tag passes its effect onto templates that extend the
+current one as well as templates included via the <code>include</code> tag,
+just like all block tags. For example:
+</para>
+<verbatim xml:space="preserve">
+# base.html
+
+{% autoescape off %}
+&lt;h1&gt;{% block title %}{% endblock %}&lt;/h1&gt;
+{% block content %}
+{% endblock %}
+{% endautoescape %}
+
+
+# child.html
+
+{% extends &quot;base.html&quot; %}
+{% block title %}This &amp; that{% endblock %}
+{% block content %}{{ greeting }}{% endblock %}
+</verbatim>
+
+<para>Because auto-escaping is turned off in the base template, it will also
+be turned off in the child template, resulting in the following rendered
+HTML when the <code>greeting</code> variable contains the string
+<code>&lt;b&gt;Hello!&lt;/b&gt;</code>:
+</para>
+<verbatim xml:space="preserve">
+&lt;h1&gt;This &amp; that&lt;/h1&gt;
+&lt;b&gt;Hello!&lt;/b&gt;
+</verbatim>
+
+</subsubsection>
+</subsection>
+</section>
+<node name="Notes" spaces=" "><nodename>Notes</nodename><nodenext automatic="on">String literals and automatic escaping</nodenext><nodeprev automatic="on">How to turn it off</nodeprev><nodeup automatic="on">Automatic HTML escaping</nodeup></node>
+<section spaces=" "><sectiontitle>Notes</sectiontitle>
+<anchor name="_0023notes">#notes</anchor>
+<para>Generally, template authors don&textrsquo;t need to worry about auto-escaping very
+much. Developers on the Python side (people writing views and custom
+filters) need to think about the cases in which data shouldn&textrsquo;t be
+escaped, and mark data appropriately, so things Just Work in the
+template.
+</para>
+<para>If you&textrsquo;re creating a template that might be used in situations where
+you&textrsquo;re not sure whether auto-escaping is enabled, then add an
+<code>escape</code> filter to any variable that needs escaping. When
+auto-escaping is on, there&textrsquo;s no danger of the <code>escape</code> filter
+<emph>double-escaping</emph> data &textndash; the <code>escape</code> filter does not affect
+auto-escaped variables.
+</para>
+</section>
+<node name="String-literals-and-automatic-escaping" spaces=" "><nodename>String literals and automatic escaping</nodename><nodeprev automatic="on">Notes</nodeprev><nodeup automatic="on">Automatic HTML escaping</nodeup></node>
+<section spaces=" "><sectiontitle>String literals and automatic escaping</sectiontitle>
+<anchor name="_0023string_002dliterals_002dand_002dautomatic_002descaping">#string-literals-and-automatic-escaping</anchor>
+<para>As we mentioned earlier, filter arguments can be strings:
+</para>
+<verbatim xml:space="preserve">
+{{ data|default:&quot;This is a string literal.&quot; }}
+</verbatim>
+
+<para>All string literals are inserted <strong>without</strong> any automatic escaping
+into the template &textndash; they act as if they were all passed through the
+<code>safe</code> filter. The reasoning behind this is that the template
+author is in control of what goes into the string literal, so they can
+make sure the text is correctly escaped when the template is written.
+</para>
+<para>This means you would write :
+</para>
+<verbatim xml:space="preserve">
+{{ data|default:&quot;3 &amp;lt; 2&quot; }}
+</verbatim>
+
+<para>...rather than :
+</para>
+<verbatim xml:space="preserve">
+{{ data|default:&quot;3 &lt; 2&quot; }}  &lt;-- Bad! Don't do this.
+</verbatim>
+
+<para>This doesn&textrsquo;t affect what happens to data coming from the variable
+itself. The variable&textrsquo;s contents are still automatically escaped, if
+necessary, because they&textrsquo;re beyond the control of the template author.
+</para>
+
+
+</section>
+</chapter>
+<node name="Custom-tag-and-filter-libraries" spaces=" "><nodename>Custom tag and filter libraries</nodename><nodenext automatic="on">Variable Index</nodenext><nodeprev automatic="on">Automatic HTML escaping</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<chapter spaces=" "><sectiontitle>Custom tag and filter libraries</sectiontitle>
+<anchor name="_0023custom_002dtag_002dand_002dfilter_002dlibraries">#custom-tag-and-filter-libraries</anchor>
+<para>Certain applications provide custom tag and filter libraries. To access
+them in a template, use the <code>load</code> tag:
+</para>
+<verbatim xml:space="preserve">
+{% load comments %}
+
+{% comment_form for blogs.entries entry.id with is_public yes %}
+</verbatim>
+
+<para>In the above, the <code>load</code> tag loads the <code>comments</code> tag library,
+which then makes the <code>comment_form</code> tag available for use. Consult
+the documentation area in your admin to find the list of custom
+libraries in your installation.
+</para>
+<para>The <code>load</code> tag can take multiple library names, separated by
+spaces. Example:
+</para>
+<verbatim xml:space="preserve">
+{% load comments i18n %}
+</verbatim>
+
+<para>See <code>/howto/custom-template-tags</code> for information on writing your
+own custom template libraries.
+</para>
+<menu endspaces=" ">
+<menuentry leadingtext="* "><menunode separator="::">Custom libraries and template inheritance</menunode><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry></menu>
+
+<node name="Custom-libraries-and-template-inheritance" spaces=" "><nodename>Custom libraries and template inheritance</nodename><nodeup automatic="on">Custom tag and filter libraries</nodeup></node>
+<section spaces=" "><sectiontitle>Custom libraries and template inheritance</sectiontitle>
+<anchor name="_0023custom_002dlibraries_002dand_002dtemplate_002dinheritance">#custom-libraries-and-template-inheritance</anchor>
+<para>When you load a custom tag or filter library, the tags/filters are only
+made available to the current template &textndash; not any parent or child
+templates along the template-inheritance path.
+</para>
+<para>For example, if a template <code>foo.html</code> has
+<code>&lbrace;% load comments %&rbrace;</code>, a child template (e.g., one that has
+<code>&lbrace;% extends &quot;foo.html&quot; %&rbrace;</code>) will <emph>not</emph> have access to the
+comments template tags and filters. The child template is responsible
+for its own <code>&lbrace;% load comments %&rbrace;</code>.
+</para>
+<para>This is a feature for the sake of maintainability and sanity.
+</para>
+
+
+</section>
+</chapter>
+<node name="Variable-Index" spaces=" "><nodename>Variable Index</nodename><nodenext automatic="on">Function Index</nodenext><nodeprev automatic="on">Custom tag and filter libraries</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<unnumbered spaces=" "><sectiontitle>Variable Index</sectiontitle>
+
+<printindex value="vr" line="vr"></printindex>
+
+</unnumbered>
+<node name="Function-Index" spaces=" "><nodename>Function Index</nodename><nodenext automatic="on">Concept Index</nodenext><nodeprev automatic="on">Variable Index</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<unnumbered spaces=" "><sectiontitle>Function Index</sectiontitle>
+
+<printindex value="fn" line="fn"></printindex>
+
+</unnumbered>
+<node name="Concept-Index" spaces=" "><nodename>Concept Index</nodename><nodeprev automatic="on">Function Index</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<unnumbered spaces=" "><sectiontitle>Concept Index</sectiontitle>
+
+<printindex value="cp" line="cp"></printindex>
+</unnumbered>
+</texinfo>
