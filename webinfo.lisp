@@ -210,8 +210,76 @@
                       (:ion-icon :name "arrow-forward-circle")
                       (:a :href (substitute #\- #\space it) (who:str it)))))))))
 
-(defvar +default-app-settings+ '((:highlight-code . t)
-                                 (:icons . t)))
+(defmethod find-node ((info-repository file-info-repository) name)
+  (find-node (file info-repository) name))
+
+(defmethod find-node ((info-repository dir-info-repository) name)
+  (bind:bind (((manual-name node-name) (split-sequence:split-sequence #\/ name)))
+    (let ((info-document (find-info-document info-repository manual-name)))
+      (find-node info-document node-name))))
+
+(defun webinfo-html (stream body)
+  (let ((theme (app-setting :theme)))
+    (who:with-html-output (stream)
+      (:html
+       (:head
+        (:title "WebInfo")
+        (when theme
+          (add-theme-styles theme stream)))
+       (:body
+        (funcall body stream)
+        (when theme
+          (add-theme-scripts theme stream)))))))
+
+(defclass theme ()
+  ((name :initarg :name
+         :accessor theme-name)))
+
+(defgeneric add-theme-styles (theme stream))
+(defgeneric add-theme-scripts (theme stream))
+
+(defclass default-theme (theme)
+  ()
+  (:default-initargs
+   :name "Default"))
+
+(defmethod add-theme-styles ((theme default-theme) stream)
+  (who:with-html-output (stream)
+    (:link :rel "stylesheet" :href "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css")
+    (:style
+         (who:str "
+code.inline { 
+   background-color: lightgray;
+}
+ion-icon {
+   color: lightblue;
+   font-size: 22px;
+}
+"))))
+  
+(defmethod add-theme-scripts ((theme default-theme) stream)
+  (who:with-html-output (stream)
+    (:script :src "https://unpkg.com/ionicons@5.4.0/dist/ionicons.js")
+    (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/highlight.min.js")
+    (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/languages/lisp.min.js")
+    (:script (who:str "hljs.initHighlightingOnLoad();"))))
+
+(defparameter *themes* (list (make-instance 'default-theme)))
+
+(defvar +app-settings+
+  `((use-icons :type boolean :label "Use icons" :default t)
+    (highlight-code :type boolean :label "Highlight code" :default t)
+    (theme :type option :label "Theme" :options ,(mapcar 'theme-name *themes*))))
+
+(defun app-setting (name &optional (acceptor hunchentoot:*acceptor*))
+  (access:access (app-settings acceptor) name))
+
+(defun set-app-setting (name value)
+  (setf (access:access (app-settings hunchentoot:*acceptor*) name) value))
+
+(defsetf app-setting set-app-setting)
+
+(defvar +default-app-settings+ (list (cons :theme (make-instance 'default-theme))))
 
 (defclass webinfo-acceptor (hunchentoot:acceptor)
   ((info-repository :initarg :info-repository
@@ -232,74 +300,6 @@
           (webinfo-html s
                         (lambda (stream)
                           (render node :html stream)))))))
-
-(defmethod find-node ((info-repository file-info-repository) name)
-  (find-node (file info-repository) name))
-
-(defmethod find-node ((info-repository dir-info-repository) name)
-  (bind:bind (((manual-name node-name) (split-sequence:split-sequence #\/ name)))
-    (let ((info-document (find-info-document info-repository manual-name)))
-      (find-node info-document node-name))))
-
-(defun webinfo-html (stream body)
-  (let ((theme (app-setting :theme)))
-    (who:with-html-output (stream)
-      (:html
-       (:head
-        (:title "WebInfo")
-        (when (app-setting :highlight-code)
-          (who:htm
-           (:link :rel "stylesheet" :href "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css")))
-        (:style
-         (who:str "
-code.inline { 
-   background-color: lightgray;
-}
-ion-icon {
-   color: lightblue;
-   font-size: 22px;
-}
-"))
-        (when theme
-          (add-theme-styles theme stream)))
-       (:body
-        (funcall body stream)
-        (when (app-setting :icons)
-          (who:htm (:script :src "https://unpkg.com/ionicons@5.4.0/dist/ionicons.js")))
-        (when (app-setting :highlight-code)
-          (who:htm
-           (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/highlight.min.js")
-           (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/languages/lisp.min.js")
-           (:script (who:str "hljs.initHighlightingOnLoad();"))))
-        (when theme
-          (add-theme-scripts theme stream)))))))
-
-(defclass theme ()
-  ((name :initarg :name
-         :accessor theme-name)))
-
-(defgeneric add-theme-styles (theme stream))
-(defgeneric add-theme-scripts (theme stream))
-
-(defclass default-theme (theme)
-  ()
-  (:default-initargs
-   :name "Default"))
-
-(defparameter *themes* (list (make-instance 'default-theme)))
-
-(defvar +app-settings+
-  `((use-icons :type boolean :label "Use icons" :default t)
-    (highlight-code :type boolean :label "Highlight code" :default t)
-    (theme :type option :label "Theme" :options ,(mapcar 'theme-name *themes*))))
-
-(defun app-setting (name &optional (acceptor hunchentoot:*acceptor*))
-  (access:access (app-settings acceptor) name))
-
-(defun set-app-setting (name value)
-  (setf (access:access (app-settings hunchentoot:*acceptor*) name) value))
-
-(defsetf app-setting set-app-setting)
 
 (defvar *webinfo-acceptor*)
 
