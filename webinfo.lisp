@@ -52,13 +52,6 @@
                  :title "Djula manual"
                  :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")))
 
-(xml-document *djula-manual*)
-
-(xpath:evaluate "/texinfo" (xml-document *djula-manual*))
-(xpath:evaluate "/texinfo/filename" (xml-document *djula-manual*))
-
-(first (xpath:all-nodes (xpath:evaluate "/texinfo/node[1]" (xml-document *djula-manual*))))
-
 (defun make-xml-info-node (xml)
   (make-instance 'xml-info-node
                  :name (dom:get-attribute xml "name")
@@ -85,24 +78,6 @@
 
 (defmethod children ((node xml-info-node))
   (mapcar 'make-xml-info-node (xpath:all-nodes (xpath:evaluate "./node" (content-xml node)))))
-
-
-(defparameter *top-node*
-  (make-xml-info-node (xpath:first-node (xpath:evaluate "/texinfo/node[1]" (xml-document *djula-manual*)))))
-
-(node-prev *top-node*)
-(node-next *top-node*)
-
-(defparameter *node*
-  (make-xml-info-node (xpath:first-node (xpath:evaluate "/texinfo/node[2]" (xml-document *djula-manual*)))))
-
-(xpath:first-node (xpath:evaluate "./following-sibling::*" *node*))
-
-(first (xpath:all-nodes (xpath:evaluate "/texinfo/node[1]/following-sibling::*" (xml-document *djula-manual*))))
-
-(first (xpath:all-nodes (xpath:evaluate "/texinfo/node[2]" (xml-document *djula-manual*))))
-
-(first (xpath:all-nodes (xpath:evaluate "/texinfo/node[2]/following-sibling::*" (xml-document *djula-manual*))))
 
 (defun parse-xml-content (xml)
   (labels ((make-element (x)
@@ -178,10 +153,6 @@
                          )))))
         (render-element xml)))))
 
-(parse-xml-content (content-xml *top-node*))
-(parse-xml-content (content-xml *node*))
-(render-xml-content (content-xml *node*))
-
 (defgeneric render (thing format stream))
 
 (defmethod render ((node xml-info-node) (format (eql :html)) stream)
@@ -199,12 +170,6 @@
 
 (defmethod node-title ((node xml-info-node))
   (dom:data (xpath:first-node (xpath:evaluate "./sectiontitle/text()" (content-xml node)))))
-
-(defparameter *node2*
-  (make-xml-info-node (xpath:first-node (xpath:evaluate "/texinfo/node[3]" (xml-document *djula-manual*)))))
-
-(mapcar (lambda (node)
-          (render node :html)) (children *node*))
 
 (defmethod find-node ((info-document xml-info-document) node-name)
   (aand (xpath:first-node
@@ -235,13 +200,15 @@
                       (:a :href (substitute #\- #\space it) (who:str it)))))))))
 
 (defclass webinfo-acceptor (hunchentoot:acceptor)
-  ())
+  ((info-document :initarg :info-document
+                  :accessor info-document
+                  :initform (error "Provide the info-document"))))
 
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
   (let* ((node-name (substitute #\- #\space (remove #\/ (hunchentoot:request-uri request))))
          (node (trivia:match node-name
-                 ("" (find-node *djula-manual* "Top"))
-                 (_ (find-node *djula-manual* node-name)))))
+                 ("" (find-node (info-document acceptor) "Top"))
+                 (_ (find-node (info-document acceptor) node-name)))))
     (if (not node)
         (format nil "Not found: ~a" node-name)
         (with-output-to-string (s)
@@ -272,8 +239,8 @@ ion-icon {
       (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/languages/lisp.min.js")
       (:script (who:str "hljs.initHighlightingOnLoad();"))))))
 
-(defun start-webinfo ()
-  (hunchentoot:start (make-instance 'webinfo-acceptor :port 9090)))
+(defun start-webinfo (&rest args)
+  (hunchentoot:start (apply #'make-instance 'webinfo-acceptor args)))
 
-(defmethod node-name :around ((node info-node))
-  (substitute #\- #\space (call-next-method)))
+(defun start-demo ()
+  (webinfo:start-webinfo :port 9090 :info-document (make-instance 'webinfo:xml-info-document :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml") :title "Djula manual")))

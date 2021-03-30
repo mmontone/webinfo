@@ -1,10 +1,18 @@
 ;;;; webinfo.asd
 
 (asdf:defsystem #:webinfo
-  :description "Describe webinfo here"
-  :author "Your Name <your.name@example.com>"
-  :license  "Specify license here"
+  :description "Web and desktop TexInfo reader"
+  :author "Mariano Montone <marianomontone@gmail.com>"
+  :license  "MIT"
   :version "0.0.1"
   :serial t
   :components ((:file "package")
-               (:file "webinfo")))
+               (:file "webinfo"))
+  :depends-on (:anaphora
+               :hunchentoot
+               :cl-who
+               :puri
+               :drakma
+               :cxml
+               :xpath
+               :trivia))
