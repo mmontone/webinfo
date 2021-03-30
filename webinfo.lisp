@@ -112,8 +112,7 @@
                                 do (render-element child)))
                         (render-menu ()
                           (who:htm
-                           (:h2 "Menu")
-                           (:ol
+                           (:ol :class "menu"
                             (loop for menuentry in (xpath:all-nodes (xpath:evaluate "./menuentry" x))
                                   do (let ((node-name (dom:data (xpath:first-node (xpath:evaluate "./menunode/text()" menuentry)))))
                                        (who:htm
