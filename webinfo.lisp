@@ -31,6 +31,17 @@
   ((node-xml :accessor node-xml :initarg :node-xml)
    (content-xml :accessor content-xml :initarg :content-xml)))
 
+(defclass info-repository ()
+  ())
+
+(defclass dir-info-repository ()
+  ((dir :initarg :dir
+        :accessor dir)))
+
+(defclass file-info-repository ()
+  ((file :initarg :file
+         :accessor file)))
+
 (defmethod initialize-instance :after ((info-document xml-info-document) &rest initargs)
   (declare (ignore initargs))
   (flet ((resolver (pubid sysid)
@@ -200,21 +211,29 @@
                       (:a :href (substitute #\- #\space it) (who:str it)))))))))
 
 (defclass webinfo-acceptor (hunchentoot:acceptor)
-  ((info-document :initarg :info-document
-                  :accessor info-document
-                  :initform (error "Provide the info-document"))))
+  ((info-repository :initarg :info-repository
+                  :accessor info-repository
+                  :initform (error "Provide the info-repository"))))
 
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
   (let* ((node-name (substitute #\- #\space (remove #\/ (hunchentoot:request-uri request))))
          (node (trivia:match node-name
-                 ("" (find-node (info-document acceptor) "Top"))
-                 (_ (find-node (info-document acceptor) node-name)))))
+                 ("" (find-node (info-repository acceptor) "Top"))
+                 (_ (find-node (info-repository acceptor) node-name)))))
     (if (not node)
         (format nil "Not found: ~a" node-name)
         (with-output-to-string (s)
           (webinfo-html s
                         (lambda (stream)
                           (render node :html stream)))))))
+
+(defmethod find-node ((info-repository file-info-repository) name)
+  (find-node (file info-repository) name))
+
+(defmethod find-node ((info-repository dir-info-repository) name)
+  (bind:bind (((manual-name node-name) (split-sequence:split-sequence #\/ name)))
+    (let ((info-document (find-info-document info-repository manual-name)))
+      (find-node info-document node-name))))
 
 (defun webinfo-html (stream body)
   (who:with-html-output (stream)
@@ -239,8 +258,21 @@ ion-icon {
       (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/languages/lisp.min.js")
       (:script (who:str "hljs.initHighlightingOnLoad();"))))))
 
+(defvar *webinfo-acceptor*)
+
 (defun start-webinfo (&rest args)
-  (hunchentoot:start (apply #'make-instance 'webinfo-acceptor args)))
+  (setf *webinfo-acceptor*
+        (hunchentoot:start (apply #'make-instance 'webinfo-acceptor args))))
+
+(defun stop-webinfo ()
+  (hunchentoot:stop *webinfo-acceptor*))
 
 (defun start-demo ()
-  (webinfo:start-webinfo :port 9090 :info-document (make-instance 'webinfo:xml-info-document :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml") :title "Djula manual")))
+  (webinfo:start-webinfo
+   :port 9090
+   :info-repository
+   (make-instance 'file-info-repository
+                  :file
+                  (make-instance 'webinfo:xml-info-document
+                                 :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
+                                 :title "Djula manual"))))
