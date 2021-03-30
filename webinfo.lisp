@@ -255,6 +255,29 @@ ion-icon {
    color: lightblue;
    font-size: 22px;
 }
+header.node-navigation ul {
+   list-style-type:none;
+   padding-left:0;
+}
+header.node-navigation li {
+   display:inline-block;
+   padding-right: 20px;
+   line-height: 22px;
+}
+header.node-navigation li a {
+   line-height: 22px;
+   vertical-align: top;
+}
+header.node-navigation {
+   border-bottom: 1px solid lightgray;
+   position: fixed;
+   top: 0;
+   width: 100%;
+   background-color: white;
+}
+div.node {
+   padding-top: 50px;
+}
 "))))
   
 (defmethod add-theme-scripts ((theme default-theme) stream)
