@@ -1,9 +1,8 @@
 # webinfo
-### _Your Name <your.name@example.com>_
 
-This is a project to do ... something.
+A TexInfo reader for Web and Desktop.
 
 ## License
 
-Specify license here
+MIT
 
