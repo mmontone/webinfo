@@ -207,18 +207,25 @@
 
 (defun render-node-navigation (node stream)
   (who:with-html-output (stream)
-    (:ul :class "node-navigation"
-         (awhen (node-prev node)
-           (who:htm
-            (:li :class "node-prev"
-                 (:a :href (substitute #\- #\space it) (who:str it)))))
-         (awhen (node-up node)
-           (who:htm
-            (:li :class "node-up" (:a :href (substitute #\- #\space it)
-                                      (who:str it)))))
-         (awhen (node-next node)
-           (who:htm
-            (:li :class "node-next" (:a :href (substitute #\- #\space it) (who:str it))))))))
+    (:header :class "node-navigation"
+             (:ul 
+              (awhen (node-prev node)
+                (who:htm
+                 (:li :class "node-prev"
+                      ;;(who:str "Previous: ")
+                      (:ion-icon :name "arrow-back-circle")
+                      (:a :href (substitute #\- #\space it) (who:str it)))))
+              (awhen (node-up node)
+                (who:htm
+                 (:li :class "node-up"
+                      (:ion-icon :name "arrow-up-circle")
+                      (:a :href (substitute #\- #\space it)
+                          (who:str it)))))
+              (awhen (node-next node)
+                (who:htm
+                 (:li :class "node-next"
+                      (:ion-icon :name "arrow-forward-circle")
+                      (:a :href (substitute #\- #\space it) (who:str it)))))))))
 
 (defclass webinfo-acceptor (hunchentoot:acceptor)
   ())
@@ -242,9 +249,18 @@
       (:title "WebInfo")
       (:link :rel "stylesheet" :href "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css")
       (:style
-       (who:str "code.inline { background-color: lightgray;}")))
+       (who:str "
+code.inline { 
+   background-color: lightgray;
+}
+ion-icon {
+   color: lightblue;
+   font-size: 22px;
+}
+")))
      (:body
       (funcall body stream)
+      (:script :src "https://unpkg.com/ionicons@5.4.0/dist/ionicons.js")
       (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/highlight.min.js")
       (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/languages/lisp.min.js")
       (:script (who:str "hljs.initHighlightingOnLoad();"))))))
