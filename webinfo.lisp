@@ -53,10 +53,9 @@
                       (cxml-dom:make-dom-builder)
                       :entity-resolver #'resolver))))
 
-(defmethod top-node ((info-document xml-info-document))
-  (make-instance 'xml-info-node
-
-                 ))
+(defgeneric info-document-for-uri (info-repository uri))
+(defmethod info-document-for-uri ((repo file-info-repository) uri)
+  (file repo))
 
 (defparameter *djula-manual*
   (make-instance 'xml-info-document
@@ -89,6 +88,16 @@
 
 (defmethod children ((node xml-info-node))
   (mapcar 'make-xml-info-node (xpath:all-nodes (xpath:evaluate "./node" (content-xml node)))))
+
+(defmethod toc ((node info-node))
+  (cons node
+        (loop for child in (children node)
+              collect (toc child))))
+
+(defmethod toc ((doc xml-info-document))
+  (let* ((top-nodes (mapcar 'make-xml-info-node (xpath:all-nodes (xpath:evaluate "/texinfo/node" (xml-document doc))))))
+    (loop for node in top-nodes
+          collect (toc node))))
 
 (defun parse-xml-content (xml)
   (labels ((make-element (x)
@@ -163,9 +172,9 @@
                          )))))
         (render-element xml)))))
 
-(defgeneric render (thing format stream))
+(defgeneric render-node (thing theme stream &rest args))
 
-(defmethod render ((node xml-info-node) (format (eql :html)) stream)
+(defmethod render-node ((node xml-info-node) theme stream &rest args)
   (who:with-html-output (stream)
     (:div :class "node"
           (render-node-navigation node stream)
@@ -228,6 +237,7 @@
        (:body
         (funcall body stream)
         (when theme
+          (add-theme-html theme stream)
           (add-theme-scripts theme stream)))))))
 
 (defclass theme ()
@@ -236,13 +246,22 @@
 
 (defgeneric add-theme-styles (theme stream))
 (defgeneric add-theme-scripts (theme stream))
+(defgeneric add-theme-html (theme stream))
 
-(defclass default-theme (theme)
+(defmethod add-theme-styles (theme stream))
+(defmethod add-theme-scripts (theme stream))
+(defmethod add-theme-html (theme stream))
+
+(defgeneric initialize-theme (theme app))
+(defmethod initialize-theme (theme app))
+
+;; Simple theme
+(defclass simple-theme (theme)
   ()
   (:default-initargs
-   :name "Default"))
+   :name "Simple"))
 
-(defmethod add-theme-styles ((theme default-theme) stream)
+(defmethod add-theme-styles ((theme simple-theme) stream)
   (who:with-html-output (stream)
     (:link :rel "stylesheet" :href "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css")
     (:style
@@ -279,14 +298,68 @@ div.node {
 }
 "))))
   
-(defmethod add-theme-scripts ((theme default-theme) stream)
+(defmethod add-theme-scripts ((theme simple-theme) stream)
   (who:with-html-output (stream)
     (:script :src "https://unpkg.com/ionicons@5.4.0/dist/ionicons.js")
     (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/highlight.min.js")
     (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/languages/lisp.min.js")
     (:script (who:str "hljs.initHighlightingOnLoad();"))))
 
-(defparameter *themes* (list (make-instance 'default-theme)))
+;; ebook theme
+(defclass ebook-theme (theme)
+  ()
+  (:default-initargs
+   :name "eBook"))
+
+(defclass nav-theme (simple-theme)
+  ((toc :initarg :toc :accessor toc))
+  (:default-initargs
+   :name "Nav"))
+
+(defmethod render-node :before (node (theme nav-theme) stream &rest args)
+  (let ((info-doc (first args)))
+    (render-toc (toc info-doc) stream)))
+
+(defun render-toc (toc stream)
+  (who:with-html-output (stream)
+    (labels ((render-toc-level (levels)
+             (who:htm (:ul
+                       (loop for level in levels
+                             when (not (null level)) ;; TODO: FIX
+                               do (who:htm
+                                   (:li (:a :href (node-name (first level))
+                                            (who:str (node-title (first level))))
+                                        (render-toc-level (cdr level)))))))))
+      (who:htm
+       (:ul :class "toc"
+           (loop for level in toc
+                 do
+                    (who:htm
+                     (:li (:a :href (node-name (car level))
+                              (who:str (node-title (car level))))
+                          (render-toc-level (cdr level))))))))))
+
+(defmethod add-theme-styles :after ((theme nav-theme) stream)
+  (who:with-html-output (stream)
+    (:style (who:str "
+  /* The sidebar menu */
+.toc {
+  height: 100%; /* Full-height: remove this if you want 'auto' height */
+  width: 200px; /* Set the width of the sidebar */
+  position: fixed; /* Fixed Sidebar (stay in place on scroll) */
+  z-index: 1; /* Stay on top */
+  top: 0; /* Stay at the top */
+  left: 0;
+  overflow-x: hidden; /* Disable horizontal scroll */
+  background-color:white;
+  padding-top: 20px;
+}
+.node {
+  padding-left: 250px;
+}
+"))))
+
+(defparameter *themes* (list (make-instance 'simple-theme)))
 
 (defvar +app-settings+
   `((use-icons :type boolean :label "Use icons" :default t)
@@ -301,7 +374,7 @@ div.node {
 
 (defsetf app-setting set-app-setting)
 
-(defvar +default-app-settings+ (list (cons :theme (make-instance 'default-theme))))
+(defvar +default-app-settings+ (list (cons :theme (make-instance 'simple-theme))))
 
 (defclass webinfo-acceptor (hunchentoot:acceptor)
   ((info-repository :initarg :info-repository
@@ -311,17 +384,24 @@ div.node {
                  :accessor app-settings
                  :initform +default-app-settings+)))
 
+(defmethod initialize-instance :after ((acceptor webinfo-acceptor) &rest initargs)
+  (declare (ignore initargs))
+  (awhen (app-setting :theme acceptor)
+    (initialize-theme it acceptor)))
+
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
   (let* ((node-name (substitute #\- #\space (remove #\/ (hunchentoot:request-uri request))))
          (node (trivia:match node-name
                  ("" (find-node (info-repository acceptor) "Top"))
-                 (_ (find-node (info-repository acceptor) node-name)))))
+                 (_ (find-node (info-repository acceptor) node-name))))
+         (info-document (info-document-for-uri (info-repository acceptor)
+                                               (hunchentoot:request-uri request))))
     (if (not node)
         (format nil "Not found: ~a" node-name)
         (with-output-to-string (s)
           (webinfo-html s
                         (lambda (stream)
-                          (render node :html stream)))))))
+                          (render-node node (app-setting :theme acceptor) stream  info-document)))))))
 
 (defvar *webinfo-acceptor*)
 
@@ -332,12 +412,13 @@ div.node {
 (defun stop-webinfo ()
   (hunchentoot:stop *webinfo-acceptor*))
 
-(defun start-demo ()
+(defun start-demo (&rest args)
   (webinfo:start-webinfo
-   :port 9090
-   :info-repository
-   (make-instance 'file-info-repository
-                  :file
-                  (make-instance 'webinfo:xml-info-document
-                                 :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
-                                 :title "Djula manual"))))
+         :port 9090
+         :info-repository
+         (make-instance 'file-info-repository
+                        :file
+                        (make-instance 'webinfo:xml-info-document
+                                       :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
+                                       :title "Djula manual"))
+         :app-settings (list (cons :theme (make-instance 'nav-theme)))))
