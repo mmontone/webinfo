@@ -330,6 +330,9 @@
 
 (defmethod add-theme-styles ((theme simple-theme) stream)
   (who:with-html-output (stream)
+    #+nil(:link :rel "stylesheet" :href "https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css")
+    (:meta :name "viewport" :content "width=device-width, initial-scale=1")
+    #+nil(:link :rel "stylesheet" :href "https://www.w3schools.com/w3css/4/w3.css")
     (:link :rel "stylesheet" :href "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css")
     (:style
          (who:str "
@@ -351,7 +354,7 @@ header.node-navigation li {
 }
 header.node-navigation li a {
    line-height: 22px;
-   vertical-align: top;
+   vertical-align: top;   
 }
 header.node-navigation {
    border-bottom: 1px solid lightgray;
@@ -420,6 +423,23 @@ div.node {
   overflow-x: hidden; /* Disable horizontal scroll */
   background-color:white;
   padding-top: 20px;
+  list-style-type:none;
+  padding-left: 10px;
+}
+
+.toc ul {
+  list-style-type: none;
+  padding-left: 10px;
+}
+
+.toc a {
+  text-decoration:none;
+  color: black;
+}
+
+.toc a:hover {
+  background-color: lightblue;
+  width: 100%;
 }
 .node {
   padding-left: 250px;
