@@ -7,7 +7,8 @@
   :version "0.0.1"
   :serial t
   :components ((:file "package")
-               (:file "webinfo"))
+               (:file "webinfo")
+               (:file "xmldoc"))
   :depends-on (:anaphora
                :hunchentoot
                :cl-who
