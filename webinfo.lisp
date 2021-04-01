@@ -444,7 +444,11 @@ div.node {
           (:div :class "search"
                 (:form :action "_is"
                        (:input :name "q")))
-          (render-toc (toc doc) stream))))
+          (render-toc (toc doc) stream)
+          (:div :class "settings"
+                (:a :href "_settings"
+                    (:ion-icon :style "font-size: 32px;" :name "settings-outline"))
+                ))))
 
 (defun render-toc (toc stream)
   (who:with-html-output (stream)
@@ -470,7 +474,8 @@ div.node {
     (:style (who:str "
   /* The sidebar menu */
 .navsidebar {
-  height: 100%; /* Full-height: remove this if you want 'auto' height */
+  height: 100%;
+  margin-bottom: -50px;
   width: 220px; /* Set the width of the sidebar */
   position: fixed; /* Fixed Sidebar (stay in place on scroll) */
   z-index: 1; /* Stay on top */
@@ -481,6 +486,10 @@ div.node {
   padding-top: 20px;
   padding-left: 10px;
   border-right: 2px solid lightgray;
+}
+.navsidebar .settings {
+  height: 50px; border-top: 1px solid gray; background-color:white;
+  padding: 10px;
 }
 .search input {
   width: 200px;
@@ -499,6 +508,12 @@ ul.toc, ul.toc ul {
   background-color: lightblue;
   width: 100%;
 }
+
+.navsidebar .toc {
+  overflow-y: scroll;
+  height: calc(100vh - 140px);
+}
+
 .node {
   padding-left: 250px;
 }
@@ -528,8 +543,6 @@ ul.toc, ul.toc ul {
                      :search-term search-term
                      :matches (search-index repo search-term))
       (find-node (file repo) "Top"))))      
-                        
-                        
 
 (defvar +app-settings+
   `((use-icons :type boolean :label "Use icons" :default t)
@@ -545,6 +558,14 @@ ul.toc, ul.toc ul {
 (defsetf app-setting set-app-setting)
 
 (defvar +default-app-settings+ (list (cons :theme (make-instance 'simple-theme))))
+
+(defclass settings-info-node (info-node)
+  ())
+
+(defmethod render-node ((node settings-info-node) theme stream &rest args)
+  (who:with-html-output (stream)
+    (:div :class "node"
+          (:h1 (who:str "Settings")))))
 
 (defclass webinfo-acceptor (hunchentoot:acceptor)
   ((info-repository :initarg :info-repository
@@ -565,6 +586,10 @@ ul.toc, ul.toc ul {
                  ((or nil "" "/") (find-node (info-repository acceptor) "Top"))
                  ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
                  ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
+                 ((or "_settings" "/_settings")
+                  (trivia:match (hunchentoot:request-method request)
+                    (:get (make-instance 'settings-info-node))
+                    (:post (save-settings acceptor request) nil)))
                  (_
                   (let ((node-name (substitute #\- #\space (remove #\/ (quri:uri-path uri)))))
                     (find-node (info-repository acceptor) node-name)))))
