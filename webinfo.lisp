@@ -136,7 +136,15 @@
                        ;; else
                        (case (alexandria:make-keyword (dom:tag-name x))
                          (:|para| (who:htm (:p (render))))
-                         (:|menu| (render-menu))
+                         (:|menu| ;;(render-menu)
+                          (who:htm (:ul :class "menu" (render)))
+                          )
+                         (:|menuentry| (who:htm (:li (render))))
+                         (:|menunode| (let ((node-name (dom:data (dom:first-child x))))
+                                        (who:htm (:a :href (substitute #\- #\space node-name)
+                                                     (who:str node-name)))))
+                         (:|menudescription| (render))
+                         (:|pre| (who:htm (:pre (render))))
                          (:|node| (if split
                                       (return-from quit)
                                       (render-element (break "~a" x))))
