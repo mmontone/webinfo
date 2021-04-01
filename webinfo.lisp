@@ -131,9 +131,13 @@
                                             (:li (:a :href (substitute #\- #\space node-name)
                                                      (who:str node-name)
                                                      )))))))))
-                   (if (dom:text-node-p x)
-                       (who:str (dom:data x))
-                       ;; else
+                   (cond
+                     ((dom:text-node-p x)
+                      (who:str (dom:data x)))
+                     ((dom:comment-p x)
+                      ;; do nothing
+                      )
+                     (t ;; otherwise
                        (case (alexandria:make-keyword (dom:tag-name x))
                          (:|para| (who:htm (:p (render))))
                          (:|menu| ;;(render-menu)
@@ -148,16 +152,27 @@
                          (:|node| (if split
                                       (return-from quit)
                                       (render-element (break "~a" x))))
+                         (:|macro|) ;; TODO
                          (:|chapter| (render))
                          (:|section| (render))
                          (:|subsection| (render))
                          (:|sectiontitle| (who:htm (:h1 (render))))
                          (:|anchor|)
+                         (:|defvr| (who:htm (:div :class "defvr" (render))))
+                         (:|definitionterm| (render))
+                         (:|defcategory| (who:fmt "[~a]" (dom:data (dom:first-child x))))
+                         (:|indexterm|)
+                         (:|defvariable| (who:htm (:span :class "defvariable" (who:str (dom:data (dom:first-child x))))))
+                         (:|definitionitem| (render))
+                         (:|deffn| (who:htm (:div :class "deffn" (render))))
+                         (:|deffunction| (who:htm (:span :class "deffunction" (who:str (dom:data (dom:first-child x))))))
+                         (:|defdelimiter| (who:str (who:escape-string (dom:data (dom:first-child x)))))
+                         (:|defparam| (who:htm (:span :class "defparam" (who:str (dom:data (dom:first-child x))))))
+                         (:|deftp| (who:htm (:div :class "deftp" (render))))
+                         (:|defdatatype| (who:htm (:span :class "defdatatype" (who:str (dom:data (dom:first-child x))))))
                          (:|top| (render))
-                         (:|unnumbered| (render))
-                         (:|findex|)
-                         (:|cindex|)
-                         (:|vindex|)
+                         ((:|unnumbered| :|appendix|) (render))
+                         ((:|findex| :|cindex| :|vindex| :|tindex|))
                          (:|printindex| (print-index (get-index (info-repository *webinfo-acceptor*)
                                                                 (alexandria:make-keyword (string-upcase (dom:get-attribute x "value"))))
                                                      stream))
@@ -173,6 +188,7 @@
                          (:|listitem| (who:htm (:li (render))))
                          (:|strong| (who:htm (:b (render))))
                          (:|emph| (who:htm (:emph (render))))
+                         (:|sc| (who:str (dom:data (dom:first-child x)))) ;; smallcaps
                          (:|ref| "TODO:implement")
                          (:|uref| "TODO: implement" )
                          (:|url| (let ((url (dom:data (dom:first-child (dom:first-child x)))))
@@ -181,9 +197,10 @@
                                                             (who:str
                                                              (who:escape-string (dom:data (dom:first-child
                                                                                            x))))))))
-                         (:|code| (who:htm (:code :class "inline" (who:str (who:escape-string (dom:data (dom:first-child x)))))))
+                         (:|code| (who:htm (:code :class "inline" (render))))
+                         (:|w| (who:str (who:escape-string (dom:data (dom:first-child x)))))
                          (t (error "~a" (dom:tag-name x)))
-                         )))))
+                         ))))))
         (render-element xml)))))
 
 (defgeneric render-node (thing theme stream &rest args))
@@ -521,7 +538,7 @@ div.node {
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
   (let* ((uri (quri:uri (hunchentoot:request-uri request)))
          (node (trivia:match (quri:uri-path uri)
-                 ((or "" "/") (find-node (info-repository acceptor) "Top"))
+                 ((or nil "" "/") (find-node (info-repository acceptor) "Top"))
                  ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
                  ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
                  (_
