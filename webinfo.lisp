@@ -436,7 +436,15 @@ div.node {
 
 (defmethod render-node :before (node (theme nav-theme) stream &rest args)
   (let ((info-doc (first args)))
-    (render-toc (toc info-doc) stream)))
+    (render-navigation-sidebar info-doc stream)))
+
+(defun render-navigation-sidebar (doc stream)
+  (who:with-html-output (stream)
+    (:div :class "navsidebar"
+          (:div :class "search"
+                (:form :action "_is"
+                       (:input :name "q")))
+          (render-toc (toc doc) stream))))
 
 (defun render-toc (toc stream)
   (who:with-html-output (stream)
@@ -461,9 +469,9 @@ div.node {
   (who:with-html-output (stream)
     (:style (who:str "
   /* The sidebar menu */
-.toc {
+.navsidebar {
   height: 100%; /* Full-height: remove this if you want 'auto' height */
-  width: 200px; /* Set the width of the sidebar */
+  width: 220px; /* Set the width of the sidebar */
   position: fixed; /* Fixed Sidebar (stay in place on scroll) */
   z-index: 1; /* Stay on top */
   top: 0; /* Stay at the top */
@@ -471,11 +479,13 @@ div.node {
   overflow-x: hidden; /* Disable horizontal scroll */
   background-color:white;
   padding-top: 20px;
-  list-style-type:none;
   padding-left: 10px;
+  border-right: 2px solid lightgray;
 }
-
-.toc ul {
+.search input {
+  width: 200px;
+}
+ul.toc, ul.toc ul {
   list-style-type: none;
   padding-left: 10px;
 }
