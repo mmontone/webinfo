@@ -20,4 +20,5 @@
                :cl-forms
                :cl-forms.who
                :metabang-bind
-               :assoc-utils))
+               :assoc-utils
+               :quri))

@@ -13,7 +13,7 @@
    (description :initarg :description
                 :accessor description)
    (indexes :accessor indexes
-          :initform nil)
+            :initform nil)
    (top-node :accessor top-node)))
 
 (defclass info-node ()
@@ -52,7 +52,7 @@
                       (cxml-dom:make-dom-builder)
                       :entity-resolver #'resolver)))
 
-  
+
   (initialize-indexes info-document))
 
 (defgeneric info-document-for-uri (info-repository uri))
@@ -125,12 +125,12 @@
                         (render-menu ()
                           (who:htm
                            (:ol :class "menu"
-                            (loop for menuentry in (xpath:all-nodes (xpath:evaluate "./menuentry" x))
-                                  do (let ((node-name (dom:data (xpath:first-node (xpath:evaluate "./menunode/text()" menuentry)))))
-                                       (who:htm
-                                        (:li (:a :href (substitute #\- #\space node-name)
-                                                 (who:str node-name)
-                                                 )))))))))
+                                (loop for menuentry in (xpath:all-nodes (xpath:evaluate "./menuentry" x))
+                                      do (let ((node-name (dom:data (xpath:first-node (xpath:evaluate "./menunode/text()" menuentry)))))
+                                           (who:htm
+                                            (:li (:a :href (substitute #\- #\space node-name)
+                                                     (who:str node-name)
+                                                     )))))))))
                    (if (dom:text-node-p x)
                        (who:str (dom:data x))
                        ;; else
@@ -180,7 +180,7 @@
                          (:|verbatim| (who:htm (:pre (:code :class "hljs"
                                                             (who:str
                                                              (who:escape-string (dom:data (dom:first-child
-                                                                                    x))))))))
+                                                                                           x))))))))
                          (:|code| (who:htm (:code :class "inline" (who:str (who:escape-string (dom:data (dom:first-child x)))))))
                          (t (error "~a" (dom:tag-name x)))
                          )))))
@@ -208,10 +208,10 @@
                          (xml-document info-document)))
         (make-xml-info-node it)))
 
-(defun render-node-navigation (node stream)
+(defmethod render-node-navigation (node stream)
   (who:with-html-output (stream)
     (:header :class "node-navigation"
-             (:ul 
+             (:ul
               (awhen (node-prev node)
                 (who:htm
                  (:li :class "node-prev"
@@ -255,7 +255,7 @@
             (xpath:all-nodes
              (xpath:evaluate (format nil ".//~a" node-name)
                              (content-xml node))))))
-    
+
 (defun initialize-indexes (info-document)
   (setf (aget (indexes info-document) :fn)
         (collect-indexes info-document :findex))
@@ -265,8 +265,8 @@
         (collect-indexes info-document :vindex)))
 
 #+nil(defmethod initialize-instance :after ((info-document info-document) &rest initargs)
-  (declare (ignore initargs))
-  (initialize-indexes info-document))
+       (declare (ignore initargs))
+       (initialize-indexes info-document))
 
 (defmethod get-index ((doc info-document) index-type)
   (aget (indexes doc) index-type))
@@ -289,26 +289,38 @@
 
 (defun print-index (index stream)
   (who:with-html-output (stream)
-    (:ul :class "menu"
-         (loop for (name . node) in index do
-           (who:htm (:li (:a :href (node-name node)
-                             (who:str name))
-                         (who:str (node-title node))))))))
+    (if (alexandria:emptyp index)
+        (who:htm (:p (who:str "No entries")))
+        (who:htm
+         (:ul :class "menu"
+              (loop for (name . node) in index do
+                (who:htm (:li (:a :href (node-name node)
+                                  (who:str name))
+                              (who:str (node-title node))))))))))
 
 (defclass index-matches-node (info-node)
   ((seach-term :initarg :search-term :accessor search-term)
    (matches :initarg :matches :accessor matches)))
 
-(defmethod render-node ((index-matches-node) theme stream &rest args)
+(defmethod render-node-navigation ((node index-matches-node) stream)
+  )
+
+(defmethod render-node ((node index-matches-node) theme stream &rest args)
+  (declare (ignore args))
   (who:with-html-output (stream)
     (:div :class "node"
           (render-node-navigation node stream)
-          (:div :class "node-content"
-                (:ul :class "index-matches"
-                     (loop for match in matches do
-                       (who:htm (:li (:a :href ))))
-          (render-node-navigation node stream)))
-  
+          (:h1 "Index search")
+          (if (alexandria:emptyp (matches node))
+              (who:htm (:p "No matches"))
+              (who:htm
+               (:div :class "node-content"
+                     (:ul :class "index-matches"
+                          (loop for (term . indexed-node) in (matches node) do
+                            (who:htm (:li (:a :href (node-name indexed-node)
+                                              (who:str term))
+                                          (who:str (node-title indexed-node)))))))))
+          (render-node-navigation node stream))))
 
 ;; Web
 
@@ -354,8 +366,8 @@
     #+nil(:link :rel "stylesheet" :href "https://www.w3schools.com/w3css/4/w3.css")
     (:link :rel "stylesheet" :href "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css")
     (:style
-         (who:str "
-code.inline { 
+     (who:str "
+code.inline {
    background-color: lightgray;
 }
 ion-icon {
@@ -373,7 +385,7 @@ header.node-navigation li {
 }
 header.node-navigation li a {
    line-height: 22px;
-   vertical-align: top;   
+   vertical-align: top;
 }
 header.node-navigation {
    border-bottom: 1px solid lightgray;
@@ -386,7 +398,7 @@ div.node {
    padding-top: 50px;
 }
 "))))
-  
+
 (defmethod add-theme-scripts ((theme simple-theme) stream)
   (who:with-html-output (stream)
     (:script :src "https://unpkg.com/ionicons@5.4.0/dist/ionicons.js")
@@ -412,21 +424,21 @@ div.node {
 (defun render-toc (toc stream)
   (who:with-html-output (stream)
     (labels ((render-toc-level (levels)
-             (who:htm (:ul
-                       (loop for level in levels
-                             when (not (null level)) ;; TODO: FIX
-                               do (who:htm
-                                   (:li (:a :href (node-name (first level))
-                                            (who:str (node-title (first level))))
-                                        (render-toc-level (cdr level)))))))))
+               (who:htm (:ul
+                         (loop for level in levels
+                               when (not (null level)) ;; TODO: FIX
+                                 do (who:htm
+                                     (:li (:a :href (node-name (first level))
+                                              (who:str (node-title (first level))))
+                                          (render-toc-level (cdr level)))))))))
       (who:htm
        (:ul :class "toc"
-           (loop for level in toc
-                 do
-                    (who:htm
-                     (:li (:a :href (node-name (car level))
-                              (who:str (node-title (car level))))
-                          (render-toc-level (cdr level))))))))))
+            (loop for level in toc
+                  do
+                     (who:htm
+                      (:li (:a :href (node-name (car level))
+                               (who:str (node-title (car level))))
+                           (render-toc-level (cdr level))))))))))
 
 (defmethod add-theme-styles :after ((theme nav-theme) stream)
   (who:with-html-output (stream)
@@ -467,6 +479,17 @@ div.node {
 
 (defparameter *themes* (list (make-instance 'simple-theme)))
 
+(defmethod make-index-search-node ((repo file-info-repository) uri)
+  (let ((params (quri:uri-query-params uri)))
+    (alexandria:if-let ((search-term (aget params "q")))
+      (make-instance 'index-matches-node
+                     :name "Index matches"
+                     :search-term search-term
+                     :matches (search-index repo search-term))
+      (find-node (file repo) "Top"))))      
+                        
+                        
+
 (defvar +app-settings+
   `((use-icons :type boolean :label "Use icons" :default t)
     (highlight-code :type boolean :label "Highlight code" :default t)
@@ -496,14 +519,18 @@ div.node {
     (initialize-theme it acceptor)))
 
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
-  (let* ((node-name (substitute #\- #\space (remove #\/ (hunchentoot:request-uri request))))
-         (node (trivia:match node-name
-                 ("" (find-node (info-repository acceptor) "Top"))
-                 (_ (find-node (info-repository acceptor) node-name))))
+  (let* ((uri (quri:uri (hunchentoot:request-uri request)))
+         (node (trivia:match (quri:uri-path uri)
+                 ((or "" "/") (find-node (info-repository acceptor) "Top"))
+                 ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
+                 ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
+                 (_
+                  (let ((node-name (substitute #\- #\space (remove #\/ (quri:uri-path uri)))))
+                    (find-node (info-repository acceptor) node-name)))))
          (info-document (info-document-for-uri (info-repository acceptor)
-                                               (hunchentoot:request-uri request))))
+                                               uri)))
     (if (not node)
-        (format nil "Not found: ~a" node-name)
+        (format nil "Not found")
         (with-output-to-string (s)
           (webinfo-html s
                         (lambda (stream)
@@ -520,11 +547,11 @@ div.node {
 
 (defun start-demo (&rest args)
   (webinfo:start-webinfo
-         :port 9090
-         :info-repository
-         (make-instance 'file-info-repository
-                        :file
-                        (make-instance 'webinfo:xml-info-document
-                                       :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
-                                       :title "Djula manual"))
-         :app-settings (list (cons :theme (make-instance 'nav-theme)))))
+   :port 9090
+   :info-repository
+   (make-instance 'file-info-repository
+                  :file
+                  (make-instance 'webinfo:xml-info-document
+                                 :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
+                                 :title "Djula manual"))
+   :app-settings (list (cons :theme (make-instance 'nav-theme)))))
