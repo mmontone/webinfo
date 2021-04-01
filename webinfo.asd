@@ -19,4 +19,5 @@
                :access
                :cl-forms
                :cl-forms.who
-               :metabang-bind))
+               :metabang-bind
+               :assoc-utils))

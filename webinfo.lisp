@@ -12,9 +12,8 @@
           :accessor title)
    (description :initarg :description
                 :accessor description)
-   (function-index)
-   (variable-index)
-   (concept-index)
+   (indexes :accessor indexes
+          :initform nil)
    (top-node :accessor top-node)))
 
 (defclass info-node ()
@@ -51,16 +50,14 @@
     (setf (xml-document info-document)
           (cxml:parse (filepath info-document)
                       (cxml-dom:make-dom-builder)
-                      :entity-resolver #'resolver))))
+                      :entity-resolver #'resolver)))
+
+  
+  (initialize-indexes info-document))
 
 (defgeneric info-document-for-uri (info-repository uri))
 (defmethod info-document-for-uri ((repo file-info-repository) uri)
   (file repo))
-
-(defparameter *djula-manual*
-  (make-instance 'xml-info-document
-                 :title "Djula manual"
-                 :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")))
 
 (defun make-xml-info-node (xml)
   (make-instance 'xml-info-node
@@ -88,6 +85,12 @@
 
 (defmethod children ((node xml-info-node))
   (mapcar 'make-xml-info-node (xpath:all-nodes (xpath:evaluate "./node" (content-xml node)))))
+
+(defmethod all-nodes ((doc xml-info-document))
+  (labels ((all-descendants (node)
+             (cons node (alexandria:flatten (mapcar #'all-descendants (children node))))))
+    (let* ((top-nodes (mapcar 'make-xml-info-node (xpath:all-nodes (xpath:evaluate "/texinfo/node" (xml-document doc))))))
+      (alexandria:flatten (mapcar #'all-descendants top-nodes)))))
 
 (defmethod toc ((node info-node))
   (cons node
@@ -140,13 +143,16 @@
                          (:|chapter| (render))
                          (:|section| (render))
                          (:|subsection| (render))
-                         (:|sectiontitle| )
+                         (:|sectiontitle| (who:htm (:h1 (render))))
                          (:|anchor|)
                          (:|top| (render))
-                         (:|unnumbered|)
+                         (:|unnumbered| (render))
                          (:|findex|)
                          (:|cindex|)
                          (:|vindex|)
+                         (:|printindex| (print-index (get-index (info-repository *webinfo-acceptor*)
+                                                                (alexandria:make-keyword (string-upcase (dom:get-attribute x "value"))))
+                                                     stream))
                          (:|table| (who:htm (:table (render))))
                          (:|tableentry| (who:htm (:tr (render))))
                          (:|tableterm| (who:htm (:td (render))))
@@ -178,8 +184,6 @@
   (who:with-html-output (stream)
     (:div :class "node"
           (render-node-navigation node stream)
-          (:h1 :class "node-title"
-               (who:str (node-title node)))
           (:div :class "node-content"
                 (render-xml-content (content-xml node) stream))
           (render-node-navigation node stream))))
@@ -225,6 +229,61 @@
   (bind:bind (((manual-name node-name) (split-sequence:split-sequence #\/ name)))
     (let ((info-document (find-info-document info-repository manual-name)))
       (find-node info-document node-name))))
+
+;; Indexes
+(defmethod collect-indexes ((info-document info-document) index-type)
+  (let ((doc-indexes (list)))
+    (loop for node in (all-nodes info-document)
+          for node-indexes := (collect-indexes node index-type)
+          do
+             (loop for node-index in node-indexes
+                   do (push (cons node-index node) doc-indexes)))
+    doc-indexes))
+
+(defmethod collect-indexes ((node xml-info-node) index-type)
+  (let ((node-name (string-downcase (string index-type))))
+    (mapcar (lambda (xml-index)
+              (dom:data (xpath:first-node (xpath:evaluate "./indexterm/text()" xml-index))))
+            (xpath:all-nodes
+             (xpath:evaluate (format nil ".//~a" node-name)
+                             (content-xml node))))))
+    
+(defun initialize-indexes (info-document)
+  (setf (aget (indexes info-document) :fn)
+        (collect-indexes info-document :findex))
+  (setf (aget (indexes info-document) :cp)
+        (collect-indexes info-document :cindex))
+  (setf (aget (indexes info-document) :vr)
+        (collect-indexes info-document :vindex)))
+
+#+nil(defmethod initialize-instance :after ((info-document info-document) &rest initargs)
+  (declare (ignore initargs))
+  (initialize-indexes info-document))
+
+(defmethod get-index ((doc info-document) index-type)
+  (aget (indexes doc) index-type))
+
+(defmethod get-index ((repo file-info-repository) index-type)
+  (get-index (file repo) index-type))
+
+(defmethod search-index ((repo file-info-repository) term &key index-type)
+  (if index-type
+      (loop for (name . node) in (get-index (file repo) index-type)
+            when (search term name :test 'equalp)
+              collect (cons name node))
+      ;; else
+      (loop for (name . node) in (apply #'append (mapcar 'cdr (indexes (file repo))))
+            when (search term name :test 'equalp)
+              collect (cons name node))))
+
+(defun print-index (index stream)
+  (who:with-html-output (stream)
+    (:ul :class "menu"
+         (loop for (name . node) in index do
+           (who:htm (:li (:a :href (node-name node)
+                             (who:str name))
+                         (who:str (node-title node))))))))
+;; Web
 
 (defun webinfo-html (stream body)
   (let ((theme (app-setting :theme)))
