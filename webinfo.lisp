@@ -274,15 +274,18 @@
 (defmethod get-index ((repo file-info-repository) index-type)
   (get-index (file repo) index-type))
 
-(defmethod search-index ((repo file-info-repository) term &key index-type)
+(defmethod search-index ((doc info-document) term &key index-type)
   (if index-type
-      (loop for (name . node) in (get-index (file repo) index-type)
+      (loop for (name . node) in (get-index doc index-type)
             when (search term name :test 'equalp)
               collect (cons name node))
       ;; else
-      (loop for (name . node) in (apply #'append (mapcar 'cdr (indexes (file repo))))
+      (loop for (name . node) in (apply #'append (mapcar 'cdr (indexes doc)))
             when (search term name :test 'equalp)
               collect (cons name node))))
+
+(defmethod search-index ((repo file-info-repository) term &key index-type)
+  (search-index (file repo) term :index-type index-type))
 
 (defun print-index (index stream)
   (who:with-html-output (stream)
@@ -291,6 +294,22 @@
            (who:htm (:li (:a :href (node-name node)
                              (who:str name))
                          (who:str (node-title node))))))))
+
+(defclass index-matches-node (info-node)
+  ((seach-term :initarg :search-term :accessor search-term)
+   (matches :initarg :matches :accessor matches)))
+
+(defmethod render-node ((index-matches-node) theme stream &rest args)
+  (who:with-html-output (stream)
+    (:div :class "node"
+          (render-node-navigation node stream)
+          (:div :class "node-content"
+                (:ul :class "index-matches"
+                     (loop for match in matches do
+                       (who:htm (:li (:a :href ))))
+          (render-node-navigation node stream)))
+  
+
 ;; Web
 
 (defun webinfo-html (stream body)
