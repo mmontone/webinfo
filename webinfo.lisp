@@ -160,7 +160,7 @@
                          (:|anchor|)
                          (:|defvr| (who:htm (:div :class "defvr" (render))))
                          (:|definitionterm| (render))
-                         (:|defcategory| (who:fmt "[~a]" (dom:data (dom:first-child x))))
+                         (:|defcategory| (who:htm (:span :class "defcategory" (who:fmt "[~a]" (dom:data (dom:first-child x))))))
                          (:|indexterm|)
                          (:|defvariable| (who:htm (:span :class "defvariable" (who:str (dom:data (dom:first-child x))))))
                          (:|definitionitem| (render))
@@ -495,9 +495,16 @@ div.node {
 
 .deffn, .defvr, .deftp {
   background-color: aliceblue;
-  border-left: 5px solid darkblue;
   padding: 5px 10px 1px 10px;
   margin-bottom: 10px;
+  border: 1px solid lightgray;
+  // border-left: 5px solid darkblue;
+}
+.defvariable, .deffunction, .defdatatype {
+  font-weight: bold;
+}
+.defcategory {
+  color: purple;
 }
 "))))
 
