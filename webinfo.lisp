@@ -492,6 +492,13 @@ div.node {
 .node {
   padding-left: 250px;
 }
+
+.deffn, .defvr, .deftp {
+  background-color: aliceblue;
+  border-left: 5px solid darkblue;
+  padding: 5px 10px 1px 10px;
+  margin-bottom: 10px;
+}
 "))))
 
 (defparameter *themes* (list (make-instance 'simple-theme)))
