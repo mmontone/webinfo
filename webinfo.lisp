@@ -446,6 +446,8 @@ div.node {
                        (:input :name "q")))
           (render-toc (toc doc) stream)
           (:div :class "settings"
+                (:a :href "/"
+                    (:ion-icon :style "font-size: 32px;" :name "home-outline"))
                 (:a :href "_settings"
                     (:ion-icon :style "font-size: 32px;" :name "settings-outline"))
                 ))))
@@ -490,6 +492,9 @@ div.node {
 .navsidebar .settings {
   height: 50px; border-top: 1px solid gray; background-color:white;
   padding: 10px;
+}
+.navsidebar .settings a {
+  margin-right: 8px;
 }
 .search input {
   width: 200px;
