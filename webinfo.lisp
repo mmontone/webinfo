@@ -143,7 +143,7 @@
   (who:with-html-output (stream)
     (:div :class "node"
           (render-node-navigation node stream)
-          (:h1 "Index search")
+          (:h1 "Index matches")
           (if (alexandria:emptyp (matches node))
               (who:htm (:p "No matches"))
               (who:htm
@@ -153,6 +153,44 @@
                             (who:htm (:li (:a :href (node-name indexed-node)
                                               (who:str term))
                                           (who:str (node-title indexed-node)))))))))
+          (render-node-navigation node stream))))
+
+(defclass search-node (info-node)
+  ((seach-term :initarg :search-term :accessor search-term)
+   (index-matches :initarg :index-matches :accessor index-matches)
+   (topics-matches :initarg :topics-matches :accessor topics-matches))
+  (:documentation "Search both index and topics at the same time"))
+
+(defmethod render-node-navigation ((node search-node) stream)
+  )
+
+(defmethod render-node ((node search-node) theme stream &rest args)
+  (declare (ignore args))
+  (who:with-html-output (stream)
+    (:div :class "node"
+          (render-node-navigation node stream)
+          (:h1 "Index matches")
+          (if (alexandria:emptyp (index-matches node))
+              (who:htm (:p "No matches"))
+              (who:htm
+               (:div :class "node-content"
+                     (:ul :class "index-matches"
+                          (loop for (term . indexed-node) in (index-matches node) do
+                            (who:htm (:li (:a :href (node-name indexed-node)
+                                              (who:str term))
+                                          (who:str (node-title indexed-node)))))))))
+          (:h1 "Topics matches")
+          (if (alexandria:emptyp (topics-matches node))
+              (who:htm (:p "No matches"))
+              (who:htm
+               (:div :class "node-content"
+                     (:ul :class "index-matches"
+                          (loop for (term . topic-node) in (topics-matches node) do
+                            (who:htm (:li (:a :href (node-name topic-node)
+                                              (who:str term))
+                                          (who:str (node-title topic-node)))))))))
+          (:form :action "_fts"
+                 (:input :type "submit" :value "Full text search"))
           (render-node-navigation node stream))))
 
 ;; Web
@@ -258,13 +296,13 @@ div.node {
   (who:with-html-output (stream)
     (:div :class "navsidebar"
           (:div :class "search"
-                (:form :action "_is"
-                       (:input :name "q")))
+                (:form :action "_s"
+                       (:input :name "q" :placeholder "Search ...")))
           (render-toc (toc doc) stream)
           (:div :class "settings"
-                (:a :href "/"
+                (:a :href "/" :alt "Home"
                     (:ion-icon :style "font-size: 32px;" :name "home-outline"))
-                (:a :href "_settings"
+                (:a :href "_settings" :alt "Settings"
                     (:ion-icon :style "font-size: 32px;" :name "settings-outline"))
                 ))))
 
@@ -363,7 +401,17 @@ ul.toc, ul.toc ul {
                      :name "Index matches"
                      :search-term search-term
                      :matches (search-index repo search-term))
-      (find-node (file repo) "Top"))))      
+      (find-node (file repo) "Top"))))
+
+(defmethod make-search-node ((repo file-info-repository) uri)
+  (let ((params (quri:uri-query-params uri)))
+    (alexandria:if-let ((search-term (aget params "q")))
+      (make-instance 'search-node
+                     :name "Search matches"
+                     :search-term search-term
+                     :index-matches (search-index repo search-term)
+                     :topics-matches nil)
+      (find-node (file repo) "Top"))))
 
 (defvar +app-settings+
   `((use-icons :type boolean :label "Use icons" :default t)
@@ -406,6 +454,7 @@ ul.toc, ul.toc ul {
          (node (trivia:match (quri:uri-path uri)
                  ((or nil "" "/") (find-node (info-repository acceptor) "Top"))
                  ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
+                 ((or "_s" "/_s") (make-search-node (info-repository acceptor) uri))
                  ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
                  ((or "_settings" "/_settings")
                   (trivia:match (hunchentoot:request-method request)
