@@ -22,7 +22,7 @@
   ((search-term :initarg :search-term :accessor search-term
                 :initform (error "Provide the search term"))
    (search-index :initarg :search-index :accessor search-index-of
-                 :initform (error "Provide the search index"))
+                 :initform *search-index*)
    (matches :accessor matches)))
 
 (defmethod initialize-instance :after ((node fulltext-search-node) &rest initargs)

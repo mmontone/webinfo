@@ -474,7 +474,6 @@ ul.toc, ul.toc ul {
                  ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
                  ((or "_s" "/_s") (make-search-node (info-repository acceptor) uri))
                  ((or "_fts" "/_fts") (make-instance 'fulltext-search-node
-                                                     :search-index *search-index*
                                                      :search-term (aget (quri:uri-query-params uri) "q")))
                  ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
                  ((or "_settings" "/_settings")
@@ -503,12 +502,14 @@ ul.toc, ul.toc ul {
   (hunchentoot:stop *webinfo-acceptor*))
 
 (defun start-demo (&rest args)
-  (webinfo:start-webinfo
-   :port 9090
-   :info-repository
-   (make-instance 'file-info-repository
-                  :file
-                  (make-instance 'webinfo:xml-info-document
-                                 :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
-                                 :title "Djula manual"))
-   :app-settings (list (cons :theme (make-instance 'nav-theme)))))
+  (let ((djula-manual (make-instance 'webinfo:xml-info-document
+                                     :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
+                                     :title "Djula manual")))
+    (fulltext-index-document djula-manual)
+    
+    (webinfo:start-webinfo
+     :port 9090
+     :info-repository
+     (make-instance 'file-info-repository
+                    :file djula-manual)
+     :app-settings (list (cons :theme (make-instance 'nav-theme))))))
