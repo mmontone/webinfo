@@ -109,8 +109,7 @@
                                       (render-element (break "~a" x))))
                          (:|macro|) ;; TODO
                          (:|chapter| (render))
-                         (:|section| (render))
-                         (:|subsection| (render))
+                         ((:|section| :|subsection| :|subsubsection|) (render))
                          (:|sectiontitle| (who:htm (:h1 (render))))
                          (:|anchor|)
                          (:|defvr| (who:htm (:div :class "defvr" (render))))

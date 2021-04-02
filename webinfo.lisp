@@ -131,6 +131,12 @@
                                   (who:str name))
                               (who:str (node-title node))))))))))
 
+(defmethod search-topics ((repo file-info-repository) term)
+  (loop for node in (all-nodes (file repo))
+        when (search term (node-title node) :test 'equalp)
+          collect (cons (node-title node)
+                        node)))
+
 (defclass index-matches-node (info-node)
   ((seach-term :initarg :search-term :accessor search-term)
    (matches :initarg :matches :accessor matches)))
@@ -156,10 +162,22 @@
           (render-node-navigation node stream))))
 
 (defclass search-node (info-node)
-  ((seach-term :initarg :search-term :accessor search-term)
-   (index-matches :initarg :index-matches :accessor index-matches)
-   (topics-matches :initarg :topics-matches :accessor topics-matches))
+  ((seach-term :initarg :search-term :accessor search-term
+               :initform (error "Provide the search term"))
+   (place :initarg :place :accessor place
+          :initform (error "Provide the place where to do the search"))
+   (index-type :initarg :index-type
+               :initform nil
+               :accessor index-type)
+   (index-matches :accessor index-matches)
+   (topics-matches :accessor topics-matches))
   (:documentation "Search both index and topics at the same time"))
+
+(defmethod initialize-instance :after ((node search-node) &rest initargs)
+  (setf (index-matches node)
+        (search-index (place node) (search-term node) :index-type (index-type node)))
+  (setf (topics-matches node)
+        (search-topics (place node) (search-term node))))
 
 (defmethod render-node-navigation ((node search-node) stream)
   )
@@ -409,8 +427,7 @@ ul.toc, ul.toc ul {
       (make-instance 'search-node
                      :name "Search matches"
                      :search-term search-term
-                     :index-matches (search-index repo search-term)
-                     :topics-matches nil)
+                     :place repo)
       (find-node (file repo) "Top"))))
 
 (defvar +app-settings+
