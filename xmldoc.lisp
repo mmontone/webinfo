@@ -70,6 +70,16 @@
                               collect (make-element child))))))
     (make-element xml)))
 
+(defmethod text-contents ((node xml-info-node))
+  (let ((text ""))
+    (labels ((append-text (x)
+             (if (dom:text-node-p x)
+                 (setf text (concatenate 'string text (dom:data x)))
+                 (loop for child across (dom:child-nodes x)
+                       do (append-text child)))))
+      (append-text (content-xml node))
+      text)))
+
 (defun render-xml-content (xml stream &key (split t))
   (who:with-html-output (stream)
     (block quit

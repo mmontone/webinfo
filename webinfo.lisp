@@ -162,8 +162,8 @@
           (render-node-navigation node stream))))
 
 (defclass search-node (info-node)
-  ((seach-term :initarg :search-term :accessor search-term
-               :initform (error "Provide the search term"))
+  ((search-term :initarg :search-term :accessor search-term
+                :initform (error "Provide the search term"))
    (place :initarg :place :accessor place
           :initform (error "Provide the place where to do the search"))
    (index-type :initarg :index-type
@@ -208,6 +208,7 @@
                                               (who:str term))
                                           (who:str (node-title topic-node)))))))))
           (:form :action "_fts"
+                 (:input :type "hidden" :name "q" :value (search-term node))
                  (:input :type "submit" :value "Full text search"))
           (render-node-navigation node stream))))
 
@@ -472,6 +473,9 @@ ul.toc, ul.toc ul {
                  ((or nil "" "/") (find-node (info-repository acceptor) "Top"))
                  ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
                  ((or "_s" "/_s") (make-search-node (info-repository acceptor) uri))
+                 ((or "_fts" "/_fts") (make-instance 'fulltext-search-node
+                                                     :search-index *search-index*
+                                                     :search-term (aget (quri:uri-query-params uri) "q")))
                  ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
                  ((or "_settings" "/_settings")
                   (trivia:match (hunchentoot:request-method request)

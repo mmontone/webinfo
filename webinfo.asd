@@ -8,7 +8,8 @@
   :serial t
   :components ((:file "package")
                (:file "webinfo")
-               (:file "xmldoc"))
+               (:file "xmldoc")
+               (:file "search"))
   :depends-on (:anaphora
                :hunchentoot
                :cl-who
@@ -22,4 +23,5 @@
                :cl-forms.who
                :metabang-bind
                :assoc-utils
-               :quri))
+               :quri
+               :montezuma))
