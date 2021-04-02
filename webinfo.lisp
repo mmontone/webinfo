@@ -3,17 +3,20 @@
 (in-package #:webinfo)
 
 (defclass info-document ()
-  ((filepath :initarg :filepath
+  ((name :initarg :name
+         :accessor document-name
+         :initform (error "Provide the document name"))
+   (filepath :initarg :filepath
              :accessor filepath)
    (file :initarg :file
          :accessor file)
    (title :initarg :title
           :accessor title)
    (description :initarg :description
-                :accessor description)
+                :accessor description
+                :initform "")
    (indexes :accessor indexes
-            :initform nil)
-   (top-node :accessor top-node)))
+            :initform nil)))
 
 (defclass info-node ()
   ((name :initarg :name :accessor node-name)))
@@ -33,10 +36,23 @@
   ((file :initarg :file
          :accessor file)))
 
+(defmethod home-node ((repo file-info-repository))
+  (find-node (file repo) "Top"))
+
+(defmethod home-node ((repo dir-info-repository))
+  (make-instance 'dir-node :dir (dir repo)))
 
 (defgeneric info-document-for-uri (info-repository uri))
 (defmethod info-document-for-uri ((repo file-info-repository) uri)
   (file repo))
+
+(defmethod info-document-for-uri ((repo dir-info-repository) uri)
+  (let ((doc-name (first (split-sequence:split-sequence #\/ (quri:uri-path uri) :remove-empty-subseqs t))))
+    (find-info-document repo doc-name)))
+
+(defun find-info-document (dir-info-repository doc-name &key (errorp t))
+  (or (find doc-name (dir dir-info-repository) :key 'document-name :test 'equalp)
+      (and errorp (error "Document not found: ~a" doc-name))))
 
 (defmethod toc ((node info-node))
   (cons node
@@ -75,7 +91,7 @@
   (find-node (file info-repository) name))
 
 (defmethod find-node ((info-repository dir-info-repository) name)
-  (bind:bind (((manual-name node-name) (split-sequence:split-sequence #\/ name)))
+  (bind:bind (((manual-name &optional (node-name "Top")) (split-sequence:split-sequence #\/ name :remove-empty-subseqs t)))
     (let ((info-document (find-info-document info-repository manual-name)))
       (find-node info-document node-name))))
 
@@ -212,6 +228,20 @@
                  (:input :type "submit" :value "Full text search"))
           (render-node-navigation node stream))))
 
+(defclass dir-node (info-node)
+  ((dir :initarg :dir :accessor dir)))
+
+(defmethod render-node ((node dir-node) theme stream &rest args)
+  (who:with-html-output (stream)
+    (:h1 (who:str "(dir)Top"))
+    (:p (who:str "This (the Directory node) gives a menu of major topics."))
+    (:ul :class "menu"
+         (loop for doc in (dir node)
+               do
+                  (who:htm (:li (:a :href (format nil "~a/" (document-name doc))
+                                    (who:str (title doc)))
+                                (who:str (description doc))))))))
+
 ;; Web
 
 (defun webinfo-html (stream body)
@@ -309,7 +339,8 @@ div.node {
 
 (defmethod render-node :before (node (theme nav-theme) stream &rest args)
   (let ((info-doc (first args)))
-    (render-navigation-sidebar info-doc stream)))
+    (when info-doc
+      (render-navigation-sidebar info-doc stream))))
 
 (defun render-navigation-sidebar (doc stream)
   (who:with-html-output (stream)
@@ -468,29 +499,33 @@ ul.toc, ul.toc ul {
     (initialize-theme it acceptor)))
 
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
-  (let* ((uri (quri:uri (hunchentoot:request-uri request)))
-         (node (trivia:match (quri:uri-path uri)
-                 ((or nil "" "/") (find-node (info-repository acceptor) "Top"))
-                 ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
-                 ((or "_s" "/_s") (make-search-node (info-repository acceptor) uri))
-                 ((or "_fts" "/_fts") (make-instance 'fulltext-search-node
-                                                     :search-term (aget (quri:uri-query-params uri) "q")))
-                 ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
-                 ((or "_settings" "/_settings")
-                  (trivia:match (hunchentoot:request-method request)
-                    (:get (make-instance 'settings-info-node))
-                    (:post (save-settings acceptor request) nil)))
-                 (_
-                  (let ((node-name (substitute #\- #\space (remove #\/ (quri:uri-path uri)))))
-                    (find-node (info-repository acceptor) node-name)))))
-         (info-document (info-document-for-uri (info-repository acceptor)
-                                               uri)))
+  (bind:bind
+      ((uri (quri:uri (hunchentoot:request-uri request)))
+       ((:values node doc)
+        (trivia:match (quri:uri-path uri)
+          ((or nil "" "/") (home-node (info-repository acceptor)))
+          ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
+          ((or "_s" "/_s") (make-search-node (info-repository acceptor) uri))
+          ((or "_fts" "/_fts") (make-instance 'fulltext-search-node
+                                              :search-term (aget (quri:uri-query-params uri) "q")))
+          ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
+          ((or "_settings" "/_settings")
+           (trivia:match (hunchentoot:request-method request)
+             (:get (make-instance 'settings-info-node))
+             (:post (save-settings acceptor request) nil)))
+          (_
+           (let* ((clean-url (remove #\/ (quri:uri-path uri) :count 1))
+                  (node-name (substitute #\- #\space clean-url)))
+             (values (find-node (info-repository acceptor) node-name)
+                     (info-document-for-uri (info-repository acceptor)
+                                            uri)
+             ))))))
     (if (not node)
         (format nil "Not found")
         (with-output-to-string (s)
           (webinfo-html s
                         (lambda (stream)
-                          (render-node node (app-setting :theme acceptor) stream  info-document)))))))
+                          (render-node node (app-setting :theme acceptor) stream  doc)))))))
 
 (defvar *webinfo-acceptor*)
 
@@ -501,8 +536,9 @@ ul.toc, ul.toc ul {
 (defun stop-webinfo ()
   (hunchentoot:stop *webinfo-acceptor*))
 
-(defun start-demo (&rest args)
+(defun start-doc-demo (&rest args)
   (let ((djula-manual (make-instance 'webinfo:xml-info-document
+                                     :name "djula"
                                      :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
                                      :title "Djula manual")))
     (fulltext-index-document djula-manual)
@@ -512,4 +548,23 @@ ul.toc, ul.toc ul {
      :info-repository
      (make-instance 'file-info-repository
                     :file djula-manual)
+     :app-settings (list (cons :theme (make-instance 'nav-theme))))))
+
+(defun start-dir-demo (&rest args)
+  (let ((djula-manual (make-instance 'webinfo:xml-info-document
+                                     :name "djula"
+                                     :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
+                                     :title "Djula manual"))
+        (djula-ref (make-instance 'webinfo:xml-info-document
+                                  :name "djula-ref"
+                                  :filepath (asdf:system-relative-pathname :webinfo "test/djula-ref.xml")
+                                  :title "Djula reference")))
+    (fulltext-index-document djula-manual)
+    (fulltext-index-document djula-ref)
+    
+    (webinfo:start-webinfo
+     :port 9090
+     :info-repository
+     (make-instance 'dir-info-repository
+                    :dir (list djula-manual djula-ref))
      :app-settings (list (cons :theme (make-instance 'nav-theme))))))
