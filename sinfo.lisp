@@ -31,7 +31,8 @@
   (elements))
 
 (defmethod sax:start-document ((handler sinfo-sax-handler))
-  (setf (slot-value handler 'elements) '(())))
+  (setf (slot-value handler 'elements) '(()))
+  )
 
 (defmethod sax:end-document ((handler sinfo-sax-handler))
   (reverse (first (slot-value handler 'elements))))
@@ -85,7 +86,7 @@
           (attributes (loop for attr in (remove-if #'namespace-p attributes)
                        collect (intern-attribute attr)
                        collect (sax:attribute-value attr))))
-      (push `(,@(when attributes `(,attributes ,name)))
+      (push `(,attributes ,name)
             elements))))
 
 (defmethod sax:end-element ((handler sinfo-sax-handler)
