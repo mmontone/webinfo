@@ -11,7 +11,8 @@
    (file :initarg :file
          :accessor file)
    (title :initarg :title
-          :accessor title)
+          :accessor title
+          :initform (error "Provide a title for the document"))
    (description :initarg :description
                 :accessor description
                 :initform "")
@@ -19,7 +20,8 @@
             :initform nil)))
 
 (defclass info-node ()
-  ((name :initarg :name :accessor node-name)))
+  ((name :initarg :name :accessor node-name
+         :initform (error "Provide a name for the node"))))
 
 (defmethod print-object ((node info-node) stream)
   (print-unreadable-object (node stream :type t :identity t)
@@ -40,7 +42,9 @@
   (find-node (file repo) "Top"))
 
 (defmethod home-node ((repo dir-info-repository))
-  (make-instance 'dir-node :dir (dir repo)))
+  (make-instance 'dir-node
+                 :dir (dir repo)
+                 :name "dir"))
 
 (defgeneric info-document-for-uri (info-repository uri))
 (defmethod info-document-for-uri ((repo file-info-repository) uri)
