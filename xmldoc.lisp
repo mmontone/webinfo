@@ -162,6 +162,7 @@
                          (:|listitem| (who:htm (:li (render))))
                          (:|strong| (who:htm (:b (render))))
                          (:|emph| (who:htm (:emph (render))))
+                         (:|quotation| (who:htm (:quote (render))))
                          (:|sc| (who:str (dom:data (dom:first-child x)))) ;; smallcaps
                          (:|ref| "TODO:implement")
                          (:|uref| "TODO: implement" )
