@@ -91,9 +91,12 @@
                           (who:htm
                            (:ol :class "menu"
                                 (loop for menuentry in (xpath:all-nodes (xpath:evaluate "./menuentry" x))
-                                      do (let ((node-name (dom:data (xpath:first-node (xpath:evaluate "./menunode/text()" menuentry)))))
+                                      do (let* ((node-name (dom:data (xpath:first-node (xpath:evaluate "./menunode/text()" menuentry))))
+                                               (node-url-name (substitute #\- #\space node-name)))
                                            (who:htm
-                                            (:li (:a :href (substitute #\- #\space node-name)
+                                            (:li (:a :href (if split
+                                                               node-url-name
+                                                               (format nil "#~a" node-url-name))
                                                      (who:str node-name)
                                                      )))))))))
                    (cond
@@ -109,14 +112,19 @@
                           (who:htm (:ul :class "menu" (render)))
                           )
                          (:|menuentry| (who:htm (:li (render))))
-                         (:|menunode| (let ((node-name (dom:data (dom:first-child x))))
-                                        (who:htm (:a :href (substitute #\- #\space node-name)
+                         (:|menunode| (let* ((node-name (dom:data (dom:first-child x)))
+                                             (node-url-name (substitute #\- #\space node-name)))
+                                        (who:htm (:a :href (if split
+                                                               node-url-name
+                                                               (format nil "#~a" node-url-name))
                                                      (who:str node-name)))))
                          (:|menudescription| (render))
                          (:|pre| (who:htm (:pre (render))))
                          (:|node| (if split
                                       (return-from quit)
-                                      (render-element (break "~a" x))))
+                                      (let ((subnode (make-xml-info-node x)))
+                                        (render-subnode subnode nil stream)))) 
+                         (:|nodename|)
                          (:|macro|) ;; TODO
                          (:|chapter| (render))
                          ((:|section| :|subsection| :|subsubsection|) (render))
@@ -140,6 +148,8 @@
                          (:|printindex| (print-index (get-index (info-repository *webinfo-acceptor*)
                                                                 (alexandria:make-keyword (string-upcase (dom:get-attribute x "value"))))
                                                      stream))
+                         (:|multitable| ;; TODO (who:htm (:table (render)))
+                          )
                          (:|table| (who:htm (:table (render))))
                          (:|tableentry| (who:htm (:tr (render))))
                          (:|tableterm| (who:htm (:td (render))))
@@ -172,8 +182,15 @@
     (:div :class "node"
           (render-node-navigation node stream)
           (:div :class "node-content"
-                (render-xml-content (content-xml node) stream))
+                (render-xml-content (content-xml node) stream :split nil))
           (render-node-navigation node stream))))
+
+(defmethod render-subnode ((node xml-info-node) theme stream)
+  (who:with-html-output (stream)
+    (:div :class "subnode"
+          :id (node-name node)
+          (:div :class "node-content"
+                (render-xml-content (content-xml node) stream :split nil)))))
 
 (defmethod node-type ((node xml-info-node))
   (alexandria:make-keyword (dom:tag-name (content-xml node))))
