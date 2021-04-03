@@ -457,6 +457,7 @@ ul.toc, ul.toc ul {
 }
 .defcategory {
   color: purple;
+  margin-right: 5px;
 }
 "))))
 

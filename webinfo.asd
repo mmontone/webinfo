@@ -9,7 +9,9 @@
   :components ((:file "package")
                (:file "webinfo")
                (:file "xmldoc")
-               (:file "search"))
+               (:file "search")
+               (:file "sexp-node")
+               (:file "lispdoc"))
   :depends-on (:anaphora
                :hunchentoot
                :cl-who
