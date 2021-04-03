@@ -8,8 +8,14 @@
           :initform nil))
   (:documentation "An info document generated dynamically from Common Lisp packages exported definitions."))
 
-(defmethod find-node ((doc lisp-info-document) name)
-  (find name (nodes doc) :key 'node-name :test 'string=))
+(defmethod find-node ((doc lisp-info-document) node-name)
+  (labels ((tree-find (node node-name)
+             (or (find node-name (nodes node) :key 'node-name :test 'string=)
+                 (loop for child in (nodes node)
+                       for found-node := (tree-find child node-name)
+                       while (not found-node)
+                       finally (return found-node)))))
+    (tree-find doc node-name)))
 
 (defun collect-package-info (&optional (package *package*))
   (let (docs)
@@ -268,9 +274,9 @@ the CADR of the list."
       (setf (node-up dictionary-node) "Top")
       (setf (contents dictionary-node)
             `(:|chapter| ()
-               (:|sectionname| ()
+               (:|sectiontitle| ()
                  "Dictionary")
-               ,(loop for info in package-info
+               ,@(loop for info in package-info
                       collect (lispinfo->sexp info))))
 
       (push top-node (nodes doc))
