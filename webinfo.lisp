@@ -28,11 +28,11 @@
 (defclass info-repository ()
   ())
 
-(defclass dir-info-repository ()
+(defclass dir-info-repository (info-repository)
   ((dir :initarg :dir
         :accessor dir)))
 
-(defclass file-info-repository ()
+(defclass file-info-repository (info-repository)
   ((file :initarg :file
          :accessor file)))
 
@@ -136,6 +136,10 @@
 (defmethod search-index ((repo file-info-repository) term &key index-type)
   (search-index (file repo) term :index-type index-type))
 
+(defmethod search-index ((repo dir-info-repository) term &key index-type)
+  (loop for doc in (dir repo)
+        appending (search-index doc term :index-type index-type)))
+
 (defun print-index (index stream)
   (who:with-html-output (stream)
     (if (alexandria:emptyp index)
@@ -147,11 +151,18 @@
                                   (who:str name))
                               (who:str (node-title node))))))))))
 
-(defmethod search-topics ((repo file-info-repository) term)
-  (loop for node in (all-nodes (file repo))
+(defmethod search-topics ((doc info-document) term)
+  (loop for node in (all-nodes doc)
         when (search term (node-title node) :test 'equalp)
           collect (cons (node-title node)
                         node)))
+
+(defmethod search-topics ((repo file-info-repository) term)
+  (search-topics (file repo) term))
+
+(defmethod search-topics ((repo dir-info-repository) term)
+  (loop for doc in (dir repo)
+        appending (search-topics doc term)))
 
 (defclass index-matches-node (info-node)
   ((seach-term :initarg :search-term :accessor search-term)
@@ -235,6 +246,9 @@
   (who:with-html-output (stream)
     (:h1 (who:str "(dir)Top"))
     (:p (who:str "This (the Directory node) gives a menu of major topics."))
+    (:div :class "search"
+          (:form :action "_s"
+                 (:input :name "q" :placeholder "Search ...")))
     (:ul :class "menu"
          (loop for doc in (dir node)
                do
@@ -453,7 +467,7 @@ ul.toc, ul.toc ul {
                      :matches (search-index repo search-term))
       (find-node (file repo) "Top"))))
 
-(defmethod make-search-node ((repo file-info-repository) uri)
+(defmethod make-search-node ((repo info-repository) uri)
   (let ((params (quri:uri-query-params uri)))
     (alexandria:if-let ((search-term (aget params "q")))
       (make-instance 'search-node
