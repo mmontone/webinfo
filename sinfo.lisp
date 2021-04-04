@@ -144,11 +144,52 @@
   ())
 
 (defun write-info-document-to-file (doc filepath)
-  (with-open-file (out filepath
-                       :direction :output
-                       :if-exists :supersede
-                       :if-does-not-exist :create
-                       :external-format '(:latin-1 :eol-style :lf))
-    (setq out (flex:make-flexi-stream out :external-format :utf-8))
+  (let ((tag-table
+          (list (cons :nodes nil)
+                (cons :indexes (list (cons :cp nil)
+                                     (cons :fn nil)
+                                     (cons :vr nil)
+                                     (cons :tp nil)))))
+        (tag-table-pos))
+    (with-open-file (file filepath
+                          :direction :output
+                          :if-exists :supersede
+                          :if-does-not-exist :create
+                          :element-type '(unsigned-byte 8)
+                          :external-format :utf-8)
+
+      (setq file (flex:make-flexi-stream file :external-format :utf-8))
+
+      ;; Nodes
+      (loop for node in (all-nodes doc)
+            do
+               (push (cons (node-name node) (file-position file))
+                     (aget tag-table :nodes))
+               (prin1 (xml-content->lisp
+                       (node-xml node) :include-nodes t)
+                      file)
+               (terpri file)
+               (prin1 (xml-content->lisp
+                       (content-xml node))
+                      file)
+               (terpri file))
+
+      ;; Index
+      (setf (aget (aget tag-table :index) :fn)
+            (collect-indexes doc :findex))
+      (setf (aget (aget tag-table :index) :vr)
+            (collect-indexes doc :vindex))
+      (setf (aget (aget tag-table :index) :tp)
+            (collect-indexes doc :tindex))
+      (setf (aget (aget tag-table :index) :cp)
+            (collect-indexes doc :cindex))
+      (setf tag-table-pos (file-position file))
+      (prin1 tag-table file)
     
-    ))
+      ;; Pointer to tag-table
+      (write-sequence (cl-intbytes:int->octets 655 3) file)
+
+      ;; File format version
+      (write-sequence (cl-intbytes:int->octets 1 1) file)
+
+      )))
