@@ -231,3 +231,16 @@
       (file-position file tag-table-pos)
       (read file)
       )))
+
+(defmethod find-node ((doc sinfo-info-document) node-name)
+  (let ((entry (find node-name (aget (tag-table doc) :nodes)
+                     :key 'car
+                     :test 'string=)))
+    (with-open-file (file (filepath doc)
+                          :direction :input
+                          :element-type '(unsigned-byte 8)
+                          :external-format :utf-8)
+      (setq file (flex:make-flexi-stream file :external-format :utf-8))
+      (file-position file (cdr entry))
+      (values (read file)
+              (read file)))))
