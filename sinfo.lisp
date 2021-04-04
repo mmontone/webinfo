@@ -20,8 +20,18 @@
 (in-package :webinfo)
 
 (defclass sinfo-info-document (info-document)
-  ((file :initarg :file :accessor file))
+  ((filepath :initarg :filepath :accessor filepath
+             :initform (error "Provide the filepath"))
+   (tag-table :initarg :tag-table
+              :accessor tag-table)
+   
+   (file :accessor file :documentation "A handle to the document file"))
   (:documentation "An info document that works with a serialized form in a file"))
+
+(defmethod initialize-instance :after ((doc sinfo-info-document) &rest initargs)
+  (declare (ignore initargs))
+  (setf (tag-table doc)
+        (read-sinfo-tag-table-from-file (filepath doc))))
 
 ;;-----------------------
 ;;-- xml reader
@@ -175,21 +185,49 @@
                (terpri file))
 
       ;; Index
-      (setf (aget (aget tag-table :index) :fn)
-            (collect-indexes doc :findex))
-      (setf (aget (aget tag-table :index) :vr)
-            (collect-indexes doc :vindex))
-      (setf (aget (aget tag-table :index) :tp)
-            (collect-indexes doc :tindex))
-      (setf (aget (aget tag-table :index) :cp)
-            (collect-indexes doc :cindex))
+      (flet ((serialize-indexes (indexes)
+               (mapcar (bind:lambda-bind ((term . node))
+                         (cons term (node-name node)))
+                       indexes)))
+        (setf (aget (aget tag-table :index) :fn)
+              (serialize-indexes (collect-indexes doc :findex)))
+        (setf (aget (aget tag-table :index) :vr)
+              (serialize-indexes (collect-indexes doc :vindex)))
+        (setf (aget (aget tag-table :index) :tp)
+              (serialize-indexes (collect-indexes doc :tindex)))
+        (setf (aget (aget tag-table :index) :cp)
+              (serialize-indexes (collect-indexes doc :cindex))))
       (setf tag-table-pos (file-position file))
       (prin1 tag-table file)
+      (terpri file)
     
       ;; Pointer to tag-table
-      (write-sequence (cl-intbytes:int->octets 655 3) file)
+      (write-sequence (cl-intbytes:int->octets tag-table-pos 3) file)
 
       ;; File format version
       (write-sequence (cl-intbytes:int->octets 1 1) file)
 
+      )))
+
+(defun read-sinfo-tag-table-from-file (filepath)
+  (with-open-file (file filepath
+                        :direction :input
+                        :element-type '(unsigned-byte 8)
+                        :external-format :utf-8)
+    (let ((file-length (file-length file))
+          tag-table-pos file-format-version)
+      (setq file (flex:make-flexi-stream file :external-format :utf-8))
+      (file-position file (1- file-length))
+      ;; File format version
+      (let ((octets (make-array 1 :element-type '(unsigned-byte 8))))
+        (read-sequence octets file)
+        (setf file-format-version (cl-intbytes:octets->uint octets 1)))
+      ;; Tag table position
+      (file-position file (- file-length 4))
+      (let ((octets (make-array 3 :element-type '(unsigned-byte 8))))
+        (read-sequence octets file)
+        (setf tag-table-pos (cl-intbytes:octets->uint octets 3)))
+
+      (file-position file tag-table-pos)
+      (read file)
       )))
