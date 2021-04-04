@@ -95,8 +95,8 @@ the CADR of the list."
         (cons :args (let ((*print-case* :downcase)
                           (*package* (symbol-package symbol)))
                       #+nil(format nil "~{~a~^ ~}"
-                              (mapcar #'format-argument-to-string (swank-backend:arglist symbol))
-                              )
+                                   (mapcar #'format-argument-to-string (swank-backend:arglist symbol))
+                                   )
                       (princ-to-string (swank-backend:arglist symbol))))
         (cons :type (cond ((macro-function symbol) :macro)
                           ((typep (symbol-function symbol) 'generic-function) :generic-function)
@@ -216,7 +216,7 @@ the CADR of the list."
           (cons :documentation (documentation cl 'type))
           (cons :slots         (load-slots cl))
           ;; (cons :methods       (load-specialisation-info cl)) TODO: fix
-          
+
           (cons :type :class))))
 
 (defun %annotate-function-info (fn-info classes)
@@ -277,11 +277,16 @@ the CADR of the list."
                (:|sectiontitle| ()
                  "Dictionary")
                ,@(loop for info in package-info
-                      collect (lispinfo->sexp info))))
+                       collect (lispinfo->sexp info))))
 
       (push top-node (nodes doc))
       (push dictionary-node (nodes top-node))
       doc)))
+
+(defun format-text (text)
+  (loop for line in (split-sequence:split-sequence #\newline
+                                                   text)
+        collect `(:para ,line)))
 
 (defun lispinfo->sexp (info)
   (ecase (aget info :type)
@@ -293,7 +298,9 @@ the CADR of the list."
           (:|defcategory| () "Variable")
           (:|defvariable| () ,(aget info :name)))
         (:|definitionitem| ()
-          (:|para| () ,(or (aget info :documentation) "")))
+          ,@(or (aand (aget info :documentation)
+                      (format-text it))
+                `((:para ""))))
         (:|vindex| ()
           (:|indexterm| ()
             ,(aget info :name)))))
@@ -306,7 +313,9 @@ the CADR of the list."
           (:|deffunction| () ,(aget info :name))
           (:|defparam| () ,(aget info :args)))
         (:|definitionitem| ()
-          (:|para| () ,(or (aget info :documentation) "")))
+          ,@(or (aand (aget info :documentation)
+                      (format-text it))
+                `((:para ""))))
         (:|findex| ()
           (:|indexterm| ()
             ,(aget info :name)))))
@@ -319,7 +328,9 @@ the CADR of the list."
           (:|deffunction| () ,(aget info :name))
           (:|defparam| () ,(aget info :args)))
         (:|definitionitem| ()
-          (:|para| () ,(or (aget info :documentation) "")))
+          ,@(or (aand (aget info :documentation)
+                      (format-text it))
+                `((:para ""))))
         (:|findex| ()
           (:|indexterm| ()
             ,(aget info :name)))))
@@ -331,7 +342,9 @@ the CADR of the list."
           (:|defcategory| () "Class")
           (:|defdatatype| () ,(aget info :name)))
         (:|definitionitem| ()
-          (:|para| () ,(or (aget info :documentation) "")))
+          ,@(or (aand (aget info :documentation)
+                      (format-text it))
+                `((:para ""))))
         (:|tindex| ()
           (:|indexterm| ()
             ,(aget info :name)))))
@@ -344,7 +357,9 @@ the CADR of the list."
           (:|deffunction| () ,(aget info :name))
           (:|defparam| () ,(aget info :args)))
         (:|definitionitem| ()
-          (:|para| () ,(or (aget info :documentation) "")))
+          ,@(or (aand (aget info :documentation)
+                      (format-text it))
+                `((:para ""))))
         (:|findex| ()
           (:|indexterm| ()
             ,(aget info :name)))))))
@@ -356,13 +371,13 @@ the CADR of the list."
   (declare (ignore initargs))
   (setf (dir repo)
         (mapcar 'make-info-document-for-package
-                (remove "COMMON-LISP" (list-all-packages)
+                (remove "COMMON-LISP" (sort (list-all-packages) 'string< :key 'package-name)
                         :test 'equalp
                         :key 'package-name))))
 
 (defun start-lispdoc-demo ()
   (webinfo:start-webinfo
-     :port 9090
-     :info-repository
-     (make-instance 'lispdoc-info-repository)
-     :app-settings (list (cons :theme (make-instance 'nav-theme)))))
+   :port 9090
+   :info-repository
+   (make-instance 'lispdoc-info-repository)
+   :app-settings (list (cons :theme (make-instance 'nav-theme)))))

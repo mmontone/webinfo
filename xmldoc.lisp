@@ -80,6 +80,27 @@
       (append-text (content-xml node))
       text)))
 
+(defun xml-content->lisp (xml)
+  (labels ((xml-elem->lisp (x)
+             (cond
+             ((dom:text-node-p x)
+              (dom:data x))
+             ((dom:comment-p x)
+              nil)
+             (t
+              (list* (alexandria:make-keyword (dom:tag-name x))
+                     (let ((args nil))
+                       (dom:map-node-map
+                        (lambda (attr)
+                          (push (dom:data (dom:first-child attr)) args)
+                          (push (alexandria:make-keyword (dom:name attr)) args))                        
+                        (dom:attributes x))
+                       args)
+                     (remove nil
+                             (loop for child across (dom:child-nodes x)
+                                   collect (xml-elem->lisp child))))))))
+    (xml-elem->lisp xml)))
+
 (defun render-xml-content (xml stream &key (split t))
   (who:with-html-output (stream)
     (block quit
