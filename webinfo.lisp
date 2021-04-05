@@ -301,8 +301,8 @@
   (who:with-html-output (stream)
     #+nil(:link :rel "stylesheet" :href "https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css")
     (:meta :name "viewport" :content "width=device-width, initial-scale=1")
-    #+nil(:link :rel "stylesheet" :href "https://www.w3schools.com/w3css/4/w3.css")
-    (:link :rel "stylesheet" :href "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css")
+    (:link :rel "stylesheet" :href "/public/highlightjs/styles/default.css")
+    
     (:style
      (who:str "
 code.inline {
@@ -340,9 +340,8 @@ div.node {
 (defmethod add-theme-scripts ((theme simple-theme) stream)
   (who:with-html-output (stream)
     (:script :src "https://unpkg.com/ionicons@5.4.0/dist/ionicons.js")
-    (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/highlight.min.js")
-    (:script :src "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/languages/lisp.min.js")
-    (:script (who:str "hljs.initHighlightingOnLoad();"))))
+    (:script :src "/public/highlightjs/highlight.pack.js")
+    (:script (who:str "hljs.highlightAll();"))))
 
 ;; ebook theme
 (defclass ebook-theme (theme)
@@ -504,7 +503,7 @@ ul.toc, ul.toc ul {
     (:div :class "node"
           (:h1 (who:str "Settings")))))
 
-(defclass webinfo-acceptor (hunchentoot:acceptor)
+(defclass webinfo-acceptor (hunchentoot:easy-acceptor)
   ((info-repository :initarg :info-repository
                     :accessor info-repository
                     :initform (error "Provide the info-repository"))
@@ -538,13 +537,19 @@ ul.toc, ul.toc ul {
              (values (find-node (info-repository acceptor) node-name)
                      (info-document-for-uri (info-repository acceptor)
                                             uri)
-             ))))))
+                     ))))))
     (if (not node)
-        (format nil "Not found")
+        (call-next-method)
         (with-output-to-string (s)
           (webinfo-html s
                         (lambda (stream)
                           (render-node node (app-setting :theme acceptor) stream  doc)))))))
+
+(push 
+ (hunchentoot:create-folder-dispatcher-and-handler
+  "/public/"
+  (asdf:system-relative-pathname :webinfo "public/"))
+ hunchentoot:*dispatch-table*)
 
 (defvar *webinfo-acceptor*)
 
