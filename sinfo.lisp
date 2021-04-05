@@ -24,7 +24,8 @@
              :initform (error "Provide the filepath"))
    (tag-table :initarg :tag-table
               :accessor tag-table)
-   (file :accessor file :documentation "A handle to the document file"))
+   (file :accessor file :documentation "A handle to the document file")
+   (toc :documentation "Toc is memoized because it is expensive to calculate"))
   (:documentation "An info document that works with a serialized form in a file"))
 
 (defmethod initialize-instance :after ((doc sinfo-info-document) &rest initargs)
@@ -40,6 +41,11 @@
                              (cons term (find-node doc node-name)))
                            entries)))
     (setf (indexes doc) indexes)))
+
+(defmethod toc ((doc sinfo-info-document))
+  (when (not (slot-boundp doc 'toc))
+    (setf (slot-value doc 'toc) (call-next-method)))
+  (slot-value doc 'toc))
 
 ;;-----------------------
 ;;-- xml reader
@@ -194,8 +200,9 @@
       )))
 
 (defmethod all-nodes ((doc sinfo-info-document))
-  (loop for node-name in (mapcar 'car (aget (tag-table doc) :nodes))
-        collect (find-node doc node-name)))
+  (nreverse
+   (loop for node-name in (mapcar 'car (aget (tag-table doc) :nodes))
+        collect (find-node doc node-name))))
 
 (defun read-sinfo-tag-table-from-file (filepath)
   (with-open-file (file filepath
@@ -220,9 +227,13 @@
       (read file)
       )))
 
+
 (defclass file-info-node (sexp-info-node)
   ((filepath :initarg :filepath :accessor filepath)
-   (file-pos :initarg :file-pos :accessor file-pos)))
+   (file-pos :initarg :file-pos :accessor file-pos)
+   (info-document :initarg :info-document
+                  :accessor info-document
+                  :initform (error "Provide info document"))))
 
 (defmethod contents ((node file-info-node))
   (when (or (not (slot-boundp node 'contents))
@@ -252,7 +263,7 @@
       (file-position file (cdr entry))
 
       (bind:bind
-          (((_ _ &rest body) (read file)) ;; node info
+          (((_ attrs &rest body) (read file)) ;; node info
            #+nil(node-contents (read file)))
         (flet ((get-node-info (what)
                  (caddr (find what body :key 'car))))
@@ -263,18 +274,26 @@
                               :node-next (get-node-info :|nodenext|)
                               :contents node-contents)
           (make-instance 'file-info-node
-                         :name (get-node-info :|nodename|)
-                         :title (get-node-info :|nodetitle|)
+                         :name (getf attrs :|name|)
+                         :title (getf attrs :|nodetitle|)
                          :node-up (get-node-info :|nodeup|)
                          :node-prev (get-node-info :|nodeprev|)
                          :node-next (get-node-info :|nodenext|)
                          :filepath (filepath doc)
-                         :file-pos (cdr entry))
+                         :file-pos (cdr entry)
+                         :info-document doc)
           )))))
 
-(defmethod toc ((doc sinfo-info-document))
-  ;; TODO
-  nil)
+(defmethod children ((node file-info-node))
+  (remove-if-not (lambda (child)
+                   (string= (node-up child) (node-name node)))
+                 (all-nodes (info-document node))))
+
+(defmethod top-nodes ((doc sinfo-info-document))
+  (remove-if-not
+   (lambda (node)
+     (string= (node-up node) "Top"))
+   (all-nodes doc)))
 
 (defun start-sinfo-demo (&rest args)
   (let ((djula-manual (make-instance 'sinfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))

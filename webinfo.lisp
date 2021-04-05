@@ -171,6 +171,10 @@
   ((seach-term :initarg :search-term :accessor search-term)
    (matches :initarg :matches :accessor matches)))
 
+(defmethod toc ((doc info-document))
+  (loop for node in (top-nodes doc)
+        collect (toc node)))
+
 (defmethod render-node-navigation ((node index-matches-node) stream)
   )
 

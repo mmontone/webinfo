@@ -52,13 +52,10 @@
 (defmethod all-nodes ((doc xml-info-document))
   (labels ((all-descendants (node)
              (cons node (alexandria:flatten (mapcar #'all-descendants (children node))))))
-    (let* ((top-nodes (mapcar 'make-xml-info-node (xpath:all-nodes (xpath:evaluate "/texinfo/node" (xml-document doc))))))
-      (alexandria:flatten (mapcar #'all-descendants top-nodes)))))
+    (alexandria:flatten (mapcar #'all-descendants (top-nodes doc)))))
 
-(defmethod toc ((doc xml-info-document))
-  (let* ((top-nodes (mapcar 'make-xml-info-node (xpath:all-nodes (xpath:evaluate "/texinfo/node" (xml-document doc))))))
-    (loop for node in top-nodes
-          collect (toc node))))
+(defmethod top-nodes ((doc xml-info-document))
+  (mapcar 'make-xml-info-node (xpath:all-nodes (xpath:evaluate "/texinfo/node" (xml-document doc)))))
 
 (defun parse-xml-content (xml)
   (labels ((make-element (x)
