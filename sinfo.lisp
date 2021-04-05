@@ -219,3 +219,19 @@
                          :node-prev (get-node-info :|nodeprev|)
                          :node-next (get-node-info :|nodenext|)
                          :contents node-contents))))))
+
+(defmethod toc ((doc sinfo-info-document))
+  ;; TODO
+  nil)
+
+(defun start-sinfo-demo (&rest args)
+  (let ((djula-manual (make-instance 'sinfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
+    
+    ;;(fulltext-index-document djula-manual)
+    
+    (webinfo:start-webinfo
+     :port 9090
+     :info-repository
+     (make-instance 'file-info-repository
+                    :file djula-manual)
+     :app-settings (list (cons :theme (make-instance 'nav-theme))))))

@@ -12,7 +12,7 @@
                (:file "search")
                (:file "sexp-node")
                (:file "lispdoc")
-               (:file "sfile"))
+               (:file "sinfo"))
   :depends-on (:anaphora
                :hunchentoot
                :cl-who
