@@ -76,19 +76,18 @@
               (awhen (node-prev node)
                 (who:htm
                  (:li :class "node-prev"
-                      ;;(who:str "Previous: ")
-                      (:ion-icon :name "arrow-back-circle")
+                      (:i :class "bi-arrow-left-circle" :style "margin-right: 5px;")
                       (:a :href (substitute #\- #\space it) (who:str it)))))
               (awhen (node-up node)
                 (who:htm
                  (:li :class "node-up"
-                      (:ion-icon :name "arrow-up-circle")
+                      (:i :class "bi-arrow-up-circle" :style "margin-right: 5px;")
                       (:a :href (substitute #\- #\space it)
                           (who:str it)))))
               (awhen (node-next node)
                 (who:htm
                  (:li :class "node-next"
-                      (:ion-icon :name "arrow-forward-circle")
+                      (:i :class "bi-arrow-right-circle" :style "margin-right: 5px;")
                       (:a :href (substitute #\- #\space it) (who:str it)))))))))
 
 (defmethod find-node ((info-repository file-info-repository) name)
@@ -302,15 +301,12 @@
     #+nil(:link :rel "stylesheet" :href "https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css")
     (:meta :name "viewport" :content "width=device-width, initial-scale=1")
     (:link :rel "stylesheet" :href "/public/highlightjs/styles/default.css")
+    (:link :rel "stylesheet" :href "/public/node_modules/bootstrap-icons/font/bootstrap-icons.css")
     
     (:style
      (who:str "
 code.inline {
    background-color: lightgray;
-}
-ion-icon {
-   color: lightblue;
-   font-size: 22px;
 }
 header.node-navigation ul {
    list-style-type:none;
@@ -339,7 +335,6 @@ div.node {
 
 (defmethod add-theme-scripts ((theme simple-theme) stream)
   (who:with-html-output (stream)
-    (:script :src "https://unpkg.com/ionicons@5.4.0/dist/ionicons.js")
     (:script :src "/public/highlightjs/highlight.pack.js")
     (:script (who:str "hljs.highlightAll();"))))
 
@@ -368,9 +363,10 @@ div.node {
           (render-toc (toc doc) stream)
           (:div :class "settings"
                 (:a :href "/" :alt "Home"
-                    (:ion-icon :style "font-size: 32px;" :name "home-outline"))
+                    (:i :class "bi-house-fill" :style "font-size: 2rem;"))
                 (:a :href "_settings" :alt "Settings"
-                    (:ion-icon :style "font-size: 32px;" :name "settings-outline"))
+                    (:i :class "bi-gear" :style "font-size: 2rem;"
+                        :name "settings-outline"))
                 ))))
 
 (defun render-toc (toc stream)

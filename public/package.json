@@ -1,0 +1,18 @@
+{
+  "name": "webinfo",
+  "version": "1.0.0",
+  "description": "Texinfo Web reader",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "texinfo"
+  ],
+  "author": "Mariano Montone",
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap-icons": "^1.4.1",
+    "highlightjs": "^9.16.2"
+  }
+}
