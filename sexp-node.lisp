@@ -13,8 +13,10 @@
    (node-next :initarg :node-next
               :accessor node-next
               :initform nil)
-   (nodes :initarg :nodes
-          :accessor nodes
+   (title :initarg :title
+          :accessor node-title)
+   (children :initarg :children
+          :accessor children
           :initform nil
           :documentation "Child nodes")))
 

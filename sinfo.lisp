@@ -32,8 +32,14 @@
   (setf (tag-table doc)
         (read-sinfo-tag-table-from-file (filepath doc)))
   ;; Initialize indexes
-  (setf (indexes doc)
-        (aget (tag-table doc) :index)))
+  (let ((indexes (aget (tag-table doc) :index)))
+    (loop for (index-type . entries) in indexes
+          do
+             (setf (aget indexes index-type)
+                   (mapcar (bind:lambda-bind ((term . node-name))
+                             (cons term (find-node doc node-name)))
+                           entries)))
+    (setf (indexes doc) indexes)))
 
 ;;-----------------------
 ;;-- xml reader
@@ -114,7 +120,7 @@
       (when (< counter 0)
         (setf elements suspended-elements)
         (setf reading-node-p nil)))
-    
+
     (let ((element (pop elements)))
       (push (reverse element) (first elements)))))
 
@@ -141,16 +147,26 @@
       ;; Nodes
       (loop for node in (all-nodes doc)
             do
+               ;; Register node position
                (push (cons (node-name node) (file-position file))
                      (aget tag-table :nodes))
-               (prin1 (xml-content->lisp
-                       (node-xml node) :include-nodes t)
-                      file)
-               (terpri file)
-               (prin1 (xml-content->lisp
-                       (content-xml node))
-                      file)
-               (terpri file))
+
+               (let ((node-header (xml-content->lisp
+                                   (node-xml node) :include-nodes t))
+                     (node-contents (xml-content->lisp (content-xml node))))
+
+                 ;; Extract node title from sectiontitle element in contents
+                 (bind:bind (((_ _ &body contents-body) node-contents)
+                             ((_ _ section-title) (first contents-body)))
+                   (setf (getf (second node-header) :|nodetitle| ) section-title))
+                 
+                 ;; Serialize node header
+                 (prin1 node-header file)
+                 (terpri file)
+
+                 ;; Serialize node content
+                 (prin1 node-contents file)
+                 (terpri file)))
 
       ;; Index
       (flet ((serialize-indexes (indexes)
@@ -168,7 +184,7 @@
       (setf tag-table-pos (file-position file))
       (prin1 tag-table file)
       (terpri file)
-    
+
       ;; Pointer to tag-table
       (write-sequence (cl-intbytes:int->octets tag-table-pos 3) file)
 
@@ -180,14 +196,6 @@
 (defmethod all-nodes ((doc sinfo-info-document))
   (loop for node-name in (mapcar 'car (aget (tag-table doc) :nodes))
         collect (find-node doc node-name)))
-
-(defmethod search-topics ((doc sinfo-info-document) term)
-  ;; let's use node-name instead of node-title for now,
-  ;; as getting the node-title requires reading the whole node content
-  (loop for node in (all-nodes doc)
-        when (search term (node-name node) :test 'equalp)
-          collect (cons (node-name node)
-                        node)))
 
 (defun read-sinfo-tag-table-from-file (filepath)
   (with-open-file (file filepath
@@ -242,20 +250,21 @@
                           :external-format :utf-8)
       (setq file (flex:make-flexi-stream file :external-format :utf-8))
       (file-position file (cdr entry))
-      
+
       (bind:bind
           (((_ _ &rest body) (read file)) ;; node info
            #+nil(node-contents (read file)))
         (flet ((get-node-info (what)
                  (caddr (find what body :key 'car))))
           #+nil(make-instance 'sexp-info-node
-                         :name (get-node-info :|nodename|)
-                         :node-up (get-node-info :|nodeup|)
-                         :node-prev (get-node-info :|nodeprev|)
-                         :node-next (get-node-info :|nodenext|)
-                         :contents node-contents)
+                              :name (get-node-info :|nodename|)
+                              :node-up (get-node-info :|nodeup|)
+                              :node-prev (get-node-info :|nodeprev|)
+                              :node-next (get-node-info :|nodenext|)
+                              :contents node-contents)
           (make-instance 'file-info-node
                          :name (get-node-info :|nodename|)
+                         :title (get-node-info :|nodetitle|)
                          :node-up (get-node-info :|nodeup|)
                          :node-prev (get-node-info :|nodeprev|)
                          :node-next (get-node-info :|nodenext|)
@@ -267,14 +276,11 @@
   ;; TODO
   nil)
 
-(defmethod node-title ((node file-info-node))
-  (node-name node))
-
 (defun start-sinfo-demo (&rest args)
   (let ((djula-manual (make-instance 'sinfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
-    
+
     (fulltext-index-document djula-manual)
-    
+
     (webinfo:start-webinfo
      :port 9090
      :info-repository
