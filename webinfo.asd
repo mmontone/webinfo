@@ -11,7 +11,8 @@
                (:file "xmldoc")
                (:file "search")
                (:file "sexp-node")
-               (:file "lispdoc"))
+               (:file "lispdoc")
+               (:file "sfile"))
   :depends-on (:anaphora
                :hunchentoot
                :cl-who
@@ -26,4 +27,5 @@
                :metabang-bind
                :assoc-utils
                :quri
-               :montezuma))
+               :montezuma
+               :cl-intbytes))

@@ -80,26 +80,30 @@
       (append-text (content-xml node))
       text)))
 
-(defun xml-content->lisp (xml)
-  (labels ((xml-elem->lisp (x)
-             (cond
-             ((dom:text-node-p x)
-              (dom:data x))
-             ((dom:comment-p x)
-              nil)
-             (t
-              (list* (alexandria:make-keyword (dom:tag-name x))
-                     (let ((args nil))
-                       (dom:map-node-map
-                        (lambda (attr)
-                          (push (dom:data (dom:first-child attr)) args)
-                          (push (alexandria:make-keyword (dom:name attr)) args))                        
-                        (dom:attributes x))
-                       args)
-                     (remove nil
-                             (loop for child across (dom:child-nodes x)
-                                   collect (xml-elem->lisp child))))))))
-    (xml-elem->lisp xml)))
+(defun xml-content->lisp (xml &key include-nodes)
+  (block quit
+    (labels ((xml-elem->lisp (x)
+               (cond
+                 ((dom:text-node-p x)
+                  (dom:data x))
+                 ((dom:comment-p x)
+                  nil)
+                 ((and (not include-nodes)
+                       (eql (alexandria:make-keyword (dom:tag-name x)) :|node|))
+                  (return-from quit))
+                 (t
+                  (list* (alexandria:make-keyword (dom:tag-name x))
+                         (let ((args nil))
+                           (dom:map-node-map
+                            (lambda (attr)
+                              (push (dom:data (dom:first-child attr)) args)
+                              (push (alexandria:make-keyword (dom:name attr)) args))                        
+                            (dom:attributes x))
+                           args)
+                         (remove nil
+                                 (loop for child across (dom:child-nodes x)
+                                       collect (xml-elem->lisp child))))))))
+      (xml-elem->lisp xml))))
 
 (defun render-xml-content (xml stream &key (split t))
   (who:with-html-output (stream)
@@ -107,19 +111,7 @@
       (labels ((render-element (x)
                  (flet ((render ()
                           (loop for child across (dom:child-nodes x)
-                                do (render-element child)))
-                        (render-menu ()
-                          (who:htm
-                           (:ol :class "menu"
-                                (loop for menuentry in (xpath:all-nodes (xpath:evaluate "./menuentry" x))
-                                      do (let* ((node-name (dom:data (xpath:first-node (xpath:evaluate "./menunode/text()" menuentry))))
-                                               (node-url-name (substitute #\- #\space node-name)))
-                                           (who:htm
-                                            (:li (:a :href (if split
-                                                               node-url-name
-                                                               (format nil "#~a" node-url-name))
-                                                     (who:str node-name)
-                                                     )))))))))
+                                do (render-element child))))
                    (cond
                      ((dom:text-node-p x)
                       (who:str (dom:data x)))
