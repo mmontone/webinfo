@@ -219,6 +219,8 @@
   (let ((entry (find node-name (aget (tag-table doc) :nodes)
                      :key 'car
                      :test 'string=)))
+    (when (null entry)
+      (return-from find-node nil))
     (with-open-file (file (filepath doc)
                           :direction :input
                           :element-type '(unsigned-byte 8)
