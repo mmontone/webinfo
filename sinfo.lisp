@@ -197,6 +197,24 @@
       (read file)
       )))
 
+(defclass file-info-node (sexp-info-node)
+  ((filepath :initarg :filepath :accessor filepath)
+   (file-pos :initarg :file-pos :accessor file-pos)))
+
+(defmethod contents ((node file-info-node))
+  (when (or (not (slot-boundp node 'contents))
+            (null (slot-value node 'contents)))
+    (with-open-file (file (filepath node)
+                          :direction :input
+                          :element-type '(unsigned-byte 8)
+                          :external-format :utf-8)
+      (setq file (flex:make-flexi-stream file :external-format :utf-8))
+      (file-position file (file-pos node))
+      (read file) ;; this read node header
+      (setf (slot-value node 'contents) (read file)) ;; read node contents
+      ))
+  (slot-value node 'contents))
+
 (defmethod find-node ((doc sinfo-info-document) node-name)
   (let ((entry (find node-name (aget (tag-table doc) :nodes)
                      :key 'car
@@ -210,15 +228,23 @@
       
       (bind:bind
           (((_ _ &rest body) (read file)) ;; node info
-           (node-contents (read file)))
+           #+nil(node-contents (read file)))
         (flet ((get-node-info (what)
                  (caddr (find what body :key 'car))))
-          (make-instance 'sexp-info-node
+          #+nil(make-instance 'sexp-info-node
                          :name (get-node-info :|nodename|)
                          :node-up (get-node-info :|nodeup|)
                          :node-prev (get-node-info :|nodeprev|)
                          :node-next (get-node-info :|nodenext|)
-                         :contents node-contents))))))
+                         :contents node-contents)
+          (make-instance 'file-info-node
+                         :name (get-node-info :|nodename|)
+                         :node-up (get-node-info :|nodeup|)
+                         :node-prev (get-node-info :|nodeprev|)
+                         :node-next (get-node-info :|nodenext|)
+                         :filepath (filepath doc)
+                         :file-pos (cdr entry))
+          )))))
 
 (defmethod toc ((doc sinfo-info-document))
   ;; TODO
