@@ -30,7 +30,10 @@
 (defmethod initialize-instance :after ((doc sinfo-info-document) &rest initargs)
   (declare (ignore initargs))
   (setf (tag-table doc)
-        (read-sinfo-tag-table-from-file (filepath doc))))
+        (read-sinfo-tag-table-from-file (filepath doc)))
+  ;; Initialize indexes
+  (setf (indexes doc)
+        (aget (tag-table doc) :index)))
 
 ;;-----------------------
 ;;-- xml reader
@@ -121,10 +124,10 @@
 (defun write-info-document-to-file (doc filepath)
   (let ((tag-table
           (list (cons :nodes nil)
-                (cons :indexes (list (cons :cp nil)
-                                     (cons :fn nil)
-                                     (cons :vr nil)
-                                     (cons :tp nil)))))
+                (cons :index (list (cons :cp nil)
+                                   (cons :fn nil)
+                                   (cons :vr nil)
+                                   (cons :tp nil)))))
         (tag-table-pos))
     (with-open-file (file filepath
                           :direction :output
@@ -173,6 +176,18 @@
       (write-sequence (cl-intbytes:int->octets 1 1) file)
 
       )))
+
+(defmethod all-nodes ((doc sinfo-info-document))
+  (loop for node-name in (mapcar 'car (aget (tag-table doc) :nodes))
+        collect (find-node doc node-name)))
+
+(defmethod search-topics ((doc sinfo-info-document) term)
+  ;; let's use node-name instead of node-title for now,
+  ;; as getting the node-title requires reading the whole node content
+  (loop for node in (all-nodes doc)
+        when (search term (node-name node) :test 'equalp)
+          collect (cons (node-name node)
+                        node)))
 
 (defun read-sinfo-tag-table-from-file (filepath)
   (with-open-file (file filepath
