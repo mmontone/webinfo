@@ -525,11 +525,12 @@ ul.toc, ul.toc ul {
           ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
           ((or "_s" "/_s") (make-search-node (info-repository acceptor) uri))
           ((or "_fts" "/_fts") (make-instance 'fulltext-search-node
+                                              :name "Fulltext search"
                                               :search-term (aget (quri:uri-query-params uri) "q")))
           ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
           ((or "_settings" "/_settings")
            (trivia:match (hunchentoot:request-method request)
-             (:get (make-instance 'settings-info-node))
+             (:get (make-instance 'settings-info-node :name "Settings"))
              (:post (save-settings acceptor request) nil)))
           (_
            (let* ((clean-url (remove #\/ (quri:uri-path uri) :count 1))

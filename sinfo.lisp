@@ -267,10 +267,13 @@
   ;; TODO
   nil)
 
+(defmethod node-title ((node file-info-node))
+  (node-name node))
+
 (defun start-sinfo-demo (&rest args)
   (let ((djula-manual (make-instance 'sinfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
     
-    ;;(fulltext-index-document djula-manual)
+    (fulltext-index-document djula-manual)
     
     (webinfo:start-webinfo
      :port 9090

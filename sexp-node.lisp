@@ -117,3 +117,14 @@
                          (t (error "~a" tag))
                          )))))))
         (render-element content)))))
+
+(defmethod text-contents ((node sexp-info-node))
+  (let ((text ""))
+    (labels ((append-text (x)
+             (if (stringp x)
+                 (setf text (concatenate 'string text x))
+                 (bind:bind (((_ _ &body body) x))
+                   (loop for child in body
+                       do (append-text child))))))
+      (append-text (contents node))
+      text)))
