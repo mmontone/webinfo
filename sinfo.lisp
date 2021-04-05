@@ -24,7 +24,6 @@
              :initform (error "Provide the filepath"))
    (tag-table :initarg :tag-table
               :accessor tag-table)
-   
    (file :accessor file :documentation "A handle to the document file"))
   (:documentation "An info document that works with a serialized form in a file"))
 
@@ -119,40 +118,6 @@
 (defmethod sax:characters ((handler sinfo-sax-handler) data)
   (push data (first (slot-value handler 'elements))))
 
-(make-array 10 :element-type 'octet)
-(babel:string-to-octets (prin1-to-string '(:key val)))
-(babel:octets-to-string (babel:string-to-octets (prin1-to-string '(:key val))))
-
-(defun bar (pathspec)
-  "With a flexi stream."
-  (with-open-file (out pathspec
-                       :direction :output
-                       :if-exists :supersede
-                       :external-format '(:latin-1 :eol-style :lf))
-    (setq out (flex:make-flexi-stream out :external-format :utf-8))
-    (write-line "ÄÖÜ1" out)
-    (setf (flex:flexi-stream-external-format out) '(:latin-1 :eol-style :lf))
-    (write-line "ÄÖÜ2" out) 
-    (write-byte #xeb out)
-    (write-sequence #(#xa3 #xa4 #xa5) out)
-    (setf (flex:flexi-stream-external-format out) :ucs-2be)
-    (write-line "ÄÖÜ3" out)))
-
-
-(cl-intbytes:int->octets 655 2)
-(cl-intbytes:octets->uint (cl-intbytes:int->octets 65000 2) 2)
-
-(defparameter +djula-manual+ (make-instance 'webinfo:xml-info-document
-                                            :name "Djula"
-                                            :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
-                                            :title "Djula manual"))
-
-(xml-content->lisp (content-xml (find-node +djula-manual+ "Top")))
-(babel:string-to-octets (prin1-to-string (xml-content->lisp (content-xml (find-node +djula-manual+ "Top")))))
-
-(defun lisp-contents (xml-node)
-  ())
-
 (defun write-info-document-to-file (doc filepath)
   (let ((tag-table
           (list (cons :nodes nil)
@@ -242,5 +207,15 @@
                           :external-format :utf-8)
       (setq file (flex:make-flexi-stream file :external-format :utf-8))
       (file-position file (cdr entry))
-      (values (read file)
-              (read file)))))
+      
+      (bind:bind
+          (((_ _ &rest body) (read file)) ;; node info
+           (node-contents (read file)))
+        (flet ((get-node-info (what)
+                 (caddr (find what body :key 'car))))
+          (make-instance 'sexp-info-node
+                         :name (get-node-info :|nodename|)
+                         :node-up (get-node-info :|nodeup|)
+                         :node-prev (get-node-info :|nodeprev|)
+                         :node-next (get-node-info :|nodenext|)
+                         :contents node-contents))))))
