@@ -33,7 +33,7 @@
     (:div :class "node"
           (render-node-navigation node stream)
           (:div :class "node-content"
-                (render-sexp-content (contents node) stream :split nil))
+                (render-sexp-content (contents node) stream))
           (render-node-navigation node stream))))
 
 (defmethod toc ((node lisp-info-document))

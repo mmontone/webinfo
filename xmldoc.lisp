@@ -81,18 +81,17 @@
       text)))
 
 (defun xml-content->lisp (xml &key include-nodes)
-  (block quit
-    (labels ((xml-elem->lisp (x)
-               (cond
-                 ((dom:text-node-p x)
-                  (dom:data x))
-                 ((dom:comment-p x)
-                  nil)
-                 ((and (not include-nodes)
-                       (eql (alexandria:make-keyword (dom:tag-name x)) :|node|))
-                  (return-from quit))
-                 (t
-                  (list* (alexandria:make-keyword (dom:tag-name x))
+  (labels ((xml-elem->lisp (x)
+             (cond
+               ((dom:text-node-p x)
+                (dom:data x))
+               ((dom:comment-p x)
+                nil)
+               ((and (not include-nodes)
+                     (eql (alexandria:make-keyword (dom:tag-name x)) :|node|))
+                nil)
+               (t
+                (list* (alexandria:make-keyword (dom:tag-name x))
                          (let ((args nil))
                            (dom:map-node-map
                             (lambda (attr)
@@ -103,7 +102,8 @@
                          (remove nil
                                  (loop for child across (dom:child-nodes x)
                                        collect (xml-elem->lisp child))))))))
-      (xml-elem->lisp xml))))
+    (or (xml-elem->lisp xml)
+        (error "Could not read xml: ~a" xml))))
 
 (defun render-xml-content (xml stream &key (split t))
   (who:with-html-output (stream)
@@ -196,7 +196,7 @@
     (:div :class "node"
           (render-node-navigation node stream)
           (:div :class "node-content"
-                (render-xml-content (content-xml node) stream :split nil))
+                (render-xml-content (content-xml node) stream))
           (render-node-navigation node stream))))
 
 (defmethod render-subnode ((node xml-info-node) theme stream)
