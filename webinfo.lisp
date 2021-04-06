@@ -642,6 +642,15 @@ ul.toc, ul.toc ul {
     ;; TODO: perform a search if a node name is not matched?
     ))
 
+;; TODO: should nodes have a reference to their document??
+;; We use the dynamic variable *INFO-DOCUMENT* to know the document being rendered, for now ...
+(defvar *info-document* "The document being rendered")
+
+(defmethod render-node :around ((node info-node) theme stream &key document)
+  (let ((*info-document* document))
+    (call-next-method)))
+
+
 (defvar *webinfo-acceptor*)
 
 (defun start-webinfo (&rest args)

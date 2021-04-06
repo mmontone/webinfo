@@ -155,7 +155,7 @@
                          (:|top| (render))
                          ((:|unnumbered| :|appendix|) (render))
                          ((:|findex| :|cindex| :|vindex| :|tindex|))
-                         (:|printindex| (print-index (get-index (info-repository *webinfo-acceptor*)
+                         (:|printindex| (print-index (get-index (or *info-document* (info-repository *webinfo-acceptor*))
                                                                 (alexandria:make-keyword (string-upcase (dom:get-attribute x "value"))))
                                                      stream))
                          (:|multitable| ;; TODO (who:htm (:table (render)))

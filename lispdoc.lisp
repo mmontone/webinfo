@@ -41,7 +41,7 @@
     (loop for node in (nodes doc)
           appending (descendants node))))
 
-(defmethod render-node ((node sexp-info-node) theme stream &rest args)
+(defmethod render-node ((node sexp-info-node) theme stream &key document)
   (who:with-html-output (stream)
     (:div :class "node"
           (render-node-navigation node stream)
@@ -307,24 +307,27 @@ the CADR of the list."
     (setf (node-up variable-index-node) "Top")
     (setf (contents variable-index-node)
           `(:|chapter| ()
-             (:|sectiontitle| () "VariableIndex")
+             (:|sectiontitle| () "Variable index")
              (:|printindex| (:|value| "vr"))))
+    (push variable-index-node (children top-node))
 
     (setf (node-up function-index-node) "Top")
     (setf (contents function-index-node)
           `(:|chapter| ()
-             (:|sectiontitle| () "FunctionIndex")
+             (:|sectiontitle| () "Function index")
              (:|printindex| (:|value| "fn"))))
 
     (setf (node-up function-index-node) "Top")
+    (push function-index-node (children top-node))
 
     (setf (node-up class-index-node) "Top")
     (setf (contents class-index-node)
           `(:|chapter| ()
-             (:|sectiontitle| () "ClassIndex")
+             (:|sectiontitle| () "Class index")
              (:|printindex| (:|value| "tp"))))
 
     (setf (node-up class-index-node) "Top")
+    (push class-index-node (children top-node))
 
     (setf (node-next dictionary-node) "VariableIndex")
 
