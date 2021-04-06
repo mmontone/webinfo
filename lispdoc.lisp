@@ -5,15 +5,19 @@
 (in-package :webinfo)
 
 (defclass lisp-info-document (info-document)
-  ((children :initarg :children
-          :accessor children
+  ((nodes :initarg :nodes
+          :accessor nodes
           :initform nil))
   (:documentation "An info document generated dynamically from Common Lisp packages exported definitions."))
 
 (defmethod find-node ((doc lisp-info-document) node-name)
-  (labels ((tree-find (node node-name)
-             (or (find node-name (children node) :key 'node-name :test 'string=)
-                 (loop for child in (children node)
+  (labels ((childs (doc-or-node)
+             (if (typep doc-or-node 'info-document)
+                 (nodes doc-or-node)
+                 (children doc-or-node)))
+           (tree-find (node node-name)
+             (or (find node-name (childs node) :key 'node-name :test 'string=)
+                 (loop for child in (childs node)
                        for found-node := (tree-find child node-name)
                        while (not found-node)
                        finally (return found-node)))))
@@ -32,8 +36,6 @@
 
 (defmethod all-nodes ((doc lisp-info-document))
   (nodes doc))
-
-(defmethod top-nodes ((doc )))
 
 (defmethod render-node ((node sexp-info-node) theme stream &rest args)
   (who:with-html-output (stream)
@@ -249,37 +251,40 @@ the CADR of the list."
                                  :title "Top"))
         (dictionary-node (make-instance 'sexp-info-node
                                         :name "Dictionary"
-                                        :title "Dictionary"))
+                                        :title "Dictionary"
+                                        :description (format nil "Dictionary of all external definitions in ~a package" package)))
         (variable-index-node (make-instance 'sexp-info-node
                                             :name "VariableIndex"
-                                            :title "Variable index"))
+                                            :title "Variable index"
+                                            :description "Variables index"))
         (function-index-node (make-instance 'sexp-info-node
                                             :name "FunctionIndex"
-                                            :title "Function index"))
+                                            :title "Function index"
+                                            :description "Functions index"))
         (class-index-node (make-instance 'sexp-info-node
                                          :name "ClassIndex"
-                                         :title "Class index"))
+                                         :title "Class index"
+                                         :description "Classes index"))
         (package-info (collect-package-info package)))
-    ;; Build top node
-    (setf (contents top-node)
-          `(:|chapter| ()
-             (:|sectiontitle| ()
-               ,(format nil "Package reference: ~a" (package-name package)))
-             (:|menu| ()
-               (:|menuentry| ()
-                 (:|menunode| ()
-                   "Dictionary")
-                 (:|menudescription| ()
-                   (:|pre| () ,(format nil "Dictionary of all external definitions in ~a package" package)))))
-             ;; ,(loop for infoitem in info
-             ;;        collect
-             ;;        `(:|menuentry| ()
-             ;;           (:|menunode| ()
-             ;;             ,(aget infoitem :name))
-             ;;           (:|menudescription| ()
-             ;;             "")))
 
-             ))
+    ;; Build top node
+    (flet ((menu-entry (node)
+             `(:|menuentry| ()
+                (:|menunode| ()
+                  ,(node-title node))
+                (:|menudescription| ()
+                  (:|pre| ,(description node))))))
+
+      (setf (contents top-node)
+            `(:|chapter| ()
+               (:|sectiontitle| ()
+                 ,(format nil "Package reference: ~a" (package-name package)))
+               (:|menu| ()
+                 ,@(loop for node in (list dictionary-node
+                                           variable-index-node
+                                           function-index-node
+                                           class-index-node)
+                         collect (menu-entry node))))))
     (push top-node (nodes doc))
 
     ;; Build dictionary node

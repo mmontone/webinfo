@@ -21,7 +21,10 @@
 
 (defclass info-node ()
   ((name :initarg :name :accessor node-name
-         :initform (error "Provide a name for the node"))))
+         :initform (error "Provide a name for the node"))
+   (description :initarg :description
+                :accessor description
+                :initform "")))
 
 (defmethod print-object ((node info-node) stream)
   (print-unreadable-object (node stream :type t :identity t)
