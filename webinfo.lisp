@@ -557,6 +557,7 @@ ul.toc, ul.toc ul {
              (:get (make-instance 'settings-info-node :name "Settings"))
              (:post (save-settings acceptor request) nil)))
           (_
+           ;; TODO: perform a search if a node name is not matched?
            (let* ((clean-url (remove #\/ (quri:uri-path uri) :count 1))
                   (node-name (substitute #\- #\space clean-url)))
              (awhen (find-node (info-repository acceptor) node-name)
