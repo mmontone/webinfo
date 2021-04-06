@@ -289,12 +289,6 @@
                    (string= (node-up child) (node-name node)))
                  (all-nodes (info-document node))))
 
-(defmethod top-nodes ((doc sinfo-info-document))
-  (remove-if-not
-   (lambda (node)
-     (string= (node-up node) "Top"))
-   (all-nodes doc)))
-
 (defun start-sinfo-demo (&rest args)
   (let ((djula-manual (make-instance 'sinfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
 

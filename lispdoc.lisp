@@ -5,15 +5,15 @@
 (in-package :webinfo)
 
 (defclass lisp-info-document (info-document)
-  ((nodes :initarg :nodes
-          :accessor nodes
+  ((children :initarg :children
+          :accessor children
           :initform nil))
   (:documentation "An info document generated dynamically from Common Lisp packages exported definitions."))
 
 (defmethod find-node ((doc lisp-info-document) node-name)
   (labels ((tree-find (node node-name)
-             (or (find node-name (nodes node) :key 'node-name :test 'string=)
-                 (loop for child in (nodes node)
+             (or (find node-name (children node) :key 'node-name :test 'string=)
+                 (loop for child in (children node)
                        for found-node := (tree-find child node-name)
                        while (not found-node)
                        finally (return found-node)))))
@@ -30,6 +30,11 @@
         (push (load-class-info symbol) docs)))
     docs))
 
+(defmethod all-nodes ((doc lisp-info-document))
+  (nodes doc))
+
+(defmethod top-nodes ((doc )))
+
 (defmethod render-node ((node sexp-info-node) theme stream &rest args)
   (who:with-html-output (stream)
     (:div :class "node"
@@ -37,9 +42,6 @@
           (:div :class "node-content"
                 (render-sexp-content (contents node) stream))
           (render-node-navigation node stream))))
-
-(defmethod toc ((node lisp-info-document))
-  nil)
 
 ;; From docbrowser
 
@@ -243,47 +245,89 @@ the CADR of the list."
                             :name (package-name package)
                             :title (package-name package)))
         (top-node (make-instance 'sexp-info-node
-                                 :name "Top"))
+                                 :name "Top"
+                                 :title "Top"))
         (dictionary-node (make-instance 'sexp-info-node
-                                        :name "Dictionary"))
+                                        :name "Dictionary"
+                                        :title "Dictionary"))
         (variable-index-node (make-instance 'sexp-info-node
-                                            :name "Variable index"))
+                                            :name "VariableIndex"
+                                            :title "Variable index"))
         (function-index-node (make-instance 'sexp-info-node
-                                            :name "Function index"))
+                                            :name "FunctionIndex"
+                                            :title "Function index"))
         (class-index-node (make-instance 'sexp-info-node
-                                         :name "Class index"))
-        )
-    (let ((package-info (collect-package-info package)))
-      ;; Build top node
-      (setf (contents top-node)
-            `(:|chapter| ()
-               (:|sectiontitle| ()
-                 ,(format nil "Package reference: ~a" (package-name package)))
-               (:|menu| ()
-                 (:|menuentry| ()
-                   (:|menunode| ()
-                     "Dictionary"))
-                 ;; ,(loop for infoitem in info
-                 ;;        collect
-                 ;;        `(:|menuentry| ()
-                 ;;           (:|menunode| ()
-                 ;;             ,(aget infoitem :name))
-                 ;;           (:|menudescription| ()
-                 ;;             "")))
+                                         :name "ClassIndex"
+                                         :title "Class index"))
+        (package-info (collect-package-info package)))
+    ;; Build top node
+    (setf (contents top-node)
+          `(:|chapter| ()
+             (:|sectiontitle| ()
+               ,(format nil "Package reference: ~a" (package-name package)))
+             (:|menu| ()
+               (:|menuentry| ()
+                 (:|menunode| ()
+                   "Dictionary")
+                 (:|menudescription| ()
+                   (:|pre| () ,(format nil "Dictionary of all external definitions in ~a package" package)))))
+             ;; ,(loop for infoitem in info
+             ;;        collect
+             ;;        `(:|menuentry| ()
+             ;;           (:|menunode| ()
+             ;;             ,(aget infoitem :name))
+             ;;           (:|menudescription| ()
+             ;;             "")))
 
-                 )))
-      ;; Build dictionary node
-      (setf (node-up dictionary-node) "Top")
-      (setf (contents dictionary-node)
-            `(:|chapter| ()
-               (:|sectiontitle| ()
-                 "Dictionary")
-               ,@(loop for info in package-info
-                       collect (lispinfo->sexp info))))
+             ))
+    (push top-node (nodes doc))
 
-      (push top-node (nodes doc))
-      (push dictionary-node (nodes top-node))
-      doc)))
+    ;; Build dictionary node
+    (setf (node-up dictionary-node) "Top")
+    (setf (contents dictionary-node)
+          `(:|chapter| ()
+             (:|sectiontitle| ()
+               "Dictionary")
+             ,@(loop for info in package-info
+                     collect (lispinfo->sexp info))))
+
+
+    (push dictionary-node (children top-node))
+
+    ;; Build index nodes
+    (setf (node-up variable-index-node) "Top")
+    (setf (contents variable-index-node)
+          `(:|chapter| ()
+             (:|sectiontitle| () "VariableIndex")
+             (:|printindex| (:|value| "vr"))))
+
+    (setf (node-up function-index-node) "Top")
+    (setf (contents function-index-node)
+          `(:|chapter| ()
+             (:|sectiontitle| () "FunctionIndex")
+             (:|printindex| (:|value| "fn"))))
+
+    (setf (node-up function-index-node) "Top")
+
+    (setf (node-up class-index-node) "Top")
+    (setf (contents class-index-node)
+          `(:|chapter| ()
+             (:|sectiontitle| () "ClassIndex")
+             (:|printindex| (:|value| "tp"))))
+
+    (setf (node-up class-index-node) "Top")
+
+    (setf (node-next dictionary-node) "VariableIndex")
+
+    (setf (node-prev variable-index-node) "Dictionary")
+    (setf (node-next variable-index-node) "FunctionIndex")
+
+    (setf (node-prev function-index-node) "VariableIndex")
+    (setf (node-next function-index-node) "ClassIndex")
+
+    (setf (node-prev class-index-node) "FunctionIndex")
+
+    doc))
 
 (defun format-text (text)
   (loop for line in (split-sequence:split-sequence #\newline
@@ -375,7 +419,9 @@ the CADR of the list."
         (mapcar 'make-info-document-for-package
                 (remove "COMMON-LISP" (sort (list-all-packages) 'string< :key 'package-name)
                         :test 'equalp
-                        :key 'package-name))))
+                        :key 'package-name)))
+  (mapcar 'fulltext-index-document (dir repo))
+  )
 
 (defun start-lispdoc-demo ()
   (webinfo:start-webinfo

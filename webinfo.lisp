@@ -44,6 +44,10 @@
          :documentation "FILE can be either a pathname pointing to a WEBINFO file, or an INFO-DOCUMENT object"))
   (:documentation "A repository of a single file"))
 
+(defgeneric home-node (info-document))
+(defgeneric all-nodes (info-document))
+(defgeneric top-nodes (info-document))
+
 (defmethod home-node ((repo file-info-repository))
   (find-node (file repo) "Top"))
 
@@ -51,6 +55,12 @@
   (make-instance 'dir-node
                  :dir (dir repo)
                  :name "dir"))
+
+(defmethod top-nodes ((doc info-document))
+  (remove-if-not
+   (lambda (node)
+     (string= (node-up node) "Top"))
+   (all-nodes doc)))
 
 (defgeneric info-document-for-uri (info-repository uri))
 (defmethod info-document-for-uri ((repo file-info-repository) uri)
@@ -73,7 +83,6 @@
   (node-name node))
 
 (defgeneric render-node (thing theme stream &rest args))
-
 
 (defmethod render-node-navigation (node stream)
   (who:with-html-output (stream)
