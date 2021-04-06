@@ -35,7 +35,11 @@
     docs))
 
 (defmethod all-nodes ((doc lisp-info-document))
-  (nodes doc))
+  (labels ((descendants (node)
+             (append (children node)
+                     (apply #'append (mapcar #'descendants (children node))))))
+    (loop for node in (nodes doc)
+          appending (descendants node))))
 
 (defmethod render-node ((node sexp-info-node) theme stream &rest args)
   (who:with-html-output (stream)
@@ -298,7 +302,7 @@ the CADR of the list."
 
 
     (push dictionary-node (children top-node))
-
+    
     ;; Build index nodes
     (setf (node-up variable-index-node) "Top")
     (setf (contents variable-index-node)

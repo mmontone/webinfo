@@ -123,10 +123,14 @@
 (defmethod text-contents ((node sexp-info-node))
   (let ((text ""))
     (labels ((append-text (x)
-             (if (stringp x)
-                 (setf text (concatenate 'string text x))
-                 (bind:bind (((_ _ &body body) x))
-                   (loop for child in body
-                       do (append-text child))))))
+               (cond
+                 ((stringp x)
+                  (setf text (concatenate 'string text x)))
+                 ((symbolp x) ;; TODO: don't do this ideally. revise
+                  (setf text (concatenate 'string text (princ-to-string x))))
+                 (t 
+                  (bind:bind (((_ _ &body body) x))
+                    (loop for child in body
+                          do (append-text child)))))))
       (append-text (contents node))
       text)))
