@@ -1,7 +1,7 @@
 ;;;; package.lisp
 
 (defpackage #:webinfo
-  (:use #:cl #:anaphora #:assoc-utils)
+  (:use #:cl #:anaphora #:assoc-utils #:cl-fad)
   (:export
    :start-webinfo
    :info-document
