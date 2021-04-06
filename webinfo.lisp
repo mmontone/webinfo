@@ -112,9 +112,15 @@
   (find-node (file info-repository) name))
 
 (defmethod find-node ((info-repository dir-info-repository) name)
-  (bind:bind (((manual-name &optional (node-name "Top")) (split-sequence:split-sequence #\/ name :remove-empty-subseqs t)))
-    (let ((info-document (find-info-document info-repository manual-name)))
-      (find-node info-document node-name))))
+  (trivia:match (split-sequence:split-sequence #\/ name :remove-empty-subseqs t)
+    ((list manual-name)
+     (alexandria:when-let
+         ((info-document (find-info-document info-repository manual-name)))
+       (find-node info-document "Top")))
+    ((list manual-name node-name)
+     (alexandria:when-let
+         ((info-document (find-info-document info-repository manual-name)))
+       (find-node info-document node-name)))))
 
 ;; Indexes
 (defmethod collect-indexes ((info-document info-document) index-type)
@@ -553,10 +559,11 @@ ul.toc, ul.toc ul {
           (_
            (let* ((clean-url (remove #\/ (quri:uri-path uri) :count 1))
                   (node-name (substitute #\- #\space clean-url)))
-             (values (find-node (info-repository acceptor) node-name)
-                     (info-document-for-uri (info-repository acceptor)
-                                            uri)
-                     ))))))
+             (awhen (find-node (info-repository acceptor) node-name)
+               (values it
+                       (info-document-for-uri (info-repository acceptor)
+                                              uri)
+                     )))))))
     (if (not node)
         (call-next-method)
         (with-output-to-string (s)

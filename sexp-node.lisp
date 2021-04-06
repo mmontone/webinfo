@@ -116,7 +116,7 @@
                                                              (who:escape-string (text body)))))))
                          (:|code| (who:htm (:code :class "inline" (render))))
                          (:|w| (who:str (who:escape-string (text body))))
-                         (t (error "~a" tag))
+                         (t (error "Malformed node content: ~s" x))
                          )))))))
         (render-element content)))))
 
