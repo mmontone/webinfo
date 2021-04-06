@@ -302,7 +302,7 @@ the CADR of the list."
 
 
     (push dictionary-node (children top-node))
-    
+
     ;; Build index nodes
     (setf (node-up variable-index-node) "Top")
     (setf (contents variable-index-node)
@@ -339,7 +339,26 @@ the CADR of the list."
 
     (setf (node-prev class-index-node) "FunctionIndex")
 
+    (initialize-lisp-document-indexes doc package-info)
+
     doc))
+
+
+(defun initialize-lisp-document-indexes (doc package-info)
+  (let ((dictionary-node (find-node doc "Dictionary")))
+    (setf (indexes doc)
+          (list (cons :fn (loop for info in package-info
+                                when (member (aget info :type) '(:function))
+                                  collect (cons (princ-to-string (aget info :name))
+                                                dictionary-node)))
+                (cons :vr (loop for info in package-info
+                                when (member (aget info :type) '(:variable))
+                                  collect (cons (princ-to-string (aget info :name))
+                                                dictionary-node)))
+                (cons :tp (loop for info in package-info
+                                when (member (aget info :type) '(:class))
+                                  collect (cons (princ-to-string (aget info :name))
+                                                dictionary-node)))))))
 
 (defun format-text (text)
   (loop for line in (split-sequence:split-sequence #\newline

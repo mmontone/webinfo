@@ -90,7 +90,7 @@
                          ((:|findex| :|cindex| :|vindex| :|tindex|))
                          (:|printindex| (print-index (get-index (or *info-document*
                                                                     (info-repository *webinfo-acceptor*))
-                                                                (getf args :value))
+                                                                (alexandria:make-keyword (string-upcase (getf args :|value|))))
                                                      stream))
                          (:|multitable| ;; TODO (who:htm (:table (render)))
                           )
