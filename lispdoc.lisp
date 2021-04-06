@@ -358,7 +358,7 @@ the CADR of the list."
                 `((:|para| () ""))))
         (:|vindex| ()
           (:|indexterm| ()
-            ,(aget info :name)))))
+            ,(princ-to-string (aget info :name))))))
     (:function
      `(:|deffn| ()
         (:|definitionterm| ()
@@ -373,7 +373,7 @@ the CADR of the list."
                 `((:|para| () ""))))
         (:|findex| ()
           (:|indexterm| ()
-            ,(aget info :name)))))
+            ,(princ-to-string (aget info :name))))))
     (:generic-function
      `(:|deffn| ()
         (:|definitionterm| ()
@@ -388,7 +388,7 @@ the CADR of the list."
                 `((:|para| () ""))))
         (:|findex| ()
           (:|indexterm| ()
-            ,(aget info :name)))))
+            ,(princ-to-string (aget info :name))))))
     (:class
      `(:|deftp| ()
         (:|definitionterm| ()
@@ -402,7 +402,7 @@ the CADR of the list."
                 `((:|para| () ""))))
         (:|tindex| ()
           (:|indexterm| ()
-            ,(aget info :name)))))
+            ,(princ-to-string (aget info :name))))))
     (:macro
      `(:|deffn| ()
         (:|definitionterm| ()
@@ -417,7 +417,7 @@ the CADR of the list."
                 `((:|para| () ""))))
         (:|findex| ()
           (:|indexterm| ()
-            ,(aget info :name)))))))
+            ,(princ-to-string (aget info :name))))))))
 
 (defclass lispdoc-info-repository (dir-info-repository)
   ())
