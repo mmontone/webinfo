@@ -1,5 +1,7 @@
 ;; An info document generated dynamically from Common Lisp packages exported definitions.
 
+;; TODO: parse docstrings and format Texinfo rich text. For example, transform symbols in upper case to links to the object, if present in the package.
+
 (in-package :webinfo)
 
 (defclass lisp-info-document (info-document)

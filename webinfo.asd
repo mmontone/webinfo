@@ -12,7 +12,8 @@
                (:file "search")
                (:file "sexp-node")
                (:file "lispdoc")
-               (:file "sinfo"))
+               (:file "sinfo")
+               (:file "user"))
   :depends-on (:anaphora
                :hunchentoot
                :cl-who

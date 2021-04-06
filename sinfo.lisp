@@ -196,8 +196,8 @@
 
       ;; File format version
       (write-sequence (cl-intbytes:int->octets 1 1) file)
-
-      )))
+      ))
+  (probe-file filepath))
 
 (defmethod all-nodes ((doc sinfo-info-document))
   (nreverse

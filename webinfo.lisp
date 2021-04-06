@@ -32,11 +32,17 @@
 
 (defclass dir-info-repository (info-repository)
   ((dir :initarg :dir
-        :accessor dir)))
+        :accessor dir
+        :type (or list pathname)
+        :documentation "DIR can be either a directory (as a Lisp pathname), a list of pathnames, or a list of INFO-DOCUMENTs"))
+  (:documentation "An info repository of multiple documents, listed in a virtual 'dir' top-level node"))
 
 (defclass file-info-repository (info-repository)
   ((file :initarg :file
-         :accessor file)))
+         :accessor file
+         :type (or pathname info-document)
+         :documentation "FILE can be either a pathname pointing to a WEBINFO file, or an INFO-DOCUMENT object"))
+  (:documentation "A repository of a single file"))
 
 (defmethod home-node ((repo file-info-repository))
   (find-node (file repo) "Top"))
