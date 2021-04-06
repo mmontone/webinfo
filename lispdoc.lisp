@@ -275,7 +275,7 @@ the CADR of the list."
     (flet ((menu-entry (node)
              `(:|menuentry| ()
                 (:|menunode| ()
-                  ,(node-title node))
+                  ,(node-name node))
                 (:|menudescription| ()
                   (:|pre| ,(description node))))))
 

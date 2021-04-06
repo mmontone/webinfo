@@ -1,7 +1,7 @@
 ;;;; webinfo.asd
 
 (asdf:defsystem #:webinfo
-  :description "Web and desktop TexInfo reader"
+  :description "Web and desktop Texinfo reader"
   :author "Mariano Montone <marianomontone@gmail.com>"
   :license  "MIT"
   :version "0.0.1"
@@ -10,6 +10,7 @@
                (:file "webinfo")
                (:file "xmldoc")
                (:file "search")
+               (:file "settings")
                (:file "sexp-node")
                (:file "lispdoc")
                (:file "sinfo")

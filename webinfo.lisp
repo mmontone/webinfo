@@ -47,7 +47,7 @@
          :documentation "FILE can be either a pathname pointing to a WEBINFO file, or an INFO-DOCUMENT object"))
   (:documentation "A repository of a single file"))
 
-(defgeneric home-node (info-document))
+(defgeneric home-node (info-repository))
 (defgeneric all-nodes (info-document))
 (defgeneric top-nodes (info-document))
 
@@ -65,16 +65,8 @@
      (string= (node-up node) "Top"))
    (all-nodes doc)))
 
-(defgeneric info-document-for-uri (info-repository uri))
-(defmethod info-document-for-uri ((repo file-info-repository) uri)
-  (file repo))
-
-(defmethod info-document-for-uri ((repo dir-info-repository) uri)
-  (let ((doc-name (first (split-sequence:split-sequence #\/ (quri:uri-path uri) :remove-empty-subseqs t))))
-    (find-info-document repo doc-name)))
-
-(defun find-info-document (dir-info-repository doc-name &key (errorp t))
-  (or (find doc-name (dir dir-info-repository) :key 'document-name :test 'equalp)
+(defmethod find-document ((info-repository dir-info-repository) doc-name &key (errorp t))
+  (or (find doc-name (dir info-repository) :key 'document-name :test 'equalp)
       (and errorp (error "Document not found: ~a" doc-name))))
 
 (defmethod toc ((node info-node))
@@ -115,11 +107,11 @@
   (trivia:match (split-sequence:split-sequence #\/ name :remove-empty-subseqs t)
     ((list manual-name)
      (alexandria:when-let
-         ((info-document (find-info-document info-repository manual-name)))
+         ((info-document (find-document info-repository manual-name)))
        (find-node info-document "Top")))
     ((list manual-name node-name)
      (alexandria:when-let
-         ((info-document (find-info-document info-repository manual-name)))
+         ((info-document (find-document info-repository manual-name)))
        (find-node info-document node-name)))))
 
 ;; Indexes
@@ -330,7 +322,7 @@
     (:meta :name "viewport" :content "width=device-width, initial-scale=1")
     (:link :rel "stylesheet" :href "/public/highlightjs/styles/default.css")
     (:link :rel "stylesheet" :href "/public/node_modules/bootstrap-icons/font/bootstrap-icons.css")
-    
+
     (:style
      (who:str "
 code.inline {
@@ -378,9 +370,9 @@ div.node {
    :name "Nav"))
 
 (defmethod render-node :before (node (theme nav-theme) stream &rest args)
-  (let ((info-doc (first args)))
-    (when info-doc
-      (render-navigation-sidebar info-doc stream))))
+  "We render navigation sidebar in this wrapper method when :document is passed in ARGS"
+  (alexandria:when-let ((info-doc (getf args :document)))
+    (render-navigation-sidebar info-doc stream)))
 
 (defun render-navigation-sidebar (doc stream)
   (who:with-html-output (stream)
@@ -496,13 +488,26 @@ ul.toc, ul.toc ul {
       (find-node (file repo) "Top"))))
 
 (defmethod make-search-node ((repo info-repository) uri)
+  "Create a virtual node for searching a repository"
   (let ((params (quri:uri-query-params uri)))
     (alexandria:if-let ((search-term (aget params "q")))
       (make-instance 'search-node
                      :name "Search matches"
                      :search-term search-term
                      :place repo)
+      ;; else
       (find-node (file repo) "Top"))))
+
+(defmethod make-search-node ((doc info-document) uri)
+  "Create a virtual node for searching a document"
+  (let ((params (quri:uri-query-params uri)))
+    (alexandria:if-let ((search-term (aget params "q")))
+      (make-instance 'search-node
+                     :name "Search matches"
+                     :search-term search-term
+                     :place doc)
+      ;; else
+      (find-node doc "Top"))))
 
 (defvar +app-settings+
   `((use-icons :type boolean :label "Use icons" :default t)
@@ -519,14 +524,6 @@ ul.toc, ul.toc ul {
 
 (defvar +default-app-settings+ (list (cons :theme (make-instance 'simple-theme))))
 
-(defclass settings-info-node (info-node)
-  ())
-
-(defmethod render-node ((node settings-info-node) theme stream &rest args)
-  (who:with-html-output (stream)
-    (:div :class "node"
-          (:h1 (who:str "Settings")))))
-
 (defclass webinfo-acceptor (hunchentoot:easy-acceptor)
   ((info-repository :initarg :info-repository
                     :accessor info-repository
@@ -540,43 +537,110 @@ ul.toc, ul.toc ul {
   (awhen (app-setting :theme acceptor)
     (initialize-theme it acceptor)))
 
-(defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
-  (bind:bind
-      ((uri (quri:uri (hunchentoot:request-uri request)))
-       ((:values node doc)
-        (trivia:match (quri:uri-path uri)
-          ((or nil "" "/") (home-node (info-repository acceptor)))
-          ((or "_is" "/_is") (make-index-search-node (info-repository acceptor) uri))
-          ((or "_s" "/_s") (make-search-node (info-repository acceptor) uri))
-          ((or "_fts" "/_fts") (make-instance 'fulltext-search-node
-                                              :name "Fulltext search"
-                                              :search-term (aget (quri:uri-query-params uri) "q")))
-          ((or "_dir" "/_dir") (make-dir-node (info-repository acceptor) request))
-          ((or "_settings" "/_settings")
-           (trivia:match (hunchentoot:request-method request)
-             (:get (make-instance 'settings-info-node :name "Settings"))
-             (:post (save-settings acceptor request) nil)))
-          (_
-           ;; TODO: perform a search if a node name is not matched?
-           (let* ((clean-url (remove #\/ (quri:uri-path uri) :count 1))
-                  (node-name (substitute #\- #\space clean-url)))
-             (awhen (find-node (info-repository acceptor) node-name)
-               (values it
-                       (info-document-for-uri (info-repository acceptor)
-                                              uri)
-                     )))))))
-    (if (not node)
-        (call-next-method)
-        (with-output-to-string (s)
-          (webinfo-html s
-                        (lambda (stream)
-                          (render-node node (app-setting :theme acceptor) stream  doc)))))))
+(defun render-webinfo-page (acceptor node &optional document)
+  (with-output-to-string (s)
+    (webinfo-html
+     s
+     (lambda (stream)
+       (render-node node (app-setting :theme acceptor) stream
+                    :document document)))))
 
-(push 
+(defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
+  (or (dispatch-webinfo-request (info-repository acceptor) request acceptor)
+      (call-next-method)))
+
+(push
  (hunchentoot:create-folder-dispatcher-and-handler
   "/public/"
   (asdf:system-relative-pathname :webinfo "public/"))
  hunchentoot:*dispatch-table*)
+
+(defun save-settings (request)
+  (error "TODO"))
+
+(defgeneric dispatch-webinfo-request (info-repository request acceptor))
+
+(defmethod dispatch-webinfo-request ((info-repository file-info-repository) request acceptor)
+  (let ((uri (quri:uri (hunchentoot:request-uri request))))
+    (trivia:match (quri:uri-path uri)
+      ((or nil "" "/")
+       (render-webinfo-page acceptor (home-node info-repository)))
+      ((or "_is" "/_is")
+       (render-webinfo-page acceptor (make-index-search-node info-repository uri)))
+      ((or "_s" "/_s")
+       (render-webinfo-page acceptor (make-search-node info-repository uri)))
+      ((or "_fts" "/_fts")
+       (render-webinfo-page acceptor
+                            (make-instance 'fulltext-search-node
+                                           :name "Fulltext search"
+                                           :search-term (aget (quri:uri-query-params uri) "q"))))
+      ((or "_settings" "/_settings")
+       (trivia:match (hunchentoot:request-method request)
+         (:get (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings")))
+         (:post (save-settings request)
+                (render-webinfo-page acceptor
+                                     (home-node info-repository)))))
+      (_
+       ;; TODO: perform a search if a node name is not matched?
+       (let ((node-name (substitute #\- #\space (subseq (quri:uri-path uri) 1))))
+         (awhen (find-node info-repository node-name)
+           (render-webinfo-page acceptor it (file info-repository))))))))
+
+(defmethod dispatch-webinfo-request ((info-repository dir-info-repository) request acceptor)
+  (let* ((uri (quri:uri (hunchentoot:request-uri request)))
+         (path (split-sequence:split-sequence #\/ (quri:uri-path uri)
+                                              :remove-empty-subseqs t)))
+    (cond
+      ((alexandria:emptyp path)
+       (render-webinfo-page acceptor (home-node info-repository)))
+      ((= (length path) 1)
+       ;; Global repository url, or manual root node
+       (trivia:match (first path)
+         ((or nil "" "/")
+          (render-webinfo-page acceptor (home-node info-repository)))
+         ((or "_is" "/_is")
+          (render-webinfo-page acceptor (make-index-search-node info-repository uri)))
+         ((or "_s" "/_s")
+          (render-webinfo-page acceptor (make-search-node info-repository uri)))
+         ((or "_fts" "/_fts")
+          (render-webinfo-page
+           acceptor
+           (make-instance 'fulltext-search-node
+                          :name "Fulltext search"
+                          :search-term (aget (quri:uri-query-params uri) "q"))))
+         ((or "_settings" "/_settings")
+          (trivia:match (hunchentoot:request-method request)
+            (:get
+             (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings")))
+            (:post (save-settings request)
+                   (render-webinfo-page acceptor (home-node info-repository)))))
+         (_
+          (alexandria:when-let ((doc (find-document info-repository (first path) :errorp nil)))
+            (render-webinfo-page acceptor (find-node doc "Top") doc)))))
+
+      ((= (length path) 2)
+       ;; Node url in some doc
+       (alexandria:when-let ((doc (find-document info-repository (first path) :errorp nil)))
+         (trivia:match (second path)
+           ("_is" (render-webinfo-page acceptor (make-index-search-node doc uri)))
+           ("_s" (render-webinfo-page acceptor (make-search-node doc uri)))
+           ("_fts"
+            (render-webinfo-page
+             acceptor
+             (make-instance 'fulltext-search-node
+                            :name "Fulltext search"
+                            :source doc
+                            :search-term (aget (quri:uri-query-params uri) "q"))))
+           (_
+            ;; TODO: perform a search if a node name is not matched?
+            (let ((node-name (substitute #\- #\space (second path))))
+              (if (not (alexandria:emptyp node-name))
+                  (alexandria:when-let ((node (find-node doc node-name)))
+                    (render-webinfo-page acceptor node doc))
+                  (render-webinfo-page acceptor (find-node doc "Top") doc))))
+           ))))
+    ;; TODO: perform a search if a node name is not matched?
+    ))
 
 (defvar *webinfo-acceptor*)
 
@@ -593,7 +657,7 @@ ul.toc, ul.toc ul {
                                      :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
                                      :title "Djula manual")))
     (fulltext-index-document djula-manual)
-    
+
     (webinfo:start-webinfo
      :port 9090
      :info-repository
@@ -612,7 +676,7 @@ ul.toc, ul.toc ul {
                                   :title "Djula reference")))
     (fulltext-index-document djula-manual)
     (fulltext-index-document djula-ref)
-    
+
     (webinfo:start-webinfo
      :port 9090
      :info-repository
