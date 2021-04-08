@@ -361,6 +361,9 @@ header.node-navigation {
 div.node {
    padding-top: 50px;
 }
+p {
+  max-width: 80ch;
+}
 "))))
 
 (defmethod add-theme-scripts ((theme simple-theme) stream)

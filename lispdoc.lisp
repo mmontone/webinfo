@@ -283,6 +283,8 @@ the CADR of the list."
             `(:|chapter| ()
                (:|sectiontitle| ()
                  ,(format nil "Package reference: ~a" (package-name package)))
+               ,@(awhen (documentation package t)
+                   (text->sexp it))
                (:|menu| ()
                  ,@(loop for node in (list dictionary-node
                                            variable-index-node
@@ -360,10 +362,22 @@ the CADR of the list."
                                   collect (cons (princ-to-string (aget info :name))
                                                 dictionary-node)))))))
 
-(defun format-text (text)
-  (loop for line in (split-sequence:split-sequence #\newline
-                                                   text)
-        collect `(:|para| () ,line)))
+(defun split-into-paragraphs (text)
+  "Divide TEXT into paragraphs, on each empty line."
+  (let ((lines (split-sequence:split-sequence #\newline text))
+        (paragraphs nil)
+        (paragraph nil))
+
+    (loop for line in lines
+          do (if (alexandria:emptyp line)
+                 (progn
+                   (push (nreverse paragraph) paragraphs)
+                   (setf paragraph nil))
+                 ;; else
+                 (push line paragraph))
+          finally (when paragraph
+                    (push (nreverse paragraph) paragraphs)))
+    (nreverse paragraphs)))
 
 (defun lispinfo->sexp (info)
   (ecase (aget info :type)
@@ -376,7 +390,7 @@ the CADR of the list."
           (:|defvariable| () ,(aget info :name)))
         (:|definitionitem| ()
           ,@(or (aand (aget info :documentation)
-                      (format-text it))
+                      (text->sexp it))
                 `((:|para| () ""))))
         (:|vindex| ()
           (:|indexterm| ()
@@ -391,7 +405,7 @@ the CADR of the list."
           (:|defparam| () ,(aget info :args)))
         (:|definitionitem| ()
           ,@(or (aand (aget info :documentation)
-                      (format-text it))
+                      (text->sexp it))
                 `((:|para| () ""))))
         (:|findex| ()
           (:|indexterm| ()
@@ -406,7 +420,7 @@ the CADR of the list."
           (:|defparam| () ,(aget info :args)))
         (:|definitionitem| ()
           ,@(or (aand (aget info :documentation)
-                      (format-text it))
+                      (text->sexp it))
                 `((:|para| () ""))))
         (:|findex| ()
           (:|indexterm| ()
@@ -420,7 +434,7 @@ the CADR of the list."
           (:|defdatatype| () ,(aget info :name)))
         (:|definitionitem| ()
           ,@(or (aand (aget info :documentation)
-                      (format-text it))
+                      (text->sexp it))
                 `((:|para| () ""))))
         (:|tindex| ()
           (:|indexterm| ()
@@ -435,7 +449,7 @@ the CADR of the list."
           (:|defparam| () ,(aget info :args)))
         (:|definitionitem| ()
           ,@(or (aand (aget info :documentation)
-                      (format-text it))
+                      (text->sexp it))
                 `((:|para| () ""))))
         (:|findex| ()
           (:|indexterm| ()

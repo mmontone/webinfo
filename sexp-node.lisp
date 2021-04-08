@@ -48,6 +48,7 @@
                       (bind:bind (((tag args &rest body) x))
                        (case tag
                          (:|para| (who:htm (:p (render))))
+                         (:|@*| (who:htm (:br))) ;; linebreaks
                          (:|menu| ;;(render-menu)
                           (who:htm (:ul :class "menu" (render)))
                           )
@@ -135,3 +136,14 @@
                           do (append-text child)))))))
       (append-text (contents node))
       text)))
+
+(defun text->sexp (text)
+  "Transform text to Texinfo paragraphs and linebreaks, in s-expression format"
+  (flet ((make-paragraph (lines)
+           (let ((last-line (car (last lines))))
+             `(:|para| ()
+                ,@(loop for line in lines
+                        collect line
+                        unless (eql line last-line)
+                          collect `(:|@*| ()))))))
+    (mapcar #'make-paragraph (split-into-paragraphs text))))
