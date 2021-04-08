@@ -193,8 +193,8 @@ If :error (default), an error is signaled. If :warn, a warning is signaled."
                          (:|code| (who:htm (:code :class "inline" (render))))
                          (:|w| (who:str (who:escape-string (dom:data (dom:first-child x)))))
                          (t (case on-unknown-tag
-                              (:error (error "Cannot process tag: ~a" (dom:tag-name x)))
-                              (:warn (warn "Cannot process tag: ~a" (dom:tag-name x)))))                          
+                              (:error (error "Don't know how to render tag: ~a" (dom:tag-name x)))
+                              (:warn (warn "Don't know how to render tag: ~a" (dom:tag-name x)))))                          
                          ))))))
         (render-element xml)))))
 
