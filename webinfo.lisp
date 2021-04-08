@@ -384,7 +384,7 @@ div.node {
           (:div :class "settings"
                 (:a :href "/" :alt "Home"
                     (:i :class "bi-house-fill" :style "font-size: 2rem;"))
-                (:a :href "_settings" :alt "Settings"
+                (:a :href "/_settings" :alt "Settings"
                     (:i :class "bi-gear" :style "font-size: 2rem;"
                         :name "settings-outline"))
                 ))))
