@@ -47,9 +47,19 @@
          :documentation "FILE can be either a pathname pointing to a WEBINFO file, or an INFO-DOCUMENT object"))
   (:documentation "A repository of a single file"))
 
-(defgeneric home-node (info-repository))
-(defgeneric all-nodes (info-document))
-(defgeneric top-nodes (info-document))
+(defgeneric dir-category (info-document)
+  (:documentation "The category in dir node for INFO-DOCUMENT"))
+(defgeneric dir-entry (info-document)
+  (:documentation "direntry spec of INFO-DOCUMENT"))
+(defgeneric texinfo-filename (info-document)
+  (:documentation "The filename specified in Texinfo source of INFO-DOCUMENT"))
+
+(defgeneric home-node (info-repository)
+  (:documentation "Home node for INFO-REPOSITORY"))
+(defgeneric all-nodes (info-document)
+  (:documentation "Returns all of the nodes in INFO-DOCUMENT, including children."))
+(defgeneric top-nodes (info-document)
+  (:documentation "Returns top-level nodes of INFO-DOCUMENT"))
 
 (defmethod home-node ((repo file-info-repository))
   (find-node (file repo) "Top"))
