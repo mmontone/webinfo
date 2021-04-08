@@ -102,7 +102,15 @@
     (or (xml-elem->lisp xml)
         (error "Could not read xml: ~a" xml))))
 
-(defun render-xml-content (xml stream &key (split t))
+(defun render-xml-content (xml stream &key (split t) (on-unknown-tag :error))
+  "Render XML content to HTML on STREAM. 
+
+Parameters:
+
+SPLIT (boolean): When T (default), render the content split. Otherwise, child nodes are rendered embedded.
+ON-UNKNOWN-TAG specifies what to do when an unknown, unprocessable tag is found. 
+If :error (default), an error is signaled. If :warn, a warning is signaled."
+  (check-type on-unknown-tag (member :error :warning))
   (who:with-html-output (stream)
     (block quit
       (labels ((render-element (x)
@@ -184,7 +192,9 @@
                                                                                            x))))))))
                          (:|code| (who:htm (:code :class "inline" (render))))
                          (:|w| (who:str (who:escape-string (dom:data (dom:first-child x)))))
-                         (t (error "~a" (dom:tag-name x)))
+                         (t (case on-unknown-tag
+                              (:error (error "Cannot process tag: ~a" (dom:tag-name x)))
+                              (:warn (warn "Cannot process tag: ~a" (dom:tag-name x)))))                          
                          ))))))
         (render-element xml)))))
 
