@@ -289,14 +289,14 @@
                    (string= (node-up child) (node-name node)))
                  (all-nodes (info-document node))))
 
-(defun start-sinfo-demo (&rest args)
+(defun start-sinfo-demo (&rest args &key (port 9090))
   (let ((djula-manual (make-instance 'sinfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
 
     (fulltext-index-document djula-manual)
 
-    (webinfo:start-webinfo
-     :port 9090
+    (apply #'webinfo:start-webinfo
      :info-repository
      (make-instance 'file-info-repository
                     :file djula-manual)
-     :app-settings (list (cons :theme (make-instance 'nav-theme))))))
+     :app-settings (list (cons :theme (make-instance 'nav-theme)))
+     args)))
