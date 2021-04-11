@@ -382,10 +382,15 @@ p {
   (:default-initargs
    :name "Nav"))
 
+(defun render-navigation-sidebar-p (args)
+  (and (getf args :document)
+       (or (not (boundp 'hunchentoot:*request*))
+           (null (hunchentoot:get-parameter "_c")))))
+
 (defmethod render-node :before (node (theme nav-theme) stream &rest args)
   "We render navigation sidebar in this wrapper method when :document is passed in ARGS"
-  (alexandria:when-let ((info-doc (getf args :document)))
-    (render-navigation-sidebar info-doc stream)))
+  (when (render-navigation-sidebar-p args)
+    (render-navigation-sidebar (getf args :document) stream)))
 
 (defun render-navigation-sidebar (doc stream)
   (who:with-html-output (stream)
