@@ -137,7 +137,9 @@ If :error (default), an error is signaled. If :warn, a warning is signaled."
                                                                (format nil "#~a" node-url-name))
                                                      (who:str node-name)))))
                          (:|menudescription| (render))
-                         (:|pre| (who:htm (:pre (render))))
+                         (:|pre| (let ((content (render)))
+                                   (when (not (alexandria:emptyp content))
+                                     (who:htm (:pre content)))))
                          (:|node| (if split
                                       (return-from quit)
                                       (let ((subnode (make-xml-info-node x)))

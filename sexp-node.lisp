@@ -60,7 +60,9 @@
                                                                (format nil "#~a" node-url-name))
                                                      (who:str node-name)))))
                          (:|menudescription| (render))
-                         (:|pre| (who:htm (:pre (render))))
+                         (:|pre| (let ((content (render)))
+                                   (when (not (alexandria:emptyp content))
+                                     (who:htm (:pre content)))))
                          (:|node|
                           (error "This shouldn't happen")
                           #+nil(if split
