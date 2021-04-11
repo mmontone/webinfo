@@ -1,6 +1,6 @@
 * Different directories views. Different layouts and presentations for 'dir' nodes.
 * Render special HTML for when browsing from particular clients. For example, don't render the TOC when browsing from Emacs. A _client parameter in request could be used for this.
-* An Emacs webinfo-minor-mode, that works over ewww (web browsing mode). Implements key bindings for navigation. A mix of remote/web info system, plus a special local client for navigation and more.
+* An Emacs webinfo-minor-mode, that works over ewww (web browsing mode). Implements key bindings for navigation. Also a custom toolbar with navigation buttons, etc. A mix of remote/web info system, plus a special local client for navigation and more.
 * Themes.
 * Switch between look at a document splitted or not (render all nodes in a single document).
 * Special options in texinfo source (macros) for specifying special webinfo options, like wether rendering the document split or not, etc.
