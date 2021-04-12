@@ -3,7 +3,7 @@
 * An Emacs webinfo-minor-mode, that works over ewww (web browsing mode). Implements key bindings for navigation. Also a custom toolbar with navigation buttons, etc. A mix of remote/web info system, plus a special local client for navigation and more.
 * Themes.
 * Switch between look at a document splitted or not (render all nodes in a single document).
-* Special options in texinfo source (macros) for specifying special webinfo options, like wether rendering the document split or not, etc.
+* Special options (or metadata) in texinfo source (macros) for specifying special webinfo options, like wether rendering the document split or not, etc.
 * Implement syntax highlighting for definitions (@deffn, @defvr, etc), like info-colors.
 * Settings.
 * Fulltext search.
