@@ -10,3 +10,4 @@
 * Read HTML documents.
 * Option controlled by settings to apply some parser to docstrings. For example, one could transform any upcase symbols to a link to an indexed search.
 * Use _c=desktop for desktop webinfo client.
+* Implement navigation urls, <nodename>/top, <nodename>/next, etc, that redirect to the appropiate node. This is needed to be able to control the navigation from outside (for example, from the Emacs/Web client).
