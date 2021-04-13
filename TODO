@@ -12,3 +12,5 @@
 * Use _c=desktop for desktop webinfo client.
 * Implement navigation urls, <nodename>/top, <nodename>/next, etc, that redirect to the appropiate node. This is needed to be able to control the navigation from outside (for example, from the Emacs/Web client).
 * CLON command line interface and binary packages. A portable binary desktop application based on webview.
+* Return different formats on URLs based on HTTP request 'Accept' media type' (json, html, pdf, etc).
+* Links to download the document in different formats (setting).
