@@ -15,3 +15,4 @@
 * Return different formats on URLs based on HTTP request 'Accept' media type' (json, html, pdf, etc).
 * Links to download the document in different formats (setting).
 * Consider CDB (https://github.com/xach/zcdb) as file format for Webinfo documents?
+* Detailed Node Listing page.
