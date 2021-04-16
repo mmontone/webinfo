@@ -181,3 +181,13 @@
 (add-hook 'webinfo-mode-hook
           (lambda ()
             (setq-local tool-bar-map webinfo-tool-bar-map)))
+
+(defun webinfo--detect-webinfo ()
+  "Returns T when webinfo is detected at current url."
+  ;; TODO. Perhaps use (eww-parse-headers)
+  nil)
+
+(add-hook 'eww-after-render-hook
+          (lambda ()
+            (when (webinfo--detect-webinfo)
+              (webinfo-mode))))
