@@ -16,3 +16,4 @@
 * Links to download the document in different formats (setting).
 * Consider CDB (https://github.com/xach/zcdb) as file format for Webinfo documents?
 * Detailed Node Listing page.
+* Setting to display breadcrumb navigation like in Emacs Info reader. The navigation bar with TOC and search should also be a setting.
