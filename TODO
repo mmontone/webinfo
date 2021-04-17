@@ -18,3 +18,4 @@
 * Detailed Node Listing page.
 * Setting to display breadcrumb navigation like in Emacs Info reader. The navigation bar with TOC and search should also be a setting.
 * Use a special WebInfo HTTP header, so that a web browser client can detect it is accessing a WebInfo instance. That is useful for toggling Emacs Webinfo minor mode automatically.
+* Try this highlighter: https://github.com/orthecreedence/highlight-lisp
