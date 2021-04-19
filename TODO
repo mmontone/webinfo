@@ -19,4 +19,5 @@
 * Setting to display breadcrumb navigation like in Emacs Info reader. The navigation bar with TOC and search should also be a setting.
 * Use a special WebInfo HTTP header, so that a web browser client can detect it is accessing a WebInfo instance. That is useful for toggling Emacs Webinfo minor mode automatically.
 * Try this highlighter: https://github.com/orthecreedence/highlight-lisp
-* * Parse and consider `symbol' syntax in docstrings. See: https://www.emacswiki.org/emacs/DocString
+* Parse and consider `symbol' syntax in docstrings. See: https://www.emacswiki.org/emacs/DocString.
+* Consider using an on-disk btree data structure for the global webinfo index, important for webinfo repository with lots of documents. cl-btree library?.
