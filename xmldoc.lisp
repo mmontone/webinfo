@@ -200,7 +200,7 @@ If :error (default), an error is signaled. If :warn, a warning is signaled."
                          ))))))
         (render-element xml)))))
 
-(defmethod render-node ((node xml-info-node) theme stream &rest args)
+(defmethod render-node-html ((node xml-info-node) theme stream &rest args)
   (who:with-html-output (stream)
     (:div :class "node"
           (render-node-navigation node stream)

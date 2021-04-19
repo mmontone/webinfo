@@ -7,6 +7,7 @@
   :version "0.0.1"
   :serial t
   :components ((:file "package")
+	       (:file "mimeparse")
                (:file "webinfo")
                (:file "xmldoc")
                (:file "search")
@@ -30,4 +31,5 @@
                :assoc-utils
                :quri
                :montezuma
-               :cl-intbytes))
+               :cl-intbytes
+	       :string-case))

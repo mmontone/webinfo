@@ -87,7 +87,12 @@
 (defmethod html-link ((node info-node))
   (node-name node))
 
-(defgeneric render-node (thing theme stream &rest args))
+(defgeneric render-node (node media-type stream &rest args))
+
+(defgeneric render-node-html (node theme stream &rest args))
+
+(defmethod render-node (node (media-type (eql :html)) stream &rest args)
+  (apply #'render-node-html node (app-setting :theme) stream args))
 
 (defmethod render-node-navigation (node stream)
   (who:with-html-output (stream)
@@ -204,7 +209,7 @@
 (defmethod render-node-navigation ((node index-matches-node) stream)
   )
 
-(defmethod render-node ((node index-matches-node) theme stream &rest args)
+(defmethod render-node-html ((node index-matches-node) theme stream &rest args)
   (declare (ignore args))
   (who:with-html-output (stream)
     (:div :class "node"
@@ -242,7 +247,7 @@
 (defmethod render-node-navigation ((node search-node) stream)
   )
 
-(defmethod render-node ((node search-node) theme stream &rest args)
+(defmethod render-node-html ((node search-node) theme stream &rest args)
   (declare (ignore args))
   (who:with-html-output (stream)
     (:div :class "node"
@@ -275,7 +280,8 @@
 (defclass dir-node (info-node)
   ((dir :initarg :dir :accessor dir)))
 
-(defmethod render-node ((node dir-node) theme stream &rest args)
+(defmethod render-node-html ((node dir-node) theme stream &rest args)
+  (declare (ignore args))
   (who:with-html-output (stream)
     (:h1 (who:str "(dir)Top"))
     (:p (who:str "This (the Directory node) gives a menu of major topics."))
@@ -387,7 +393,7 @@ p {
        (or (not (boundp 'hunchentoot:*request*))
            (null (hunchentoot:get-parameter "_c")))))
 
-(defmethod render-node :before (node (theme nav-theme) stream &rest args)
+(defmethod render-node-html :before (node (theme nav-theme) stream &rest args)
   "We render navigation sidebar in this wrapper method when :document is passed in ARGS"
   (when (render-navigation-sidebar-p args)
     (render-navigation-sidebar (getf args :document) stream)))
@@ -560,8 +566,9 @@ ul.toc, ul.toc ul {
     (webinfo-html
      s
      (lambda (stream)
-       (render-node node (app-setting :theme acceptor) stream
-                    :document document)))))
+       (let ((request-media-type (request-media-type)))
+         (render-node node request-media-type stream
+                      :document document))))))
 
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
   (or (dispatch-webinfo-request (info-repository acceptor) request acceptor)
@@ -575,6 +582,25 @@ ul.toc, ul.toc ul {
 
 (defun save-settings (request)
   (error "TODO"))
+
+(defvar *accepted-media-types*
+  '(("text/html" . :html)
+    ("application/xml" . :xml)
+    ("application/json" . :json)))
+
+(defun request-media-type (&optional (request hunchentoot:*request*))
+  (cond
+    ((hunchentoot:get-parameter "_t")
+     (string-case:string-case ((hunchentoot:get-parameter "_t"))
+       ("html" :html)
+       ("xml" :xml)
+       ("json" :json)
+       ("source" :source)
+       (t (error "Invalid media type parameter value: ~a" (hunchentoot:get-parameter "_t")))))
+    ((hunchentoot:header-in "accept" request)
+     (aand (mimeparse:best-match (mapcar 'car *accepted-media-types*)
+                                 (hunchentoot:header-in "accept" request))
+           (aget *accepted-media-types* it)))))
 
 (defgeneric dispatch-webinfo-request (info-repository request acceptor))
 
@@ -664,7 +690,7 @@ ul.toc, ul.toc ul {
 ;; We use the dynamic variable *INFO-DOCUMENT* to know the document being rendered, for now ...
 (defvar *info-document* "The document being rendered")
 
-(defmethod render-node :around ((node info-node) theme stream &key document)
+(defmethod render-node-html :around ((node info-node) theme stream &key document)
   (let ((*info-document* document))
     (call-next-method)))
 

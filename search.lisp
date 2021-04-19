@@ -40,7 +40,7 @@
                    (montezuma:document-value document "node-title"))
              (matches node))))))
 
-(defmethod render-node ((node fulltext-search-node) theme stream &rest args)
+(defmethod render-node-html ((node fulltext-search-node) theme stream &rest args)
   (who:with-html-output (stream)
     (:div :class "node"
     (:h1 "Full text search matches")
