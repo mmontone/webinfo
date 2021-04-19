@@ -21,3 +21,4 @@
 * Try this highlighter: https://github.com/orthecreedence/highlight-lisp
 * Parse and consider `symbol' syntax in docstrings. See: https://www.emacswiki.org/emacs/DocString.
 * Consider using an on-disk btree data structure for the global webinfo index, important for webinfo repository with lots of documents. cl-btree library?.
+* Module to generate TexInfo reference documentation for an ASDF system, so that it can be used via @include from a user manual. Special macros @cldeffn, @cldefvar, etc, that create appropiate <package>:<symbol> indexes. Also optional creation of source code documents and references to it (parse source code and include @anchor commands. Then reference from functions definitions.).
