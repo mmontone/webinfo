@@ -87,12 +87,17 @@
 (defmethod html-link ((node info-node))
   (node-name node))
 
+(defgeneric node-source (node))
+
 (defgeneric render-node (node media-type stream &rest args))
 
 (defgeneric render-node-html (node theme stream &rest args))
 
 (defmethod render-node (node (media-type (eql :html)) stream &rest args)
   (apply #'render-node-html node (app-setting :theme) stream args))
+
+(defmethod render-node (node (media-type (eql :source)) stream &rest args)
+  (write-string (node-source node) stream))
 
 (defmethod render-node-navigation (node stream)
   (who:with-html-output (stream)

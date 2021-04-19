@@ -249,6 +249,9 @@
       ))
   (slot-value node 'contents))
 
+(defmethod node-source ((node file-info-node))
+  (prin1-to-string (contents node)))
+
 (defmethod find-node ((doc sinfo-info-document) node-name)
   (let ((entry (find node-name (aget (tag-table doc) :nodes)
                      :key 'car
