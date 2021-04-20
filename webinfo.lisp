@@ -632,8 +632,17 @@ ul.toc, ul.toc ul {
       (_
        ;; TODO: perform a search if a node name is not matched?
        (let ((node-name (substitute #\- #\space (subseq (quri:uri-path uri) 1))))
-         (awhen (find-node info-repository node-name)
-           (render-webinfo-page acceptor it (file info-repository))))))))
+         (alexandria:when-let ((node (find-node info-repository node-name)))
+           (awhen (hunchentoot:get-parameter "_n")
+             (return-from dispatch-webinfo-request
+               (hunchentoot:redirect
+                (format nil "/~a"
+                        (trivia:match it
+                          ("up" (node-up node))
+                          ("next" (node-next node))
+                          ("prev" (node-prev node))))		
+		)))
+           (render-webinfo-page acceptor node (file info-repository))))))))
 
 (defmethod dispatch-webinfo-request ((info-repository dir-info-repository) request acceptor)
   (let* ((uri (quri:uri (hunchentoot:request-uri request)))
@@ -685,6 +694,14 @@ ul.toc, ul.toc ul {
             (let ((node-name (substitute #\- #\space (second path))))
               (if (not (alexandria:emptyp node-name))
                   (alexandria:when-let ((node (find-node doc node-name)))
+                    (awhen (hunchentoot:get-parameter "_n") ;; navigation parameter
+                      (return-from dispatch-webinfo-request
+			(hunchentoot:redirect 
+                        (format nil "/~a/~a" (document-name doc)
+                                (trivia:match it
+                                  ("up" (node-up node))
+                                  ("next" (node-next node))
+                                  ("prev" (node-prev node)))))))
                     (render-webinfo-page acceptor node doc))
                   (render-webinfo-page acceptor (find-node doc "Top") doc))))
            ))))
