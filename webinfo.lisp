@@ -603,9 +603,12 @@ ul.toc, ul.toc ul {
        ("source" :source)
        (t (error "Invalid media type parameter value: ~a" (hunchentoot:get-parameter "_t")))))
     ((hunchentoot:header-in "accept" request)
-     (aand (mimeparse:best-match (mapcar 'car *accepted-media-types*)
-                                 (hunchentoot:header-in "accept" request))
-           (aget *accepted-media-types* it)))))
+     (if (string= (hunchentoot:header-in "accept" request) "*/*")
+	 :html
+	 ;; else
+	 (aand (mimeparse:best-match (mapcar 'car *accepted-media-types*)
+				     (hunchentoot:header-in "accept" request))
+	       (aget *accepted-media-types* it))))))
 
 (defgeneric dispatch-webinfo-request (info-repository request acceptor))
 

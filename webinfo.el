@@ -63,15 +63,21 @@
 
 (defun webinfo-prev ()
   (interactive)
-  (debug "webinfo-prev"))
+  ;; add the _n parameter to the url
+  ;; TODO: implement properly using some uri library
+  (eww-browse-url (format "%s?_n=prev" (eww-current-url))))
 
 (defun webinfo-next ()
   (interactive)
-  (debug "webinfo-next"))
+  ;; add the _n parameter to the url
+  ;; TODO: implement properly using some uri library
+  (eww-browse-url (format "%s?_n=next" (eww-current-url))))
 
 (defun webinfo-up ()
   (interactive)
-  (debug "webinfo-up"))
+  ;; add the _n parameter to the url
+  ;; TODO: implement properly using some uri library
+  (eww-browse-url (format "%s?_n=up" (eww-current-url))))
 
 (defun webinfo-top-node ()
   (interactive)
@@ -87,7 +93,7 @@
 
 (defun webinfo-exit ()
   (interactive)
-  (debug "webinfo exit"))
+  (kill-buffer (current-buffer)))
 
 (defun webinfo-index ()
   (interactive)
