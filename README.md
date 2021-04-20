@@ -1,6 +1,6 @@
 # webinfo
 
-A TexInfo reader for Web and Desktop.
+A documentation server based on TexInfo, for Web and Desktop.
 
 ## License
 
