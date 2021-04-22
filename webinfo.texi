@@ -2,6 +2,7 @@
 
 @macro cldefun{package, name, args}
 @findex \package\:\name\
+@anchor{\package\-\name\}
 @deffn \package\ \name\ \args\
 @end macro
 
@@ -13,4 +14,10 @@
 @c @cldefun {alexandria, flatten, (x y z)}
 @c This is alexandria flatten function
 @c @endcldefun
+
+@macro clref{package, name}
+@xref{\package\-\name\,\name\}
+@end macro
+
+@c Use @clref{package, name} to reference cl definitions
 
