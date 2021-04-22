@@ -1,0 +1,16 @@
+@c Macros for Common Lisp definitions
+
+@macro cldefun{package, name, args}
+@findex \package\:\name\
+@defun \name\ \args\
+@end macro
+
+@macro endcldefun
+@end defun
+@end macro
+
+@c Example:
+@c @cldefun {alexandria, flatten, (x y z)}
+@c This is alexandria flatten function
+@c @endcldefun
+
