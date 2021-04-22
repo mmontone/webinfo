@@ -3,7 +3,9 @@
 
 (in-package :webinfo/texinfo-processor)
 
+;; This embeds a CL function, reading its structure and documentation from Lisp process:
 ;; @clfunction{alexandria:flatten}
+;; Same for macros and other CL stuff:
 ;; @clmacro{cl:with-open-file}
 
 (defun process-texinfo-file (file)
