@@ -2,11 +2,11 @@
 
 @macro cldefun{package, name, args}
 @findex \package\:\name\
-@defun \name\ \args\
+@deffn \package\ \name\ \args\
 @end macro
 
 @macro endcldefun
-@end defun
+@end deffn
 @end macro
 
 @c Example:
