@@ -28,6 +28,7 @@
     (:@clpackage . "@clpackage{(.*)}")
     (:@clsystem . "@clsystem{(.*)}")
     (:@clsourcecode . "@clsourcecode{(.*),(.*)}")
+    (:@clsourceref . "@clsourceref{(.*),(.*),(.*)}")
     ))
 
 (defun process-texinfo-file (file stream)
@@ -86,6 +87,30 @@
                 (write-string (aget function-info :documentation) stream))
               (terpri stream)
               (write-string "@endcldefun" stream)))))))
+
+(defun lget (list key)
+  (second (find key list :key 'car)))
+
+(let ((fprops (def-properties:function-properties 'alexandria:flatten)))
+  (lget (rest (aget fprops :source)) :file))
+
+(defmethod process-texinfo-syntax ((syntax (eql :@clsourceref)) line stream)
+  (let ((regex (aget *texinfo-syntax* :@clsourceref)))
+    (ppcre:do-register-groups (symbol-type package-name symbol-name)
+        (regex line)
+      (let* ((symbol (intern (string-upcase symbol-name)
+			     (or (find-package (string-upcase package-name))
+				 (error "Package not found: ~a" package-name))))
+	     (symbol-info (ecase (intern (string-upcase symbol-type) :keyword)
+			    (:function (def-properties:function-properties symbol)))))
+        (if (null symbol-info)
+            (error "Symbol properties could not be read: ~s" symbol)
+	    (format stream "@xref{~a, Source}"
+		    (source-anchor-name (lget (rest (aget symbol-info :source))
+					      :file)
+					;; FIXME: we need the line, not the position here
+					(lget (rest (aget symbol-info :source))
+					      :position))))))))
 
 ;; @clpackage-functions: Produce a Texinfo section with a package external function definitions.
 ;; @clpackage-variables: Same with variables.
