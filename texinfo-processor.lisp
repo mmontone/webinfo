@@ -11,7 +11,13 @@
 ;; @clmacro{cl:with-open-file}
 
 (defparameter *texinfo-syntax*
-  '((:@clfunction . "@clfunction{(.*):(.*)}")))
+  '((:@clfunction . "@clfunction{(.*):(.*)}")
+    (:@clvariable . "@clvariable{(.*):(.*)}")
+    (:@clmacro . "@clmacro{(.*):(.*)}")
+    (:@clclass . "@clclass{(.*):(.*)}")
+    (:@clpackage . "@clpackage{(.*):(.*)}")
+    (:@clsystem . "@clsystem{(.*):(.*)}")
+    ))
 
 (defun process-texinfo-file (file stream)
   "Expands @clfunction, @clmacro, etc. definitions to a Texinfo definition with body extracted from Common Lisp code."
@@ -51,9 +57,29 @@
 	      (write-string "@endcldefun" stream)
 	      (terpri stream)))))))
 
-;; @clpackage-functions
-;; @clpackage-variables
-;; @clpackage-classes
+(defmethod process-texinfo-syntax ((syntax (eql :@clvariable)) line stream)
+  (let ((regex (aget *texinfo-syntax* :@clvariable)))
+    (ppcre:do-register-groups (package-name symbol-name)
+	(regex line)
+      (let* ((function-symbol (intern (string-upcase symbol-name)
+				      (or (find-package (string-upcase package-name))
+					  (error "Package not found: ~a" package-name))))
+	     (function-info (def-properties:function-properties function-symbol)))
+	(if (null function-info)
+	    (error "Function properties could not be read: ~s" function-symbol)
+	    (progn
+	      (format stream "@cldefun {~a, ~a, ~a}"
+		      package-name symbol-name (aget function-info :args))
+	      (terpri stream)
+	      (when (aget function-info :documentation)
+		(write-string (aget function-info :documentation) stream))
+	      (terpri stream)
+	      (write-string "@endcldefun" stream)
+	      (terpri stream)))))))
+
+;; @clpackage-functions: Produce a Texinfo section with a package external function definitions.
+;; @clpackage-variables: Same with variables.
+;; @clpackage-classes: Same with classes.
 
 ;; TODO: make @cldefun reference source code when enabled (use swank location).
 ;; Source code enabled is indicated with a Texinfo variable.
@@ -67,3 +93,23 @@
 (with-output-to-string (s)
   (process-texinfo-file
    (asdf:system-relative-pathname :webinfo "test/texinfo.texi") s))
+
+(defun source-anchor-name (source-file line-number)
+  (format nil "~aL~a" (pathname-name source-file)
+		   line-number))
+
+(defun generate-texinfo-source (source-file output)
+  "Source code is serialized to a Texinfo node with an anchor for each line @anchor{<filename>L<linename>}"
+    (with-open-file (f source-file :direction :input
+				   :external-format :utf-8)
+      (loop for line := (read-line f nil nil)
+	    for line-number := 1 then (1+ line-number)
+	    while line
+	    do
+	       (format output "@anchor{~a}" (source-anchor-name line-number))
+	       (write-string line output)
+	       (terpri output)))))
+
+(with-output-to-string (s)
+  (generate-texinfo-source
+   (asdf:system-relative-pathname :webinfo "webinfo.lisp") s))
