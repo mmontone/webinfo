@@ -5,6 +5,16 @@
 
 (in-package :webinfo/texinfo-processor)
 
+(defun texinfo-escape (string)
+  (let ((chars
+          (loop
+            for char across string
+            if (member char '(#\{ #\} #\@))
+              collect #\@ and collect char
+            else
+              collect char)))
+    (coerce chars 'string)))
+
 ;; This embeds a CL function, reading its structure and documentation from Lisp process:
 ;; @clfunction{alexandria:flatten}
 ;; Same for macros and other CL stuff:
@@ -17,6 +27,7 @@
     (:@clclass . "@clclass{(.*),(.*)}")
     (:@clpackage . "@clpackage{(.*)}")
     (:@clsystem . "@clsystem{(.*)}")
+    (:@clsourcecode . "@clsourcecode{(.*),(.*)}")
     ))
 
 (defun process-texinfo-file (file stream)
@@ -105,9 +116,17 @@
           for line-number := 1 then (1+ line-number)
           while line
           do
-             (format output "@anchor{~a}" (source-anchor-name line-number))
-             (write-string line output)
-             (terpri output))))
+             (format output "@anchor{~a}" (source-anchor-name source-file line-number))
+             (write-string (texinfo-escape line) output)
+	     (write-string "@*" output)
+	     (terpri output))))
+
+(defmethod process-texinfo-syntax ((syntax (eql :@clsourcecode)) line stream)
+  (let ((regex (aget *texinfo-syntax* :@clsourcecode)))
+    (ppcre:do-register-groups (system-name filepath)
+        (regex line)
+      (let ((source-file (asdf:system-relative-pathname system-name filepath)))
+	(generate-texinfo-source source-file stream)))))
 
 (with-output-to-string (s)
   (generate-texinfo-source

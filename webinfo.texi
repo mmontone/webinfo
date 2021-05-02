@@ -24,3 +24,6 @@
 @macro clfunction{package, name}
 @end macro
 
+@macro clsourcecode{system,path}
+@end macro
+
