@@ -21,3 +21,6 @@
 
 @c Use @clref{package, name} to reference cl definitions
 
+@macro clfunction{package, name}
+@end macro
+
