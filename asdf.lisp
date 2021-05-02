@@ -73,3 +73,8 @@ If INCLUDE-SUBDIRECTORIES is T, then work recursively."
 		       (push file doc-files))
 		     nil)      
       doc-files)))
+
+(defun process-systems-documentation (directory-path)
+  (ensure-directories-exist directory-path)
+  (dolist (system (asdf/system-registry:registered-systems*))
+    (ensure-directories-exist (merge-pathnames (uiop/pathname:ensure-directory-pathname (asdf:component-name system)) directory-path)
