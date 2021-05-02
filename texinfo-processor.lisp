@@ -19,28 +19,37 @@
 			  :external-format :utf-8)
     (loop for line := (read-line f nil nil)
 	  while line
-	  do (cond
-	       ((ppcre:scan (aget *texinfo-syntax* :@clfunction) line)
-		(ppcre:do-register-groups (package-name symbol-name)
-		    ((aget *texinfo-syntax* :@clfunction) line)
-		  
-		  (let* ((function-symbol (intern (string-upcase symbol-name)
-						  (or (find-package (string-upcase package-name))
-						      (error "Package not found: ~a" package-name))))
-			 (function-info (def-properties:function-properties function-symbol)))
-		    (if (null function-info)
-			(error "Function properties could not be read: ~s" function-symbol)
-			(progn
-			  (format stream "@cldefun {~a, ~a, ~a}"
-				  package-name symbol-name (aget function-info :args))
-			  (terpri stream)
-			  (when (aget function-info :documentation)
-			    (write-string (aget function-info :documentation) stream))
-			  (terpri stream)
-			  (write-string "@endcldefun" stream)
-			  (terpri stream))))))
-	       (t (write-string line stream)
-		  (terpri stream))))))
+	  do
+	     (when (not
+		    (block process
+		      (dolist (syntax *texinfo-syntax*)
+			(when (ppcre:scan (cdr syntax) line)
+			  (process-texinfo-syntax (car syntax) line stream)
+			  (return-from process t)))))
+	       (write-string line stream)
+	       (terpri stream)))))
+
+(defgeneric process-texinfo-syntax (syntax line stream))
+
+(defmethod process-texinfo-syntax ((syntax (eql :@clfunction)) line stream)
+  (let ((regex (aget *texinfo-syntax* :@clfunction)))
+    (ppcre:do-register-groups (package-name symbol-name)
+	(regex line)
+      (let* ((function-symbol (intern (string-upcase symbol-name)
+				      (or (find-package (string-upcase package-name))
+					  (error "Package not found: ~a" package-name))))
+	     (function-info (def-properties:function-properties function-symbol)))
+	(if (null function-info)
+	    (error "Function properties could not be read: ~s" function-symbol)
+	    (progn
+	      (format stream "@cldefun {~a, ~a, ~a}"
+		      package-name symbol-name (aget function-info :args))
+	      (terpri stream)
+	      (when (aget function-info :documentation)
+		(write-string (aget function-info :documentation) stream))
+	      (terpri stream)
+	      (write-string "@endcldefun" stream)
+	      (terpri stream)))))))
 
 ;; @clpackage-functions
 ;; @clpackage-variables
