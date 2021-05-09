@@ -15,6 +15,13 @@
   :type 'symbol
   :group 'webinfo)
 
+(defun webinfo (&optional node-name)
+  (interactive "sNode name (default: root): ")
+
+  (when (null node-name)
+    (setq node-name ""))
+  (webinfo-browse-url (format "%s/%s?" webinfo-url node-name)))
+
 (defun webinfo-apropos-symbol (symbol)
   (interactive "sSymbol:")
   (webinfo-browse-url (format "%s/_s?q=%s" webinfo-url symbol)))
