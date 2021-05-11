@@ -3,7 +3,7 @@
 ;; All nodes are flattened and serialized, then an index table at the end for fast and memory efficient access.
 ;; Expressions have the form (tag (&rest args) body)
 ;; Example:
-;; (:setfilename () "djula.sinfo")
+;; (:setfilename () "djula.winfo")
 ;; (:node (:name "Top")
 ;;        (:section ()
 ;;                  (:sectiontitle () "Top")
@@ -19,19 +19,19 @@
 
 (in-package :webinfo)
 
-(defclass sinfo-info-document (info-document)
+(defclass winfo-info-document (info-document)
   ((filepath :initarg :filepath :accessor filepath
              :initform (error "Provide the filepath"))
    (tag-table :initarg :tag-table
               :accessor tag-table)
    (file :accessor file :documentation "A handle to the document file")
    (toc :documentation "Toc is memoized because it is expensive to calculate"))
-  (:documentation "An info document that works with a serialized form in a file"))
+  (:documentation "This is the custom format for WebInfo documents."))
 
-(defmethod initialize-instance :after ((doc sinfo-info-document) &rest initargs)
+(defmethod initialize-instance :after ((doc winfo-info-document) &rest initargs)
   (declare (ignore initargs))
   (setf (tag-table doc)
-        (read-sinfo-tag-table-from-file (filepath doc)))
+        (read-winfo-tag-table-from-file (filepath doc)))
   ;; Initialize indexes
   (let ((indexes (aget (tag-table doc) :index)))
     (loop for (index-type . entries) in indexes
@@ -42,7 +42,7 @@
                            entries)))
     (setf (indexes doc) indexes)))
 
-(defmethod toc ((doc sinfo-info-document))
+(defmethod toc ((doc winfo-info-document))
   (when (not (slot-boundp doc 'toc))
     (setf (slot-value doc 'toc) (call-next-method)))
   (slot-value doc 'toc))
@@ -51,25 +51,25 @@
 ;;-- xml reader
 ;;-----------------------
 
-(defclass sinfo-sax-handler (sax:default-handler)
+(defclass winfo-sax-handler (sax:default-handler)
   (elements nodes counter suspended-elements reading-node-p))
 
-(defmethod sax:start-document ((handler sinfo-sax-handler))
+(defmethod sax:start-document ((handler winfo-sax-handler))
   (setf (slot-value handler 'elements) '(()))
   (setf (slot-value handler 'nodes) '())
   (setf (slot-value handler 'counter) 0)
   (setf (slot-value handler 'reading-node-p) nil)
   )
 
-(defmethod sax:end-document ((handler sinfo-sax-handler))
+(defmethod sax:end-document ((handler winfo-sax-handler))
   (with-slots (elements nodes) handler
     (values (reverse (first (slot-value handler 'elements)))
             nodes))
   handler)
 
-(defmethod sax:start-dtd ((handler sinfo-sax-handler) name public-id system-id))
+(defmethod sax:start-dtd ((handler winfo-sax-handler) name public-id system-id))
 
-(defmethod sax:comment ((handler sinfo-sax-handler) data))
+(defmethod sax:comment ((handler winfo-sax-handler) data))
 
 (defun namespace-p (attribute)
   (string= (sax:attribute-namespace-uri attribute)
@@ -86,7 +86,7 @@
    :keyword))
 
 
-(defmethod sax:start-element ((handler sinfo-sax-handler)
+(defmethod sax:start-element ((handler winfo-sax-handler)
                               namespace-uri
                               local-name
                               qname
@@ -115,7 +115,7 @@
         (incf counter))
       (push `(,attributes ,name) elements))))
 
-(defmethod sax:end-element ((handler sinfo-sax-handler)
+(defmethod sax:end-element ((handler winfo-sax-handler)
                             namespace-uri
                             local-name
                             qname)
@@ -130,10 +130,13 @@
     (let ((element (pop elements)))
       (push (reverse element) (first elements)))))
 
-(defmethod sax:characters ((handler sinfo-sax-handler) data)
+(defmethod sax:characters ((handler winfo-sax-handler) data)
   (push data (first (slot-value handler 'elements))))
 
 (defun write-info-document-to-file (doc filepath)
+  "Serialize info-document DOC to FILEPATH.
+DOC should be an info-document with xml contents.
+The serialized format is winfo, an indexable file format, that allows working with info-document on-disk (without having to load them to memory)."
   (let ((tag-table
           (list (cons :nodes nil)
                 (cons :index (list (cons :cp nil)
@@ -199,12 +202,12 @@
       ))
   (probe-file filepath))
 
-(defmethod all-nodes ((doc sinfo-info-document))
+(defmethod all-nodes ((doc winfo-info-document))
   (nreverse
    (loop for node-name in (mapcar 'car (aget (tag-table doc) :nodes))
         collect (find-node doc node-name))))
 
-(defun read-sinfo-tag-table-from-file (filepath)
+(defun read-winfo-tag-table-from-file (filepath)
   (with-open-file (file filepath
                         :direction :input
                         :element-type '(unsigned-byte 8)
@@ -252,7 +255,7 @@
 (defmethod node-source ((node file-info-node))
   (prin1-to-string (contents node)))
 
-(defmethod find-node ((doc sinfo-info-document) node-name)
+(defmethod find-node ((doc winfo-info-document) node-name)
   (let ((entry (find node-name (aget (tag-table doc) :nodes)
                      :key 'car
                      :test 'string=)))
@@ -292,8 +295,8 @@
                    (string= (node-up child) (node-name node)))
                  (all-nodes (info-document node))))
 
-(defun start-sinfo-demo (&rest args &key (port 9090))
-  (let ((djula-manual (make-instance 'sinfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
+(defun start-winfo-demo (&rest args &key (port 9090))
+  (let ((djula-manual (make-instance 'winfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
 
     (fulltext-index-document djula-manual)
 

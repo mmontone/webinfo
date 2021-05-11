@@ -13,6 +13,11 @@
    (title :initarg :title
           :accessor title
           :initform (error "Provide a title for the document"))
+   (direntry :initarg :direntry
+	     :accessor direntry
+	     :initform nil
+	     :documentation "The directory entry of the info document.
+See: https://www.gnu.org/software/texinfo/manual/texinfo/html_node/Installing-Dir-Entries.html")
    (description :initarg :description
                 :accessor description
                 :initform "")

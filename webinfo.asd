@@ -14,7 +14,7 @@
                (:file "settings")
                (:file "sexp-node")
                (:file "lispdoc")
-               (:file "sinfo")
+               (:file "winfo")
                (:file "user"))
   :depends-on (:anaphora
                :hunchentoot
