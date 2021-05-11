@@ -1,5 +1,5 @@
 (defpackage :webinfo-user
-  (:use :cl :cl-fad)
+  (:use :cl)
   (:export :make-webinfo))
 
 (in-package :webinfo-user)
@@ -9,10 +9,12 @@
 OUTPUT-PATH can be either a filename path or a directory path.
 
 See: texi2any --xml"
-  (let ((output-filepath (if (directory-pathname-p output-path)
-                             (merge-pathnames (format nil "~a.winfo" (pathname-name filepath))  output-path)
-                             output-path)))
+  (let ((output-filepath
+	  (if (uiop/pathname:directory-pathname-p output-path)
+	      (merge-pathnames (format nil "~a.winfo" (pathname-name filepath))  output-path)
+	      output-path)))
     (let ((doc (apply #'make-instance 'webinfo::xml-info-document
-                      :filepath filepath
-                      args)))
+		      :name (pathname-name output-filepath)
+		      :title (pathname-name output-filepath)
+                      :filepath filepath args)))
       (webinfo::write-info-document-to-file doc output-filepath))))
