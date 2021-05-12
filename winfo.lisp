@@ -26,13 +26,20 @@
               :accessor tag-table)
    (file :accessor file :documentation "A handle to the document file")
    (toc :documentation "Toc is memoized because it is expensive to calculate"))
+  (:default-initargs :name nil :title nil)
   (:documentation "This is the custom format for WebInfo documents."))
 
 (defmethod initialize-instance :after ((doc winfo-info-document) &rest initargs)
   (declare (ignore initargs))
+
+  ;; read metadata
+  (read-winfo-metadata doc)
+
+  ;; load tags table
   (setf (tag-table doc)
         (read-winfo-tag-table-from-file (filepath doc)))
-  ;; Initialize indexes
+
+  ;; initialize indexes
   (let ((indexes (aget (tag-table doc) :index)))
     (loop for (index-type . entries) in indexes
           do
@@ -153,6 +160,14 @@ The serialized format is winfo, an indexable file format, that allows working wi
 
       (setq file (flex:make-flexi-stream file :external-format :utf-8))
 
+      ;; metadata
+      (prin1 (list :name (document-name doc)
+                   :title (title doc)
+                   :description (description doc)
+                   :direntry (direntry doc))
+             file)
+      (terpri file)
+
       ;; Nodes
       (loop for node in (all-nodes doc)
             do
@@ -166,9 +181,9 @@ The serialized format is winfo, an indexable file format, that allows working wi
 
                  ;; Extract node title from sectiontitle element in contents
                  (bind:bind (((_ _ &body contents-body) node-contents)
-                             ((_ _ section-title) (first contents-body)))
+                              ((_ _ section-title) (first contents-body)))
                    (setf (getf (second node-header) :|nodetitle| ) section-title))
-                 
+
                  ;; Serialize node header
                  (prin1 node-header file)
                  (terpri file)
@@ -205,7 +220,26 @@ The serialized format is winfo, an indexable file format, that allows working wi
 (defmethod all-nodes ((doc winfo-info-document))
   (nreverse
    (loop for node-name in (mapcar 'car (aget (tag-table doc) :nodes))
-        collect (find-node doc node-name))))
+         collect (find-node doc node-name))))
+
+(defun read-winfo-metadata (doc &optional (overwrite t))
+  (let ((metadata (with-open-file (f (filepath doc)
+                                     :direction :input
+				     :external-format :utf-8)
+                    (read f))))
+    (with-slots (name title description direntry) doc
+      (when (or (null name)
+                overwrite)
+        (setf name (getf metadata :name)))
+      (when (or (null title)
+                overwrite)
+        (setf title (getf metadata :title)))
+      (when (or (null description)
+                overwrite)
+        (setf description (getf metadata :description)))
+      (when (or (null direntry)
+                overwrite)
+        (setf direntry (getf metadata :direntry))))))
 
 (defun read-winfo-tag-table-from-file (filepath)
   (with-open-file (file filepath
@@ -229,7 +263,6 @@ The serialized format is winfo, an indexable file format, that allows working wi
       (file-position file tag-table-pos)
       (read file)
       )))
-
 
 (defclass file-info-node (sexp-info-node)
   ((filepath :initarg :filepath :accessor filepath)
@@ -270,7 +303,7 @@ The serialized format is winfo, an indexable file format, that allows working wi
 
       (bind:bind
           (((_ attrs &rest body) (read file)) ;; node info
-           #+nil(node-contents (read file)))
+            #+nil(node-contents (read file)))
         (flet ((get-node-info (what)
                  (caddr (find what body :key 'car))))
           #+nil(make-instance 'sexp-info-node
@@ -301,8 +334,8 @@ The serialized format is winfo, an indexable file format, that allows working wi
     (fulltext-index-document djula-manual)
 
     (apply #'webinfo:start-webinfo
-     :info-repository
-     (make-instance 'file-info-repository
-                    :file djula-manual)
-     :app-settings (list (cons :theme (make-instance 'nav-theme)))
-     args)))
+           :info-repository
+           (make-instance 'file-info-repository
+                          :file djula-manual)
+           :app-settings (list (cons :theme (make-instance 'nav-theme)))
+           args)))

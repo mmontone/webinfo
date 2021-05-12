@@ -2,9 +2,9 @@
 
 (defclass file-system-info-repository (dir-info-repository)
   ((working-directory :initarg :working-directory
-              :accessor working-directory
-              :type pathname
-              :documentation "The file system directory with the compiled  WebInfo documents."))
+                      :accessor working-directory
+                      :type pathname
+                      :documentation "The file system directory with the compiled  WebInfo documents."))
   (:documentation "Info repository implemented from a file system directory.
 
 The WORKING-DIRECTORY contains the compiled WebInfo documents in files.
@@ -37,16 +37,11 @@ It is similar to FILE-SYSTEM-DIRECTORY-REPOSITORY, but processes files inside th
 
 (defun read-direntries-file (direntries-file)
   (with-open-file (f direntries-file :direction :input
-				     :external-format :utf-8)
+                                     :external-format :utf-8)
     (read f)))
 
 (defmethod direntries ((info-repository file-system-info-repository))
   (read-direntries-file (merge-pathnames "dir" (working-directory info-repository))))
-
-(defparameter *lisp-manuals-repository*
-  (make-instance 'source-file-system-info-repository
-		 :source-directory (ensure-directories-exist #p"~/src/lisp/lisp-manuals/")
-		 :working-directory (ensure-directories-exist #p"~/.local/share/webinfo/repositories/lisp-manuals/")))
 
 (defun get-temporary-file-pathname (&key directory (type "tmp" typep) prefix (suffix (when typep "-tmp")))
   "The temporary file's pathname will be based on concatenating
@@ -55,34 +50,56 @@ and optional SUFFIX (defaults to \"-tmp\" if a type was provided)
 and TYPE (defaults to \"tmp\", using a dot as separator if not NIL),
 within DIRECTORY (defaulting to the TEMPORARY-DIRECTORY) if the PREFIX isn't absolute."
   (let* ((prefix-pn (uiop/stream::ensure-absolute-pathname
-		     (or prefix "tmp")
-		     (or (uiop/stream::ensure-pathname
-			  directory
-			  :namestring :native
-			  :ensure-directory t
-			  :ensure-physical t)
-			 #'uiop/stream:temporary-directory)))
-	 (prefix-nns (uiop/stream::native-namestring prefix-pn))
-	 (counter (random (expt 36 #-gcl 8 #+gcl 5))))
+                     (or prefix "tmp")
+                     (or (uiop/stream::ensure-pathname
+                          directory
+                          :namestring :native
+                          :ensure-directory t
+                          :ensure-physical t)
+                         #'uiop/stream:temporary-directory)))
+         (prefix-nns (uiop/stream::native-namestring prefix-pn))
+         (counter (random (expt 36 #-gcl 8 #+gcl 5))))
     (uiop/stream::parse-native-namestring
      (format nil "~A~36R~@[~A~]~@[.~A~]"
-	     prefix-nns counter suffix (unless (eq type :unspecific) type)))))
+             prefix-nns counter suffix (unless (eq type :unspecific) type)))))
 
 ;;(get-temporary-file-pathname)
 
 (defun compile-texinfo-file (file output-pathname)
   (let ((xmlfile (get-temporary-file-pathname)))
     (uiop/run-program:run-program (list "texi2any" "--no-validate" "--xml" (princ-to-string file)
-					"-o" (princ-to-string xmlfile)))
+                                        "-o" (princ-to-string xmlfile)))
     (webinfo-user:make-webinfo xmlfile output-pathname)))
 
 (defun compile-texi-files (info-repository)
   (dolist (texi-file (uiop/filesystem:directory-files
-		      (source-directory info-repository)
-		      "*.texi*"))
+                      (source-directory info-repository)
+                      "*.texi*"))
     (let ((target-pathname (merge-pathnames (format nil "~a.winfo" (pathname-name texi-file))
-					    (working-directory info-repository))))
-    (format t "Compiling Texinfo file: ~a to ~a~%" texi-file target-pathname)
-    (compile-texinfo-file texi-file target-pathname))))
+                                            (working-directory info-repository))))
+      (format t "Compiling Texinfo file: ~a to ~a~%" texi-file target-pathname)
+      (compile-texinfo-file texi-file target-pathname))))
 
-(compile-texi-files *lisp-manuals-repository*)
+(defmethod dir ((info-repository file-system-info-repository))
+  (mapcar (lambda (file)
+	    (make-instance 'winfo-info-document
+			   :filepath file
+			   :name (pathname-name file)
+			   :title (pathname-name file)))
+	  (uiop/filesystem:directory-files (working-directory info-repository)
+					   "*.winfo")))
+
+(defparameter *lisp-manuals-repository*
+  (make-instance 'source-file-system-info-repository
+                 :source-directory (ensure-directories-exist #p"~/src/lisp/lisp-manuals/")
+                 :working-directory (ensure-directories-exist #p"~/.local/share/webinfo/repositories/lisp-manuals/")))
+
+(defun start-lisp-manuals-demo (&rest args)
+  (webinfo:start-webinfo
+   :port 9090
+   :info-repository
+   *lisp-manuals-repository*
+   :app-settings (list (cons :theme (make-instance 'nav-theme)))))
+
+;;(compile-texi-files *lisp-manuals-repository*)
+;;(dir *lisp-manuals-repository*)
