@@ -70,10 +70,10 @@
 (defmethod text-contents ((node xml-info-node))
   (let ((text ""))
     (labels ((append-text (x)
-             (if (dom:text-node-p x)
-                 (setf text (concatenate 'string text (dom:data x)))
-                 (loop for child across (dom:child-nodes x)
-                       do (append-text child)))))
+               (if (dom:text-node-p x)
+                   (setf text (concatenate 'string text (dom:data x)))
+                   (loop for child across (dom:child-nodes x)
+                         do (append-text child)))))
       (append-text (content-xml node))
       text)))
 
@@ -89,26 +89,26 @@
                 nil)
                (t
                 (list* (alexandria:make-keyword (dom:tag-name x))
-                         (let ((args nil))
-                           (dom:map-node-map
-                            (lambda (attr)
-                              (push (dom:data (dom:first-child attr)) args)
-                              (push (alexandria:make-keyword (dom:name attr)) args))                        
-                            (dom:attributes x))
-                           args)
-                         (remove nil
-                                 (loop for child across (dom:child-nodes x)
-                                       collect (xml-elem->lisp child))))))))
+                       (let ((args nil))
+                         (dom:map-node-map
+                          (lambda (attr)
+                            (push (dom:data (dom:first-child attr)) args)
+                            (push (alexandria:make-keyword (dom:name attr)) args))
+                          (dom:attributes x))
+                         args)
+                       (remove nil
+                               (loop for child across (dom:child-nodes x)
+                                     collect (xml-elem->lisp child))))))))
     (or (xml-elem->lisp xml)
         (error "Could not read xml: ~a" xml))))
 
 (defun render-xml-content (xml stream &key (split t) (on-unknown-tag :error))
-  "Render XML content to HTML on STREAM. 
+  "Render XML content to HTML on STREAM.
 
 Parameters:
 
 SPLIT (boolean): When T (default), render the content split. Otherwise, child nodes are rendered embedded.
-ON-UNKNOWN-TAG specifies what to do when an unknown, unprocessable tag is found. 
+ON-UNKNOWN-TAG specifies what to do when an unknown, unprocessable tag is found.
 If :error (default), an error is signaled. If :warn, a warning is signaled."
   (check-type on-unknown-tag (member :error :warning))
   (who:with-html-output (stream)
@@ -124,80 +124,81 @@ If :error (default), an error is signaled. If :warn, a warning is signaled."
                       ;; do nothing
                       )
                      (t ;; otherwise
-                       (case (alexandria:make-keyword (dom:tag-name x))
-                         (:|para| (who:htm (:p (render))))
-                         (:|menu| ;;(render-menu)
-                          (who:htm (:ul :class "menu" (render)))
-                          )
-                         (:|menuentry| (who:htm (:li (render))))
-                         (:|menunode| (let* ((node-name (dom:data (dom:first-child x)))
-                                             (node-url-name (substitute #\- #\space node-name)))
-                                        (who:htm (:a :href (if split
-                                                               node-url-name
-                                                               (format nil "#~a" node-url-name))
-                                                     (who:str node-name)))))
-                         (:|menudescription| (render))
-                         (:|pre| (let ((content (render)))
-                                   (when (not (alexandria:emptyp content))
-                                     (who:htm (:pre content)))))
-                         (:|node| (if split
-                                      (return-from quit)
-                                      (let ((subnode (make-xml-info-node x)))
-                                        (render-subnode subnode nil stream)))) 
-                         (:|nodename|)
-                         (:|macro|) ;; TODO
-                         (:|chapter| (render))
-                         ((:|section| :|subsection| :|subsubsection|) (render))
-                         (:|sectiontitle| (who:htm (:h1 (render))))
-                         (:|anchor|)
-                         (:|defvr| (who:htm (:div :class "defvr" (render))))
-                         (:|definitionterm| (render))
-                         (:|defcategory| (who:htm (:span :class "defcategory" (who:fmt "[~a]" (dom:data (dom:first-child x))))))
-                         (:|indexterm|)
-                         (:|defvariable| (who:htm (:span :class "defvariable" (who:str (dom:data (dom:first-child x))))))
-                         (:|definitionitem| (render))
-                         (:|deffn| (who:htm (:div :class "deffn" (render))))
-                         (:|deffunction| (who:htm (:span :class "deffunction" (who:str (dom:data (dom:first-child x))))))
-                         (:|defdelimiter| (who:str (who:escape-string (dom:data (dom:first-child x)))))
-                         (:|defparam| (who:htm (:span :class "defparam" (who:str (dom:data (dom:first-child x))))))
-                         (:|deftp| (who:htm (:div :class "deftp" (render))))
-                         (:|defdatatype| (who:htm (:span :class "defdatatype" (who:str (dom:data (dom:first-child x))))))
-                         (:|top| (render))
-                         ((:|unnumbered| :|appendix|) (render))
-                         ((:|findex| :|cindex| :|vindex| :|tindex|))
-                         (:|printindex| (print-index (get-index (or *info-document* (info-repository *webinfo-acceptor*))
-                                                                (alexandria:make-keyword (string-upcase (dom:get-attribute x "value"))))
-                                                     stream))
-                         (:|multitable| ;; TODO (who:htm (:table (render)))
-                          )
-                         (:|table| (who:htm (:table (render))))
-                         (:|tableentry| (who:htm (:tr (render))))
-                         (:|tableterm| (who:htm (:td (render))))
-                         (:|tableitem| (who:htm (:td (render))))
-                         (:|item| (who:htm (:td (render))))
-                         (:|itemformat| (who:htm (:td (render))))
-                         (:|itemize| (who:htm
-                                      (:ul (render) )))
-                         ((:|itemprepend| :|prepend|))
-                         (:|listitem| (who:htm (:li (render))))
-                         (:|strong| (who:htm (:b (render))))
-                         (:|emph| (who:htm (:emph (render))))
-                         (:|quotation| (who:htm (:quote (render))))
-                         (:|sc| (who:str (dom:data (dom:first-child x)))) ;; smallcaps
-                         (:|ref| "TODO:implement")
-                         (:|uref| "TODO: implement" )
-                         (:|url| (let ((url (dom:data (dom:first-child (dom:first-child x)))))
-                                   (who:htm (:a :href url (who:str url)))))
-                         (:|verbatim| (who:htm (:pre (:code :class "hljs"
-                                                            (who:str
-                                                             (who:escape-string (dom:data (dom:first-child
-                                                                                           x))))))))
-                         (:|code| (who:htm (:code :class "inline" (render))))
-                         (:|w| (who:str (who:escape-string (dom:data (dom:first-child x)))))
-                         (t (case on-unknown-tag
-                              (:error (error "Don't know how to render tag: ~a" (dom:tag-name x)))
-                              (:warn (warn "Don't know how to render tag: ~a" (dom:tag-name x)))))                          
-                         ))))))
+                      (case (alexandria:make-keyword (dom:tag-name x))
+                        (:|para| (who:htm (:p (render))))
+                        (:|menu| ;;(render-menu)
+                         (who:htm (:ul :class "menu" (render)))
+                         )
+                        (:|menuentry| (who:htm (:li (render))))
+                        (:|menunode| (let* ((node-name (dom:data (dom:first-child x)))
+                                            (node-url-name (substitute #\- #\space node-name)))
+                                       (who:htm (:a :href (if split
+                                                              node-url-name
+                                                              (format nil "#~a" node-url-name))
+                                                    (who:str node-name)))))
+                        (:|menudescription| (render))
+                        (:|pre| (let ((content (render)))
+                                  (when (not (alexandria:emptyp content))
+                                    (who:htm (:pre content)))))
+                        (:|node| (if split
+                                     (return-from quit)
+                                     (let ((subnode (make-xml-info-node x)))
+                                       (render-subnode subnode nil stream))))
+                        (:|nodename|)
+                        (:|macro|) ;; TODO
+                        (:|chapter| (render))
+                        ((:|section| :|subsection| :|subsubsection|) (render))
+                        (:|sectiontitle| (who:htm (:h1 (render))))
+                        (:|anchor|)
+                        (:|defvr| (who:htm (:div :class "defvr" (render))))
+                        (:|definitionterm| (render))
+                        (:|defcategory| (who:htm (:span :class "defcategory" (who:fmt "[~a]" (dom:data (dom:first-child x))))))
+                        (:|indexterm|)
+                        (:|defvariable| (who:htm (:span :class "defvariable" (who:str (dom:data (dom:first-child x))))))
+                        (:|definitionitem| (render))
+                        (:|deffn| (who:htm (:div :class "deffn" (render))))
+                        (:|deffunction| (who:htm (:span :class "deffunction" (who:str (dom:data (dom:first-child x))))))
+                        (:|defdelimiter| (who:str (who:escape-string (dom:data (dom:first-child x)))))
+                        (:|defparam| (who:htm (:span :class "defparam" (who:str (dom:data (dom:first-child x))))))
+                        (:|deftp| (who:htm (:div :class "deftp" (render))))
+                        (:|defdatatype| (who:htm (:span :class "defdatatype" (who:str (dom:data (dom:first-child x))))))
+                        (:|top| (render))
+                        ((:|unnumbered| :|appendix|) (render))
+                        ((:|findex| :|cindex| :|vindex| :|tindex|))
+                        (:|printindex| (print-index (get-index (or *info-document* (info-repository *webinfo-acceptor*))
+                                                               (alexandria:make-keyword (string-upcase (dom:get-attribute x "value"))))
+                                                    stream))
+                        (:|multitable| ;; TODO (who:htm (:table (render)))
+                         )
+                        (:|table| (who:htm (:table (render))))
+                        (:|tableentry| (who:htm (:tr (render))))
+                        (:|tableterm| (who:htm (:td (render))))
+                        (:|tableitem| (who:htm (:td (render))))
+                        (:|item| (who:htm (:td (render))))
+                        (:|itemformat| (who:htm (:td (render))))
+                        (:|itemize| (who:htm
+                                     (:ul (render) )))
+                        ((:|itemprepend| :|prepend|))
+                        (:|listitem| (who:htm (:li (render))))
+                        (:|strong| (who:htm (:b (render))))
+                        (:|emph| (who:htm (:emph (render))))
+                        (:|quotation| (who:htm (:quote (render))))
+                        (:|sc| (who:str (dom:data (dom:first-child x)))) ;; smallcaps
+                        (:|ref| "TODO:implement")
+                        (:|uref| "TODO: implement" )
+                        (:|url| (let ((url (dom:data (dom:first-child (dom:first-child x)))))
+                                  (who:htm (:a :href url (who:str url)))))
+                        (:|verbatim| (who:htm (:pre (:code :class "hljs"
+                                                           (who:str
+                                                            (who:escape-string (dom:data (dom:first-child
+                                                                                          x))))))))
+                        (:|code| (who:htm (:code :class "inline" (render))))
+			(:|verb| (who:htm (:code :class "inline" (render))))
+                        (:|w| (who:str (who:escape-string (dom:data (dom:first-child x)))))
+                        (t (case on-unknown-tag
+                             (:error (error "Don't know how to render tag: ~a" (dom:tag-name x)))
+                             (:warn (warn "Don't know how to render tag: ~a" (dom:tag-name x)))))
+                        ))))))
         (render-element xml)))))
 
 (defmethod render-node-html ((node xml-info-node) theme stream &rest args)

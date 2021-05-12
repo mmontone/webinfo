@@ -26,10 +26,10 @@
 (defun render-sexp-content (content stream &key (split t))
   (who:with-html-output (stream)
     (block quit
-      (labels ((render-element (x)
-                 (flet ((render ()
+      (labels ((render-element (x &optional (stream stream))
+                 (flet ((render (&optional (stream stream))
                           (loop for child in (cddr x)
-                                do (render-element child)))
+                                do (render-element child stream)))
                         (text (body)
                           (cond
                             ((stringp (car body))
@@ -60,9 +60,7 @@
                                                                (format nil "#~a" node-url-name))
                                                      (who:str node-name)))))
                          (:|menudescription| (render))
-                         (:|pre| (let ((content (render)))
-                                   (when (not (alexandria:emptyp content))
-                                     (who:htm (:pre content)))))
+                         
                          (:|node|
                           (error "This shouldn't happen")
                           #+nil(if split
@@ -75,7 +73,7 @@
                          (:|chapter| (render))
                          ((:|section| :|subsection| :|subsubsection|) (render))
                          (:|sectiontitle| (who:htm (:h1 (render))))
-                         (:|anchor|)
+                         (:|anchor| (who:htm (:span :class "anchor" :id (getf args :|name|))))
                          (:|defvr| (who:htm (:div :class "defvr" (render))))
                          (:|definitionterm| (render))
                          (:|defcategory| (who:htm (:span :class "defcategory" (who:fmt "[~a]" (text body)))))
@@ -105,21 +103,45 @@
                          (:|itemformat| (who:htm (:td (render))))
                          (:|itemize| (who:htm
                                       (:ul (render) )))
-                         ((:|itemprepend| :|prepend|))
+                         ((:|itemprepend| :|prepend| :|beforefirstitem|))
                          (:|listitem| (who:htm (:li (render))))
                          (:|strong| (who:htm (:b (render))))
                          (:|emph| (who:htm (:emph (render))))
                          (:|quotation| (who:htm (:quote (render))))
                          (:|sc| (who:str (text body))) ;; smallcaps
-                         (:|ref| "TODO:implement")
-                         (:|uref| "TODO: implement" )
                          (:|url| (let ((url (text body)))
                                    (who:htm (:a :href url (who:str url)))))
-                         (:|verbatim| (who:htm (:pre (:code :class "hljs"
-                                                            (who:str
-                                                             (who:escape-string (text body)))))))
+                         ((:|verbatim| :|example| :|lisp|)
+			  (render))
+			 (:|pre| (who:htm (:pre (:code :class "hljs"
+						(who:str
+						 (who:escape-string (text body)))))))
+			 
                          (:|code| (who:htm (:code :class "inline" (render))))
+			 (:|verb| (who:htm (:code :class "verb" (render))))
+			 (:|var| (who:htm (:code :class "var" (render))))
                          (:|w| (who:str (who:escape-string (text body))))
+			 (:|linebreak| (who:htm (:br)))
+			 (:|verbatiminclude| ;; What to do? We ignore for now ...
+			  )
+			 (:|xref| (who:htm (:a :href (format nil "#~a" (getf args :|label|)) (render))))
+			 (:|ref| (who:htm (:a :href (format nil "#~a" (getf args :|label|)) (render))))
+			 ((:|xrefnodename| :|xrefinfoname|))
+			 (:|xrefprinteddesc| (render))
+
+			 (:|uref|
+			  ;; we assume first element is |urefurl| and second |urefdesc|)
+			  (let ((href
+				  (with-output-to-string (stream)
+				    (render-element (first body) stream))))
+				(who:htm (:a :href href (render-element (second body))))))
+				
+			    
+			 ((:|urefurl| :|urefdesc|) (render))
+
+			 (:|heading| (who:htm (:h2 (render))))
+			 (:|majorheading| (who:htm (:h1 (render))))
+			 
                          (t (error "Malformed node content: ~s" x))
                          )))))))
         (render-element content)))))
