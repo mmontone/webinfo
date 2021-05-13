@@ -81,7 +81,9 @@
                           (:|defvariable| (who:htm (:span :class "defvariable" (who:str (text body)))))
                           (:|definitionitem| (render))
                           (:|deffn| (who:htm (:div :class "deffn" (render))))
-                          (:|deffunction| (who:htm (:span :class "deffunction" (who:str (text body)))))
+			  (:|defun| (who:htm (:div :class "defun" (render))))
+			  (:|defmac| (who:htm (:div :class "defmac" (render))))
+			  (:|deffunction| (who:htm (:span :class "deffunction" (who:str (text body)))))
                           (:|defdelimiter| (who:str (who:escape-string (text body))))
                           (:|defparam| (who:htm (:span :class "defparam" (text body))))
                           (:|deftp| (who:htm (:div :class "deftp" (render))))
@@ -100,7 +102,7 @@
                           (:|tableterm| (who:htm (:td (render))))
                           (:|tableitem| (who:htm (:td (render))))
 			  (:|asis| (render))
-                          (:|item| (who:htm (:td (render))))
+                          ((:|item| :|itemx|) (who:htm (:td (render))))
                           (:|itemformat| (who:htm (:td (render))))
                           (:|itemize| (who:htm
                                        (:ul (render) )))
@@ -177,6 +179,7 @@
 			  (:|command| (who:htm (:code :class "command" (render))))
 			  (:|samp| (who:htm (:code :class "samp" (render))))
 			  (:|noindent|)
+			  (:|spacecmd|) ;;todo
 			  		  
                           (t (error "Malformed node content: ~s" x))
                           )))))))
