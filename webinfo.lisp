@@ -7,7 +7,8 @@
          :accessor document-name
          :initform (error "Provide the document name"))
    (filepath :initarg :filepath
-             :accessor filepath)
+             :accessor filepath
+	     :documentation "The filepath of the info document.")
    (file :initarg :file
          :accessor file)
    (title :initarg :title
@@ -151,6 +152,13 @@ See FULLTEXT-INDEX-DOCUMENT.
        (find-node info-document node-name)))))
 
 ;; Indexes
+(defgeneric collect-indexes (info-document index-type)
+  (:documentation "Collect indexes in NODE of type INDEX-TYPE.
+
+INDEX-TYPE can be :findex, :cindex, :vindex, :tindex, etc.
+
+The returned list is an alist with (indexterm . node) items."))
+
 (defmethod collect-indexes ((info-document info-document) index-type)
   (let ((doc-indexes (list)))
     (loop for node in (all-nodes info-document)
@@ -161,12 +169,16 @@ See FULLTEXT-INDEX-DOCUMENT.
     doc-indexes))
 
 (defun initialize-indexes (info-document)
-  (setf (aget (indexes info-document) :fn)
+  "Initialize the index of INFO-DOCUMENT."
+  (setf (indexes info-document) (make-hash-table))
+  (setf (gethash :fn (indexes info-document))
         (collect-indexes info-document :findex))
-  (setf (aget (indexes info-document) :cp)
+  (setf (gethash :cp (indexes info-document))
         (collect-indexes info-document :cindex))
-  (setf (aget (indexes info-document) :vr)
-        (collect-indexes info-document :vindex)))
+  (setf (gethash :vr (indexes info-document))
+        (collect-indexes info-document :vindex))
+  (setf (gethash :tp (indexes info-document))
+	(collect-indexes info-document :tindex)))
 
 #+nil(defmethod initialize-instance :after ((info-document info-document) &rest initargs)
        (declare (ignore initargs))

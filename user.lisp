@@ -4,6 +4,15 @@
 
 (in-package :webinfo-user)
 
+(defun read-xml-info-document (filepath &rest args)
+  "Read an info-document in xml format from FILEPATH."
+  (check-type filepath pathname)
+  (apply #'make-instance 'webinfo::xml-info-document
+	 :name (princ-to-string filepath)
+	 :title (princ-to-string filepath)
+	 :filepath filepath
+	 args))
+
 (defun make-webinfo (filepath output-path &rest args)
   "Compiles a Texinfo XML file to a Webinfo file.
 OUTPUT-PATH can be either a filename path or a directory path.

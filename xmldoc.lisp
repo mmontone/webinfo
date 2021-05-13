@@ -2,7 +2,7 @@
 
 (defclass xml-info-document (info-document)
   ((xml-document :accessor xml-document :initarg :xml))
-  (:documentation "info document loaded from texi2any xml files"))
+  (:documentation "INFO-DOCUMENT loaded from texi2any xml files"))
 
 (defclass xml-info-node (info-node)
   ((node-xml :accessor node-xml :initarg :node-xml)
@@ -18,7 +18,6 @@
           (cxml:parse (filepath info-document)
                       (cxml-dom:make-dom-builder)
                       :entity-resolver #'resolver)))
-
 
   (initialize-indexes info-document))
 
@@ -240,12 +239,14 @@ If :error (default), an error is signaled. If :warn, a warning is signaled."
 (defmethod collect-indexes ((node xml-info-node) index-type)
   "Collect indexes in NODE of type INDEX-TYPE.
 
-INDEX-TYPE can be :findex, :cindex, :vindex, :tindex, etc."
+INDEX-TYPE can be :findex, :cindex, :vindex, :tindex, etc.
+
+The returned list is an alist with (indexterm . node) items."
   (let ((node-name (string-downcase (string index-type)))
 	indexes)
-    (dolist (node (xpath:all-nodes
-		   (xpath:evaluate (format nil ".//~a" node-name)
-				   (content-xml node))))
-      (dolist (indexterm (xpath:all-nodes (xpath:evaluate "./indexterm" node)))
-	(push (xml2text indexterm) indexes))
-      indexes)))
+    (dolist (xml-node (xpath:all-nodes
+		       (xpath:evaluate (format nil ".//~a" node-name)
+				       (content-xml node))))
+      (dolist (indexterm (xpath:all-nodes (xpath:evaluate "./indexterm" xml-node)))
+	(push (xml2text indexterm) indexes)))
+    indexes))
