@@ -39,6 +39,13 @@ See: https://www.gnu.org/software/texinfo/manual/texinfo/html_node/Installing-Di
   (print-unreadable-object (node stream :type t :identity t)
     (format stream "~a" (node-name node))))
 
+(defgeneric text-contents (info-node)
+  (:documentation "Returns the NODE contents as plain text.
+This is useful for fulltext indexing.
+
+See FULLTEXT-INDEX-DOCUMENT.
+"))
+
 (defclass info-repository ()
   ())
 

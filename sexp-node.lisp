@@ -186,6 +186,11 @@
         (render-element content)))))
 
 (defmethod text-contents ((node sexp-info-node))
+  "Returns the NODE contents as plain text.
+This is useful for fulltext indexing.
+
+See FULLTEXT-INDEX-DOCUMENT.
+"
   (let ((text ""))
     (labels ((append-text (x)
                (cond
