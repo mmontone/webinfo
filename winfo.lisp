@@ -329,13 +329,16 @@ The serialized format is winfo, an indexable file format, that allows working wi
                  (all-nodes (info-document node))))
 
 (defun start-winfo-demo (&rest args)
-  (let ((djula-manual (make-instance 'winfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
-
-    (fulltext-index-document djula-manual)
+  (let ((djula-manual
+	  (make-instance 'winfo-info-document
+			 :filepath #p"/home/marian/src/webinfo/test/djula.winfo"
+			 :name "Djula"
+			 :title "Djula")))
 
     (apply #'webinfo:start-webinfo
            :info-repository
            (make-instance 'file-info-repository
-                          :file djula-manual)
+                          :file djula-manual
+			  :search-index (make-memory-search-index))
            :app-settings (list (cons :theme (make-instance 'nav-theme)))
            args)))

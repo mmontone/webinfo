@@ -455,8 +455,10 @@ the CADR of the list."
           (:|indexterm| ()
             ,(princ-to-string (aget info :name))))))))
 
-(defclass lispdoc-info-repository (dir-info-repository)
-  ())
+(defclass lispdoc-info-repository (dir-info-repository indexable-info-repository)
+  ()
+  (:default-initargs
+   :search-index (make-memory-search-index)))
 
 (defmethod initialize-instance :after ((repo lispdoc-info-repository) &rest initargs)
   (declare (ignore initargs))

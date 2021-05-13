@@ -2,27 +2,46 @@
 
 (in-package :webinfo)
 
-(defparameter *search-index* (make-instance 'montezuma:index))
+(defun make-memory-search-index ()
+  (make-instance 'montezuma:index))
 
-(defun fulltext-index-document (doc)
+(defun make-persistent-search-index (path)
+  (make-instance 'montezuma:index
+		 :path path))
+
+(defclass indexable-info-repository ()
+  ((search-index :initarg :search-index
+		 :initform nil
+		 :accessor repository-search-index)
+   (terms-index :initarg :terms-index
+		:initform nil
+		:accessor repository-terms-index)))
+
+(defmethod initialize-instance :after ((info-repository indexable-info-repository) &rest initargs)
+  (declare (ignore initargs))
+
+  (when (not (null (repository-search-index info-repository)))
+    (dolist (doc (dir info-repository))
+      (fulltext-index-document doc info-repository))))
+
+(defgeneric fulltext-index-document (document info-repository)
+  (:documentation "Index DOCUMENT for full text search under INFO-REPOSITORY."))
+
+(defmethod fulltext-index-document (doc (info-repository info-repository))
   (loop for node in (all-nodes doc)
         do
-           (montezuma:add-document-to-index *search-index*
-                                            (list
-                                             (cons "node-name"  (node-name node))
-                                             (cons "node-title" (node-title node))
-                                             (cons "content" (text-contents node))))))
-
-(defun test-search-index (term)
-  (montezuma:search-each *search-index* (format nil "content:~s" term)
-                         #'(lambda (doc score)
-                             (format T "~&Document ~S found with score of ~S." doc score))))
+           (montezuma:add-document-to-index
+	    (repository-search-index info-repository)
+	    (list
+	     (cons "node-name"  (node-name node))
+	     (cons "node-title" (node-title node))
+	     (cons "content" (text-contents node))))))
 
 (defclass fulltext-search-node (info-node)
   ((search-term :initarg :search-term :accessor search-term
                 :initform (error "Provide the search term"))
-   (search-index :initarg :search-index :accessor search-index-of
-                 :initform *search-index*)
+   (info-repository :initarg :info-repository
+		    :accessor info-repository)
    (matches :accessor matches)
    (source :initarg :source
            :accessor source))
@@ -30,12 +49,14 @@
    :name "Fulltext search"))
 
 (defmethod initialize-instance :after ((node fulltext-search-node) &rest initargs)
+  (declare (ignore initargs))
   (setf (matches node) nil)
   (montezuma:search-each
-   (search-index-of node)
+   (repository-search-index (info-repository node))
    (format nil "content:~s" (search-term node))
    (lambda (doc score)
-     (let ((document (montezuma:get-document *search-index* doc)))
+     (declare (ignorable score))
+     (let ((document (montezuma:get-document (repository-search-index (info-repository node)) doc)))
        (push (cons (montezuma:document-value document "node-name")
                    (montezuma:document-value document "node-title"))
              (matches node))))))

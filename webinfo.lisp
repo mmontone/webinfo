@@ -50,7 +50,7 @@ See FULLTEXT-INDEX-DOCUMENT.
 (defclass info-repository ()
   ())
 
-(defclass dir-info-repository (info-repository)
+(defclass dir-info-repository (info-repository indexable-info-repository)
   ((dir :initarg :dir
         :accessor dir
         :type (or list pathname)
@@ -63,6 +63,9 @@ See FULLTEXT-INDEX-DOCUMENT.
          :type (or pathname info-document)
          :documentation "FILE can be either a pathname pointing to a WEBINFO file, or an INFO-DOCUMENT object"))
   (:documentation "A repository of a single file"))
+
+(defmethod dir ((info-repository file-info-repository))
+  (list  (file info-repository)))
 
 (defgeneric dir-category (info-document)
   (:documentation "The category in dir node for INFO-DOCUMENT"))
@@ -696,7 +699,8 @@ ul.toc, ul.toc ul {
            acceptor
            (make-instance 'fulltext-search-node
                           :name "Fulltext search"
-                          :search-term (aget (quri:uri-query-params uri) "q"))))
+                          :search-term (aget (quri:uri-query-params uri) "q")
+			  :info-repository info-repository)))
          ((or "_settings" "/_settings")
           (trivia:match (hunchentoot:request-method request)
             (:get
@@ -719,7 +723,8 @@ ul.toc, ul.toc ul {
              (make-instance 'fulltext-search-node
                             :name "Fulltext search"
                             :source doc
-                            :search-term (aget (quri:uri-query-params uri) "q"))))
+                            :search-term (aget (quri:uri-query-params uri) "q")
+			    :info-repository info-repository)))
            (_
             ;; TODO: perform a search if a node name is not matched?
             (let ((node-name (substitute #\- #\space (second path))))
@@ -772,20 +777,19 @@ ul.toc, ul.toc ul {
      :app-settings (list (cons :theme (make-instance 'nav-theme))))))
 
 (defun start-dir-demo (&rest args)
-  (let ((djula-manual (make-instance 'webinfo:xml-info-document
+  (let* ((djula-manual (make-instance 'webinfo:xml-info-document
                                      :name "djula"
                                      :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
                                      :title "Djula manual"))
         (djula-ref (make-instance 'webinfo:xml-info-document
                                   :name "djula-ref"
                                   :filepath (asdf:system-relative-pathname :webinfo "test/djula-ref.xml")
-                                  :title "Djula reference")))
-    (fulltext-index-document djula-manual)
-    (fulltext-index-document djula-ref)
+                                  :title "Djula reference"))
+	(info-repository (make-instance 'dir-info-repository
+					:dir (list djula-manual djula-ref)
+					:search-index (make-memory-search-index))))    
 
     (webinfo:start-webinfo
      :port 9090
-     :info-repository
-     (make-instance 'dir-info-repository
-                    :dir (list djula-manual djula-ref))
+     :info-repository info-repository
      :app-settings (list (cons :theme (make-instance 'nav-theme))))))
