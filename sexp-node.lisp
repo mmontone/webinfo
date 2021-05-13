@@ -205,6 +205,17 @@ See FULLTEXT-INDEX-DOCUMENT.
       (append-text (contents node))
       text)))
 
+(defun sexp2text (sexp)
+  "Returns the XML dom node contents as plain text."
+  (let ((text ""))
+    (labels ((append-text (x)
+               (if (stringp x)
+                   (setf text (concatenate 'string text x))
+                   (loop for child in (cddr x)
+                         do (append-text child)))))
+      (append-text sexp)
+      text)))
+
 (defun text->sexp (text)
   "Transform text to Texinfo paragraphs and linebreaks, in s-expression format"
   (flet ((make-paragraph (lines)

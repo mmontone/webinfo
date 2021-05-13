@@ -181,11 +181,9 @@ The serialized format is winfo, an indexable file format, that allows working wi
 
 		 ;; Disable node title extraction for now, as it doesn't work for all cases
                  ;; Extract node title from sectiontitle element in contents
-                 #+nil(bind:bind (((_ _ &body contents-body) node-contents)
-                              ((_ _ section-title) (first contents-body)))
-			(setf (getf (second node-header) :|nodetitle| ) section-title))
-		 (setf (getf (second node-header) :|nodetitle| ) (node-name node) )
-
+                 (bind:bind (((_ _ &body contents-body) node-contents))
+		   (setf (getf (second node-header) :|nodetitle| ) (sexp2text (first contents-body))))
+		 
                  ;; Serialize node header
                  (prin1 node-header file)
                  (terpri file)
