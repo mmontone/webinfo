@@ -67,15 +67,24 @@
                               collect (make-element child))))))
     (make-element xml)))
 
-(defmethod text-contents ((node xml-info-node))
+(defun xml2text (xml)
+  "Returns the XML dom node contents as plain text."
   (let ((text ""))
     (labels ((append-text (x)
                (if (dom:text-node-p x)
                    (setf text (concatenate 'string text (dom:data x)))
                    (loop for child across (dom:child-nodes x)
                          do (append-text child)))))
-      (append-text (content-xml node))
+      (append-text xml)
       text)))
+
+(defmethod text-contents ((node xml-info-node))
+  "Returns the NODE contents as plain text.
+This is useful for fulltext indexing.
+
+See FULLTEXT-INDEX-DOCUMENT.
+"
+  (xml2text (content-xml node)))
 
 (defun xml-content->lisp (xml &key include-nodes)
   (labels ((xml-elem->lisp (x)
@@ -229,12 +238,14 @@ If :error (default), an error is signaled. If :warn, a warning is signaled."
         (make-xml-info-node it)))
 
 (defmethod collect-indexes ((node xml-info-node) index-type)
+  "Collect indexes in NODE of type INDEX-TYPE.
+
+INDEX-TYPE can be :findex, :cindex, :vindex, :tindex, etc."
   (let ((node-name (string-downcase (string index-type)))
 	indexes)
     (dolist (node (xpath:all-nodes
 		   (xpath:evaluate (format nil ".//~a" node-name)
 				   (content-xml node))))
-      ;; FIXME: some of the indexes are not being collected here ...
-      (awhen (xpath:first-node (xpath:evaluate "./indexterm/text()" node))
-	(push (dom:data it) indexes))
+      (dolist (indexterm (xpath:all-nodes (xpath:evaluate "./indexterm" node)))
+	(push (xml2text indexterm) indexes))
       indexes)))
