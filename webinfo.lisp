@@ -24,6 +24,10 @@ See: https://www.gnu.org/software/texinfo/manual/texinfo/html_node/Installing-Di
    (indexes :accessor indexes
             :initform nil)))
 
+(defmethod print-object ((info-document info-document) stream)
+  (print-unreadable-object (info-document stream :type t :identity t)
+    (write-string (document-name info-document) stream)))
+
 (defclass info-node ()
   ((name :initarg :name :accessor node-name
          :initform (error "Provide a name for the node"))

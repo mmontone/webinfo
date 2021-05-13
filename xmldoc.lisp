@@ -229,9 +229,12 @@ If :error (default), an error is signaled. If :warn, a warning is signaled."
         (make-xml-info-node it)))
 
 (defmethod collect-indexes ((node xml-info-node) index-type)
-  (let ((node-name (string-downcase (string index-type))))
-    (mapcar (lambda (xml-index)
-              (dom:data (xpath:first-node (xpath:evaluate "./indexterm/text()" xml-index))))
-            (xpath:all-nodes
-             (xpath:evaluate (format nil ".//~a" node-name)
-                             (content-xml node))))))
+  (let ((node-name (string-downcase (string index-type)))
+	indexes)
+    (dolist (node (xpath:all-nodes
+		   (xpath:evaluate (format nil ".//~a" node-name)
+				   (content-xml node))))
+      ;; FIXME: some of the indexes are not being collected here ...
+      (awhen (xpath:first-node (xpath:evaluate "./indexterm/text()" node))
+	(push (dom:data it) indexes))
+      indexes)))

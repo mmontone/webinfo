@@ -99,6 +99,7 @@
                           (:|tableentry| (who:htm (:tr (render))))
                           (:|tableterm| (who:htm (:td (render))))
                           (:|tableitem| (who:htm (:td (render))))
+			  (:|asis| (render))
                           (:|item| (who:htm (:td (render))))
                           (:|itemformat| (who:htm (:td (render))))
                           (:|itemize| (who:htm
@@ -108,14 +109,18 @@
                           (:|strong| (who:htm (:b (render))))
                           (:|emph| (who:htm (:emph (render))))
                           (:|quotation| (who:htm (:quote (render))))
-                          (:|sc| (who:str (text body))) ;; smallcaps
+                          (:|sc| (who:htm (:small (who:str (string-upcase (text body)))))) ;; smallcaps
                           (:|url| (let ((url (text body)))
                                     (who:htm (:a :href url (who:str url)))))
                           ((:|verbatim| :|example| :|lisp|)
                            (render))
+			  ((:|smallverbatim| :|smallexample| :|smalllisp|)
+                           (render)) ;; TODO
                           (:|pre| (who:htm (:pre (:code :class "hljs"
-                                                        (who:str
-                                                         (who:escape-string (text body)))))))
+                                                        #+nil(who:str
+                                                         (who:escape-string (text body)))
+							(render)
+							))))
 
                           (:|code| (who:htm (:code :class "inline" (render))))
                           (:|verb| (who:htm (:code :class "verb" (render))))
@@ -124,8 +129,9 @@
                           (:|linebreak| (who:htm (:br)))
                           (:|verbatiminclude| ;; What to do? We ignore for now ...
                            )
-                          (:|xref| (who:htm (:a :href (format nil "#~a" (getf args :|label|)) (render))))
+                          (:|xref| (who:htm (:a :href (format nil "#~a" (getf args :|label|)) (who:str "See ") (render))))
                           (:|ref| (who:htm (:a :href (format nil "#~a" (getf args :|label|)) (render))))
+			  (:|pxref| (who:htm (:a :href (format nil "#~a" (getf args :|label|)) (who:str "see ") (render))))
                           ((:|xrefnodename| :|xrefinfoname|))
                           (:|xrefprinteddesc| (render))
 
@@ -134,14 +140,44 @@
                            (let ((href
                                    (with-output-to-string (stream)
                                      (render-element (first body) stream))))
-                             (who:htm (:a :href href (render-element (second body))))))
+                             (who:htm (:a :href href
+					  (if (second body)
+					      (render-element (second body))
+					      (who:str href))))))
 
 
-                          ((:|urefurl| :|urefdesc|) (render))
+                          ((:|urefurl| :|urefdesc| :|urefreplacement|) (render))
+
+			  (:|dfn| (who:htm (:i (render))))
+			  (:|email|
+			   ;; we assume first element is |emailaddress| and second |emailname|
+			   (let ((href
+                                   (format nil "emailto: ~a"
+					   (with-output-to-string (stream)
+					     (render-element (first body) stream)))))
+			     (who:htm (:a :href href (render-element (second body))))))
+			  ((:|emailaddress| :|emailname|) (render))
 
                           (:|heading| (who:htm (:h2 (render))))
+			  (:|subheading| (who:htm (:h3 (render))))
                           (:|majorheading| (who:htm (:h1 (render))))
 
+			  (:|insertcopying| ) ;; TODO. ignore
+			  (:|menucomment| (render))
+			  (:|detailmenu| (render))
+			  (:|acronym| (who:htm (:span :class "acronym" (render))))
+			  (:|acronymword| (render))
+
+			  (:|accent| (render)) ;; TODO
+			  (:|punct| (render))
+			  (:|defparamtype| (render))
+			  ((:|noeos| :|page|))
+			  (:|footnote| );; TODO
+			  (:|file| (who:htm (:code :class "file" (render))))
+			  (:|command| (who:htm (:code :class "command" (render))))
+			  (:|samp| (who:htm (:code :class "samp" (render))))
+			  (:|noindent|)
+			  		  
                           (t (error "Malformed node content: ~s" x))
                           )))))))
         (render-element content)))))

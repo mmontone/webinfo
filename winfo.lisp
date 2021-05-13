@@ -179,10 +179,12 @@ The serialized format is winfo, an indexable file format, that allows working wi
                                    (node-xml node) :include-nodes t))
                      (node-contents (xml-content->lisp (content-xml node))))
 
+		 ;; Disable node title extraction for now, as it doesn't work for all cases
                  ;; Extract node title from sectiontitle element in contents
-                 (bind:bind (((_ _ &body contents-body) node-contents)
+                 #+nil(bind:bind (((_ _ &body contents-body) node-contents)
                               ((_ _ section-title) (first contents-body)))
-                   (setf (getf (second node-header) :|nodetitle| ) section-title))
+			(setf (getf (second node-header) :|nodetitle| ) section-title))
+		 (setf (getf (second node-header) :|nodetitle| ) (node-name node) )
 
                  ;; Serialize node header
                  (prin1 node-header file)
@@ -328,7 +330,7 @@ The serialized format is winfo, an indexable file format, that allows working wi
                    (string= (node-up child) (node-name node)))
                  (all-nodes (info-document node))))
 
-(defun start-winfo-demo (&rest args &key (port 9090))
+(defun start-winfo-demo (&rest args)
   (let ((djula-manual (make-instance 'winfo-info-document :filepath #p"/home/marian/src/webinfo/test/djula.winfo" :name "Djula" :title "Djula")))
 
     (fulltext-index-document djula-manual)
