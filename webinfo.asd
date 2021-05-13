@@ -33,4 +33,5 @@
                :quri
                :montezuma
                :cl-intbytes
-	       :string-case))
+	       :string-case
+	       :cl-tokyo-cabinet))

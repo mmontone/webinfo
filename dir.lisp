@@ -91,8 +91,8 @@ within DIRECTORY (defaulting to the TEMPORARY-DIRECTORY) if the PREFIX isn't abs
 
 (defparameter *lisp-manuals-repository*
   (make-instance 'source-file-system-info-repository
-                 :source-directory (ensure-directories-exist #p"~/src/lisp/lisp-manuals/")
-                 :working-directory (ensure-directories-exist #p"~/.local/share/webinfo/repositories/lisp-manuals/")))
+                 :source-directory (ensure-directories-exist #p"/home/marian/src/lisp/lisp-manuals/")
+                 :working-directory (ensure-directories-exist #p"/home/marian/.local/share/webinfo/repositories/lisp-manuals/")))
 
 (defun start-lisp-manuals-demo (&rest args)
   (webinfo:start-webinfo
@@ -103,3 +103,33 @@ within DIRECTORY (defaulting to the TEMPORARY-DIRECTORY) if the PREFIX isn't abs
 
 ;;(compile-texi-files *lisp-manuals-repository*)
 ;;(dir *lisp-manuals-repository*)
+;;(mapcar 'indexes (dir *lisp-manuals-repository*))
+
+(defun create-index-file (info-repository)
+  (tokyo-cabinet:with-database
+      (db (namestring (merge-pathnames "index.db" (working-directory info-repository)))
+	  'tokyo-cabinet:tc-bdb
+	  :write :create)
+    (dolist (info-document (dir info-repository))
+      (dolist (type-indexes (indexes info-document))
+	(destructuring-bind (index-type . indexes) type-indexes
+	  (dolist (index indexes)
+	    (destructuring-bind (term . node) index
+	      (let ((key (format nil "~a/~a" index-type term))
+		    (value (prin1-to-string (list :document (document-name info-document)
+						  :node (node-name node)
+						  :type index-type))))
+		(tokyo-cabinet:dbm-put db key value)))))))))
+
+;; (create-index-file *lisp-manuals-repository*)
+
+(defun read-index (name index-type info-repository)
+  (tokyo-cabinet:with-database
+      (db (namestring (merge-pathnames "index.db" (working-directory info-repository)))
+	  'tokyo-cabinet:tc-bdb
+	  :read)
+    (let ((value (tokyo-cabinet:dbm-get db (format nil "~a/~a" index-type name))))
+      (when value
+	(read-from-string value)))))
+
+;;(read-index "djula:compile-template*" :fn *lisp-manuals-repository*)
