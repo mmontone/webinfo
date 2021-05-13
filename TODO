@@ -25,3 +25,4 @@
 * Potential doc <-> lisp integration. Implement an Emacs/SLIME WebInfo reader, that accesses WebInfo via api, and renders the document itself. Could display "eval in slime" buttons along @example and @lisp sections.
 * See Texinfo HTML output generated here: https://www.gnu.org/software/texinfo/manual/texinfo-html/index.html
 * An INFO files parser and renderer. Use it to load the Linux info directory /usr/share/info and experiment with how WebInfo is able to replace normal info reader.
+* Load "hyperspec" library and change the WebInfo dispatcher so that when an index search on a CL symbol is made, redirect to HyperSpec.
