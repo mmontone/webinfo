@@ -460,15 +460,14 @@ the CADR of the list."
   (:default-initargs
    :search-index (make-memory-search-index)))
 
-(defmethod initialize-instance :after ((repo lispdoc-info-repository) &rest initargs)
+(defmethod initialize-instance ((repo lispdoc-info-repository) &rest initargs)
   (declare (ignore initargs))
   (setf (dir repo)
         (mapcar 'make-info-document-for-package
                 (remove "COMMON-LISP" (sort (list-all-packages) 'string< :key 'package-name)
                         :test 'equalp
                         :key 'package-name)))
-  (mapcar 'fulltext-index-document (dir repo))
-  )
+  (call-next-method))
 
 (defun start-lispdoc-demo ()
   (webinfo:start-webinfo
