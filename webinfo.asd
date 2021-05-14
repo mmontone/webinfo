@@ -13,7 +13,6 @@
                (:file "search")
                (:file "settings")
                (:file "sexp-node")
-               (:file "lispdoc")
                (:file "winfo")
                (:file "user")
 	       (:file "dir"))
