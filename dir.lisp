@@ -119,9 +119,16 @@ within DIRECTORY (defaulting to the TEMPORARY-DIRECTORY) if the PREFIX isn't abs
 		    (value (prin1-to-string (list :document (document-name info-document)
 						  :node (node-name node)
 						  :type index-type))))
-		(tokyo-cabinet:dbm-put db key value)))))))))
+		(tokyo-cabinet:dbm-put db key value :mode :concat)))))))))
 
 ;; (create-index-file *lisp-manuals-repository*)
+
+
+(defun read-index-values (input)
+  (with-input-from-string (s input)
+    (loop for val := (read s nil nil)
+	  while val
+	  collect val)))
 
 (defun read-index (name index-type info-repository)
   (tokyo-cabinet:with-database
@@ -130,6 +137,6 @@ within DIRECTORY (defaulting to the TEMPORARY-DIRECTORY) if the PREFIX isn't abs
 	  :read)
     (let ((value (tokyo-cabinet:dbm-get db (format nil "~a/~a" index-type name))))
       (when value
-	(read-from-string value)))))
+	(read-index-values value)))))
 
 ;;(read-index "djula:compile-template*" :fn *lisp-manuals-repository*)
