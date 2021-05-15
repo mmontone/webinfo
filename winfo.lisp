@@ -313,7 +313,8 @@ The serialized format is winfo, an indexable file format, that allows working wi
                               :node-next (get-node-info :|nodenext|)
                               :contents node-contents)
           (make-instance 'file-info-node
-                         :name (getf attrs :|name|)
+			 ;; read the name from :|nodename| element, not :|name| attribute
+                         :name (get-node-info :|nodename|)
                          :title (getf attrs :|nodetitle|)
                          :node-up (get-node-info :|nodeup|)
                          :node-prev (get-node-info :|nodeprev|)
@@ -327,18 +328,3 @@ The serialized format is winfo, an indexable file format, that allows working wi
   (remove-if-not (lambda (child)
                    (string= (node-up child) (node-name node)))
                  (all-nodes (info-document node))))
-
-(defun start-winfo-demo (&rest args)
-  (let ((djula-manual
-	  (make-instance 'winfo-info-document
-			 :filepath #p"/home/marian/src/webinfo/test/djula.winfo"
-			 :name "Djula"
-			 :title "Djula")))
-
-    (apply #'webinfo:start-webinfo
-           :info-repository
-           (make-instance 'file-info-repository
-                          :file djula-manual
-			  :search-index (make-memory-search-index))
-           :app-settings (list (cons :theme (make-instance 'nav-theme)))
-           args)))

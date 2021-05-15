@@ -462,7 +462,7 @@ p {
                  (loop for level in levels
                        when (not (null level)) ;; TODO: FIX
                          do (who:htm
-                             (:li (:a :href (node-name (first level))
+                             (:li (:a :href (hunchentoot:url-encode (node-name (first level)))
                                       (who:str (node-title (first level))))
                                   (render-toc-level (cdr level)))))))))
       (who:htm
@@ -470,7 +470,7 @@ p {
             (loop for level in toc
                   do
                      (who:htm
-                      (:li (:a :href (node-name (car level))
+                      (:li (:a :href (hunchentoot:url-encode (node-name (car level)))
                                (who:str (node-title (car level))))
                            (render-toc-level (cdr level))))))))))
 
