@@ -8,16 +8,16 @@
          :initform (error "Provide the document name"))
    (filepath :initarg :filepath
              :accessor filepath
-	     :documentation "The filepath of the info document.")
+             :documentation "The filepath of the info document.")
    (file :initarg :file
          :accessor file)
    (title :initarg :title
           :accessor title
           :initform (error "Provide a title for the document"))
    (direntry :initarg :direntry
-	     :accessor direntry
-	     :initform nil
-	     :documentation "The directory entry of the info document.
+             :accessor direntry
+             :initform nil
+             :documentation "The directory entry of the info document.
 See: https://www.gnu.org/software/texinfo/manual/texinfo/html_node/Installing-Dir-Entries.html")
    (description :initarg :description
                 :accessor description
@@ -172,7 +172,11 @@ The returned list is an alist with (indexterm . node) items."))
     doc-indexes))
 
 (defun initialize-indexes (info-document)
-  "Initialize the index of INFO-DOCUMENT."
+  "Initialize the index of INFO-DOCUMENT.
+
+Indexes are collected in an a list with (<index-type> . <indexes>),
+where indexes is a list of (<index-term> . <node>), and where
+<index-term> appears repeated in the list for each appearance of the index term."
   (setf (indexes info-document) nil)
   (setf (aget (indexes info-document) :fn)
         (collect-indexes info-document :findex))
@@ -181,7 +185,7 @@ The returned list is an alist with (indexterm . node) items."))
   (setf (aget (indexes info-document) :vr)
         (collect-indexes info-document :vindex))
   (setf (aget (indexes info-document) :tp)
-	(collect-indexes info-document :tindex))
+        (collect-indexes info-document :tindex))
   t)
 
 #+nil(defmethod initialize-instance :after ((info-document info-document) &rest initargs)
@@ -453,13 +457,14 @@ p {
 (defun render-toc (toc stream)
   (who:with-html-output (stream)
     (labels ((render-toc-level (levels)
-               (who:htm (:ul
-                         (loop for level in levels
-                               when (not (null level)) ;; TODO: FIX
-                                 do (who:htm
-                                     (:li (:a :href (node-name (first level))
-                                              (who:str (node-title (first level))))
-                                          (render-toc-level (cdr level)))))))))
+               (who:htm
+                (:ul
+                 (loop for level in levels
+                       when (not (null level)) ;; TODO: FIX
+                         do (who:htm
+                             (:li (:a :href (node-name (first level))
+                                      (who:str (node-title (first level))))
+                                  (render-toc-level (cdr level)))))))))
       (who:htm
        (:ul :class "toc"
             (loop for level in toc
@@ -539,17 +544,10 @@ ul.toc, ul.toc ul {
 
 (defparameter *themes* (list (make-instance 'simple-theme)))
 
-(defmethod make-index-search-node ((repo file-info-repository) uri)
-  (let ((params (quri:uri-query-params uri)))
-    (alexandria:if-let ((search-term (aget params "q")))
-      (make-instance 'index-matches-node
-                     :name "Index matches"
-                     :search-term search-term
-                     :matches (search-index repo search-term))
-      (find-node (file repo) "Top"))))
+(defgeneric make-search-node (info-repository uri)
+  (:documentation "Build a virtual node for searching INFO-REPOSITORY."))
 
 (defmethod make-search-node ((repo info-repository) uri)
-  "Create a virtual node for searching a repository"
   (let ((params (quri:uri-query-params uri)))
     (alexandria:if-let ((search-term (aget params "q")))
       (make-instance 'search-node
@@ -569,6 +567,27 @@ ul.toc, ul.toc ul {
                      :place doc)
       ;; else
       (find-node doc "Top"))))
+
+(defgeneric make-index-search-node (info-repository uri)
+  (:documentation "Build a virtual node for searching INFO-REPOSITORY index."))
+
+(defmethod make-index-search-node ((repo file-info-repository) uri)
+  (let ((params (quri:uri-query-params uri)))
+    (alexandria:if-let ((search-term (aget params "q")))
+      (make-instance 'index-matches-node
+                     :name "Index matches"
+                     :search-term search-term
+                     :matches (search-index repo search-term))
+      (find-node (file repo) "Top"))))
+
+(defgeneric make-fulltext-search-node (info-repository uri)
+  (:documentation "Build a virtual node for fulltext searching in INFO-REPOSITORY"))
+
+(defmethod make-fulltext-search-node ((repo info-repository) uri)
+  (make-instance 'fulltext-search-node
+                 :name "Fulltext search"
+                 :search-term (aget (quri:uri-query-params uri) "q")
+                 :info-repository repo))
 
 (defvar +app-settings+
   `((use-icons :type boolean :label "Use icons" :default t)
@@ -636,11 +655,11 @@ ul.toc, ul.toc ul {
        (t (error "Invalid media type parameter value: ~a" (hunchentoot:get-parameter "_t")))))
     ((hunchentoot:header-in "accept" request)
      (if (string= (hunchentoot:header-in "accept" request) "*/*")
-	 :html
-	 ;; else
-	 (aand (mimeparse:best-match (mapcar 'car *accepted-media-types*)
-				     (hunchentoot:header-in "accept" request))
-	       (aget *accepted-media-types* it))))))
+         :html
+         ;; else
+         (aand (mimeparse:best-match (mapcar 'car *accepted-media-types*)
+                                     (hunchentoot:header-in "accept" request))
+               (aget *accepted-media-types* it))))))
 
 (defgeneric dispatch-webinfo-request (info-repository request acceptor))
 
@@ -655,9 +674,7 @@ ul.toc, ul.toc ul {
        (render-webinfo-page acceptor (make-search-node info-repository uri)))
       ((or "_fts" "/_fts")
        (render-webinfo-page acceptor
-                            (make-instance 'fulltext-search-node
-                                           :name "Fulltext search"
-                                           :search-term (aget (quri:uri-query-params uri) "q"))))
+                            (make-fulltext-search-node info-repository uri)))
       ((or "_settings" "/_settings")
        (trivia:match (hunchentoot:request-method request)
          (:get (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings")))
@@ -675,8 +692,8 @@ ul.toc, ul.toc ul {
                         (trivia:match it
                           ("up" (node-up node))
                           ("next" (node-next node))
-                          ("prev" (node-prev node))))		
-		)))
+                          ("prev" (node-prev node))))
+                )))
            (render-webinfo-page acceptor node (file info-repository))))))))
 
 (defmethod dispatch-webinfo-request ((info-repository dir-info-repository) request acceptor)
@@ -696,12 +713,7 @@ ul.toc, ul.toc ul {
          ((or "_s" "/_s")
           (render-webinfo-page acceptor (make-search-node info-repository uri)))
          ((or "_fts" "/_fts")
-          (render-webinfo-page
-           acceptor
-           (make-instance 'fulltext-search-node
-                          :name "Fulltext search"
-                          :search-term (aget (quri:uri-query-params uri) "q")
-			  :info-repository info-repository)))
+          (render-webinfo-page acceptor (make-fulltext-search-node info-repository uri)))
          ((or "_settings" "/_settings")
           (trivia:match (hunchentoot:request-method request)
             (:get
@@ -725,7 +737,7 @@ ul.toc, ul.toc ul {
                             :name "Fulltext search"
                             :source doc
                             :search-term (aget (quri:uri-query-params uri) "q")
-			    :info-repository info-repository)))
+                            :info-repository info-repository)))
            (_
             ;; TODO: perform a search if a node name is not matched?
             (let ((node-name (substitute #\- #\space (second path))))
@@ -733,12 +745,12 @@ ul.toc, ul.toc ul {
                   (alexandria:when-let ((node (find-node doc node-name)))
                     (awhen (hunchentoot:get-parameter "_n") ;; navigation parameter
                       (return-from dispatch-webinfo-request
-			(hunchentoot:redirect 
-                        (format nil "/~a/~a" (document-name doc)
-                                (trivia:match it
-                                  ("up" (node-up node))
-                                  ("next" (node-next node))
-                                  ("prev" (node-prev node)))))))
+                        (hunchentoot:redirect
+                         (format nil "/~a/~a" (document-name doc)
+                                 (trivia:match it
+                                   ("up" (node-up node))
+                                   ("next" (node-next node))
+                                   ("prev" (node-prev node)))))))
                     (render-webinfo-page acceptor node doc))
                   (render-webinfo-page acceptor (find-node doc "Top") doc))))
            ))))
@@ -779,16 +791,16 @@ ul.toc, ul.toc ul {
 
 (defun start-dir-demo (&rest args)
   (let* ((djula-manual (make-instance 'webinfo:xml-info-document
-                                     :name "djula"
-                                     :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
-                                     :title "Djula manual"))
-        (djula-ref (make-instance 'webinfo:xml-info-document
-                                  :name "djula-ref"
-                                  :filepath (asdf:system-relative-pathname :webinfo "test/djula-ref.xml")
-                                  :title "Djula reference"))
-	(info-repository (make-instance 'dir-info-repository
-					:dir (list djula-manual djula-ref)
-					:search-index (make-memory-search-index))))    
+                                      :name "djula"
+                                      :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
+                                      :title "Djula manual"))
+         (djula-ref (make-instance 'webinfo:xml-info-document
+                                   :name "djula-ref"
+                                   :filepath (asdf:system-relative-pathname :webinfo "test/djula-ref.xml")
+                                   :title "Djula reference"))
+         (info-repository (make-instance 'dir-info-repository
+                                         :dir (list djula-manual djula-ref)
+                                         :search-index (make-memory-search-index))))
 
     (webinfo:start-webinfo
      :port 9090
