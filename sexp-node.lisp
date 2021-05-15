@@ -227,6 +227,23 @@ See FULLTEXT-INDEX-DOCUMENT.
                           collect `(:|@*| ()))))))
     (mapcar #'make-paragraph (split-into-paragraphs text))))
 
+(defun split-into-paragraphs (text)
+  "Divide TEXT into paragraphs, on each empty line."
+  (let ((lines (split-sequence:split-sequence #\newline text))
+        (paragraphs nil)
+        (paragraph nil))
+
+    (loop for line in lines
+          do (if (alexandria:emptyp line)
+                 (progn
+                   (push (nreverse paragraph) paragraphs)
+                   (setf paragraph nil))
+                 ;; else
+                 (push line paragraph))
+          finally (when paragraph
+                    (push (nreverse paragraph) paragraphs)))
+    (nreverse paragraphs)))
+
 (defmethod render-node-html ((node sexp-info-node) theme stream &key document)
   (who:with-html-output (stream)
     (:div :class "node"
