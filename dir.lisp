@@ -43,28 +43,8 @@ It is similar to FILESYSTEM-DIRECTORY-REPOSITORY, but processes files inside the
 (defmethod direntries ((info-repository filesystem-info-repository))
   (read-direntries-file (merge-pathnames "dir" (working-directory info-repository))))
 
-(defun get-temporary-file-pathname (&key directory (type "tmp" typep) prefix (suffix (when typep "-tmp")))
-  "The temporary file's pathname will be based on concatenating
-PREFIX (or \"tmp\" if it's NIL), a random alphanumeric string,
-and optional SUFFIX (defaults to \"-tmp\" if a type was provided)
-and TYPE (defaults to \"tmp\", using a dot as separator if not NIL),
-within DIRECTORY (defaulting to the TEMPORARY-DIRECTORY) if the PREFIX isn't absolute."
-  (let* ((prefix-pn (uiop/stream::ensure-absolute-pathname
-                     (or prefix "tmp")
-                     (or (uiop/stream::ensure-pathname
-                          directory
-                          :namestring :native
-                          :ensure-directory t
-                          :ensure-physical t)
-                         #'uiop/stream:temporary-directory)))
-         (prefix-nns (uiop/stream::native-namestring prefix-pn))
-         (counter (random (expt 36 #-gcl 8 #+gcl 5))))
-    (uiop/stream::parse-native-namestring
-     (format nil "~A~36R~@[~A~]~@[.~A~]"
-             prefix-nns counter suffix (unless (eq type :unspecific) type)))))
-
 (defun compile-texinfo-file (file output-pathname)
-  (let ((xmlfile (get-temporary-file-pathname)))
+  (let ((xmlfile (webinfo/utils:get-temporary-file-pathname)))
     (uiop/run-program:run-program (list "texi2any" "--no-validate" "--xml" (princ-to-string file)
                                         "-o" (princ-to-string xmlfile)))
     (webinfo-user:make-webinfo xmlfile output-pathname)))
