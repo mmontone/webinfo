@@ -226,3 +226,11 @@ See FULLTEXT-INDEX-DOCUMENT.
                         unless (eql line last-line)
                           collect `(:|@*| ()))))))
     (mapcar #'make-paragraph (split-into-paragraphs text))))
+
+(defmethod render-node-html ((node sexp-info-node) theme stream &key document)
+  (who:with-html-output (stream)
+    (:div :class "node"
+          (render-node-navigation node stream)
+          (:div :class "node-content"
+                (render-sexp-content (contents node) stream))
+          (render-node-navigation node stream))))

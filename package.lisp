@@ -13,7 +13,9 @@
    :info-repository
    :file-info-repository
    :dir-info-repository
-
+   :filesystem-info-repository
+   :source-filesystem-info-repository
+   
    :nav-theme
 
    :make-memory-search-index
