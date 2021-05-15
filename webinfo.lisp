@@ -124,26 +124,28 @@ See FULLTEXT-INDEX-DOCUMENT.
     (:header :class "node-navigation"
              (:ul
               (awhen (node-prev node)
-		(let ((prev-node (find-node *info-document* it)))
-		  (who:htm
-		   (:li :class "node-prev"
-			(:i :class "bi-arrow-left-circle" :style "margin-right: 5px;")
-			(:a :href (hunchentoot:url-encode it)
-			    (who:str (node-title prev-node)))))))
+                (let ((prev-node (find-node *info-document* it)))
+                  (when prev-node
+                    (who:htm
+                     (:li :class "node-prev"
+                          (:i :class "bi-arrow-left-circle" :style "margin-right: 5px;")
+                          (:a :href (hunchentoot:url-encode it)
+                              (who:str (node-title prev-node))))))))
               (awhen (node-up node)
-		(let ((up-node (find-node *info-document* it)))
-		  (who:htm
-		   (:li :class "node-up"
-			(:i :class "bi-arrow-up-circle" :style "margin-right: 5px;")
-			(:a :href (hunchentoot:url-encode it)
-			    (who:str (node-title up-node)))))))
+                (let ((up-node (find-node *info-document* it)))
+                  (when up-node
+                    (who:htm
+                     (:li :class "node-up"
+                          (:i :class "bi-arrow-up-circle" :style "margin-right: 5px;")
+                          (:a :href (hunchentoot:url-encode it)
+                              (who:str (node-title up-node))))))))
               (awhen (node-next node)
-		(let ((next-node (find-node *info-document* it)))
-		  (who:htm
-		   (:li :class "node-next"
-			(:i :class "bi-arrow-right-circle" :style "margin-right: 5px;")
-			(:a :href (hunchentoot:url-encode it)
-			    (who:str (node-title next-node)))))))))))
+                (let ((next-node (find-node *info-document* it)))
+                  (who:htm
+                   (:li :class "node-next"
+                        (:i :class "bi-arrow-right-circle" :style "margin-right: 5px;")
+                        (:a :href (hunchentoot:url-encode it)
+                            (who:str (node-title next-node)))))))))))
 
 (defmethod find-node ((info-repository file-info-repository) name)
   (find-node (file info-repository) name))
@@ -466,10 +468,10 @@ p {
 (defun render-toc-cached (doc stream)
   (when (not (gethash (document-name doc) *toc-cache*))
     (let ((rendered-toc (with-output-to-string (s)
-			  (render-toc doc s))))
+                          (render-toc doc s))))
       (setf (gethash (document-name doc) *toc-cache*)
-	    rendered-toc)))
-  (write-string  (gethash (document-name doc) *toc-cache*) stream))  
+            rendered-toc)))
+  (write-string  (gethash (document-name doc) *toc-cache*) stream))
 
 (defun render-toc (doc stream)
   (who:with-html-output (stream)
@@ -609,7 +611,7 @@ ul.toc, ul.toc ul {
 (defmethod make-fulltext-search-node ((doc info-document) uri)
   (make-instance 'fulltext-search-node
                  :name "Fulltext search"
-		 :source doc
+                 :source doc
                  :search-term (aget (quri:uri-query-params uri) "q")))
 
 (defvar +app-settings+
@@ -763,7 +765,7 @@ ul.toc, ul.toc ul {
            (_
             ;; TODO: perform a search if a node name is not matched?
             (let ((node-name (hunchentoot:url-decode (second path))))
-	      (if (not (alexandria:emptyp node-name))
+              (if (not (alexandria:emptyp node-name))
                   (alexandria:when-let ((node (find-node doc node-name)))
                     (awhen (hunchentoot:get-parameter "_n") ;; navigation parameter
                       (return-from dispatch-webinfo-request
