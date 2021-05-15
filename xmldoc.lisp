@@ -22,10 +22,14 @@
   (initialize-indexes info-document))
 
 (defun make-xml-info-node (xml)
-  (make-instance 'xml-info-node
-                 :name (dom:get-attribute xml "name")
-                 :node-xml xml
-                 :content-xml (xpath:first-node (xpath:evaluate "./following-sibling::*" xml))))
+  "Create an XML-INFO-NODE from XML."
+
+  ;; We read the node name from the <nodename> xml element, not from the 'name' attribute.
+  (let ((node-name (dom:data (xpath:first-node (xpath:evaluate "./nodename/text()" xml)))))
+    (make-instance 'xml-info-node
+		   :name node-name
+		   :node-xml xml
+		   :content-xml (xpath:first-node (xpath:evaluate "./following-sibling::*" xml)))))
 
 (defmethod contents ((node xml-info-node))
   (content-xml node))
