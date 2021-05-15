@@ -54,7 +54,7 @@
                            )
                           (:|menuentry| (who:htm (:li (render))))
                           (:|menunode| (let* ((node-name (text body))
-                                              (node-url-name (substitute #\- #\space node-name)))
+                                              (node-url-name (hunchentoot:url-encode node-name)))
                                          (who:htm (:a :href (if split
                                                                 node-url-name
                                                                 (format nil "#~a" node-url-name))

@@ -688,7 +688,7 @@ ul.toc, ul.toc ul {
                                      (home-node info-repository)))))
       (_
        ;; TODO: perform a search if a node name is not matched?
-       (let ((node-name (substitute #\- #\space (subseq (quri:uri-path uri) 1))))
+       (let ((node-name (hunchentoot:url-decode (subseq (quri:uri-path uri) 1))))
          (alexandria:when-let ((node (find-node info-repository node-name)))
            (awhen (hunchentoot:get-parameter "_n")
              (return-from dispatch-webinfo-request
@@ -745,8 +745,8 @@ ul.toc, ul.toc ul {
                             :info-repository info-repository)))
            (_
             ;; TODO: perform a search if a node name is not matched?
-            (let ((node-name (substitute #\- #\space (second path))))
-              (if (not (alexandria:emptyp node-name))
+            (let ((node-name (hunchentoot:url-decode (second path))))
+	      (if (not (alexandria:emptyp node-name))
                   (alexandria:when-let ((node (find-node doc node-name)))
                     (awhen (hunchentoot:get-parameter "_n") ;; navigation parameter
                       (return-from dispatch-webinfo-request
