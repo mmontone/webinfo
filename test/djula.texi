@@ -5,6 +5,8 @@
 * Djula: (djula). Common Lisp template system
 @end direntry
 
+@include common-lisp.texi
+
 @node Top
 @top Top
 @cindex djula
@@ -31,8 +33,17 @@
 @node Introduction
 @chapter Introduction
 @anchor{#introduction}
+
+@cindex foo
+
+@cldefun {alexandria, flatten, (x y z)}
+This is alexandria flatten function
+@endcldefun
+
 Djula is an HTML templating system similar to Django templates for
 Common Lisp.
+
+Like the function @clref{alexandria, flatten}.
 
 Djula's template language is designed to strike a balance between power
 and ease. It's designed to feel comfortable to those used to working
@@ -79,6 +90,8 @@ Djula is available on Quicklisp:
 @node Basics
 @chapter Basics
 @anchor{#basics}
+
+@cindex foo
 
 A template is simply a text file. It can generate any text-based format
 (HTML, XML, CSV, etc.).
@@ -173,6 +186,7 @@ If you want to disable this, use the :djula-prod @emph{feature}:
 @chapter Variables
 @anchor{#variables}
 @cindex variables
+@cindex foo
 Variables look like this: @code{@{@{ variable @}@}}. When the template
 engine encounters a variable, it evaluates that variable and replaces it
 with the result. Variable names consist of any combination of

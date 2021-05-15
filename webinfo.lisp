@@ -589,6 +589,12 @@ ul.toc, ul.toc ul {
                  :search-term (aget (quri:uri-query-params uri) "q")
                  :info-repository repo))
 
+(defmethod make-fulltext-search-node ((doc info-document) uri)
+  (make-instance 'fulltext-search-node
+                 :name "Fulltext search"
+		 :source doc
+                 :search-term (aget (quri:uri-query-params uri) "q")))
+
 (defvar +app-settings+
   `((use-icons :type boolean :label "Use icons" :default t)
     (highlight-code :type boolean :label "Highlight code" :default t)
@@ -673,8 +679,7 @@ ul.toc, ul.toc ul {
       ((or "_s" "/_s")
        (render-webinfo-page acceptor (make-search-node info-repository uri)))
       ((or "_fts" "/_fts")
-       (render-webinfo-page acceptor
-                            (make-fulltext-search-node info-repository uri)))
+       (render-webinfo-page acceptor (make-fulltext-search-node info-repository uri)))
       ((or "_settings" "/_settings")
        (trivia:match (hunchentoot:request-method request)
          (:get (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings")))
@@ -774,35 +779,3 @@ ul.toc, ul.toc ul {
 
 (defun stop-webinfo ()
   (hunchentoot:stop *webinfo-acceptor*))
-
-(defun start-doc-demo (&rest args)
-  (let ((djula-manual (make-instance 'webinfo:xml-info-document
-                                     :name "djula"
-                                     :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
-                                     :title "Djula manual")))
-    (fulltext-index-document djula-manual)
-
-    (webinfo:start-webinfo
-     :port 9090
-     :info-repository
-     (make-instance 'file-info-repository
-                    :file djula-manual)
-     :app-settings (list (cons :theme (make-instance 'nav-theme))))))
-
-(defun start-dir-demo (&rest args)
-  (let* ((djula-manual (make-instance 'webinfo:xml-info-document
-                                      :name "djula"
-                                      :filepath (asdf:system-relative-pathname :webinfo "test/djula.xml")
-                                      :title "Djula manual"))
-         (djula-ref (make-instance 'webinfo:xml-info-document
-                                   :name "djula-ref"
-                                   :filepath (asdf:system-relative-pathname :webinfo "test/djula-ref.xml")
-                                   :title "Djula reference"))
-         (info-repository (make-instance 'dir-info-repository
-                                         :dir (list djula-manual djula-ref)
-                                         :search-index (make-memory-search-index))))
-
-    (webinfo:start-webinfo
-     :port 9090
-     :info-repository info-repository
-     :app-settings (list (cons :theme (make-instance 'nav-theme))))))

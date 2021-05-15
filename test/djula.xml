@@ -9,6 +9,13 @@
 <menuentry leadingtext="* "><menutitle separator=": ">Djula</menutitle><menunode separator=". ">(djula)</menunode><menudescription><pre xml:space="preserve">Common Lisp template system
 </pre></menudescription></menuentry></direntry>
 
+<macro name="cldefun" line=" cldefun{package, name, args}"><formalarg>package</formalarg><formalarg>name</formalarg><formalarg>args</formalarg>@findex \package\:\name\
+@defun \name\ \args\
+</macro>
+
+<macro name="endcldefun" line=" endcldefun">@end defun
+</macro>
+
 <node name="Top" spaces=" "><nodename>Top</nodename><nodenext automatic="on">Introduction</nodenext></node>
 <top spaces=" "><sectiontitle>Top</sectiontitle>
 <cindex index="cp" spaces=" "><indexterm index="cp" number="1">djula</indexterm></cindex>
@@ -36,6 +43,12 @@
 <node name="Introduction" spaces=" "><nodename>Introduction</nodename><nodenext automatic="on">Basics</nodenext><nodeprev automatic="on">Top</nodeprev><nodeup automatic="on">Top</nodeup></node>
 <chapter spaces=" "><sectiontitle>Introduction</sectiontitle>
 <anchor name="_0023introduction">#introduction</anchor>
+
+<findex index="fn" spaces=" "><indexterm index="fn" number="1">alexandria:flatten</indexterm></findex>
+<defun spaces=" " endspaces=" "><definitionterm><indexterm index="fn" number="2">flatten</indexterm><defcategory automatic="on" bracketed="on">Function</defcategory> <deffunction>flatten</deffunction> <defdelimiter>(</defdelimiter><defparam>x</defparam> <defparam>y</defparam> <defparam>z</defparam><defdelimiter>)</defdelimiter></definitionterm>
+<definitionitem><para>This is alexandria flatten function
+</para></definitionitem></defun>
+
 <para>Djula is an HTML templating system similar to Django templates for
 Common Lisp.
 </para>
@@ -121,9 +134,9 @@ will be explained later in this document.
 <node name="Usage" spaces=" "><nodename>Usage</nodename><nodenext automatic="on">Variables</nodenext><nodeprev automatic="on">Basics</nodeprev><nodeup automatic="on">Top</nodeup></node>
 <chapter spaces=" "><sectiontitle>Usage</sectiontitle>
 <anchor name="_0023usage">#usage</anchor>
-<findex index="fn" spaces=" "><indexterm index="fn" number="1">djula:add-template-directory</indexterm></findex>
+<findex index="fn" spaces=" "><indexterm index="fn" number="3">djula:add-template-directory</indexterm></findex>
 <vindex index="vr" spaces=" "><indexterm index="vr" number="1">djula:*current-store*</indexterm></vindex>
-<findex index="fn" spaces=" "><indexterm index="fn" number="2">djula:compile-template*</indexterm></findex>
+<findex index="fn" spaces=" "><indexterm index="fn" number="4">djula:compile-template*</indexterm></findex>
 
 <para>To render our templates, they need to be compiled first. We do that with
 the :cl<code>COMPILE-TEMPLATE*</code> function. For inheritance to work, we

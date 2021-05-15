@@ -36,8 +36,13 @@ File: djula.info,  Node: Introduction,  Next: Basics,  Prev: Top,  Up: Top
 1 Introduction
 **************
 
-Djula is an HTML templating system similar to Django templates for
+ -- alexandria: flatten (x y z)
+     This is alexandria flatten function
+
+   Djula is an HTML templating system similar to Django templates for
 Common Lisp.
+
+   Like the function *Note flatten: alexandria-flatten.
 
    Djula's template language is designed to strike a balance between
 power and ease.  It's designed to feel comfortable to those used to
@@ -46,14 +51,14 @@ working with HTML.
    Philosophy
 
    If you have a background in programming, or if you're used to
-languages which mix programming code directly into HTML, you'll want to
-bear in mind that the Djula template system is not simply Common Lisp
-code embedded into HTML. This is by design: the template system is meant
-to express presentation, not program logic.
+languages which mix programming code directly into HTML, you'll want
+to bear in mind that the Djula template system is not simply Common
+Lisp code embedded into HTML. This is by design: the template system
+is meant to express presentation, not program logic.
 
    The Djula template system provides tags which function similarly to
-some programming constructs - an 'if' tag for boolean tests, a 'for' tag
-for looping, etc.  - but these are not simply executed as the
+some programming constructs - an 'if' tag for boolean tests, a 'for'
+tag for looping, etc.  - but these are not simply executed as the
 corresponding Lisp code, and the template system will not execute
 arbitrary Lisp expressions.  Only the tags, filters and syntax listed
 below are supported by default (although you can add 'your own
@@ -89,12 +94,12 @@ File: djula.info,  Node: Basics,  Next: Usage,  Prev: Introduction,  Up: Top
 2 Basics
 ********
 
-A template is simply a text file.  It can generate any text-based format
-(HTML, XML, CSV, etc.).
+A template is simply a text file.  It can generate any text-based
+format (HTML, XML, CSV, etc.).
 
-   A template contains *variables*, which get replaced with values when
-the template is evaluated, and *tags*, which control the logic of the
-template.
+   A template contains *variables*, which get replaced with values
+when the template is evaluated, and *tags*, which control the logic of
+the template.
 
    Below is a minimal template that illustrates a few basics.  Each
 element will be explained later in this document.
@@ -183,10 +188,10 @@ File: djula.info,  Node: Variables,  Next: Tags,  Prev: Usage,  Up: Top
 Variables look like this: '{{ variable }}'.  When the template engine
 encounters a variable, it evaluates that variable and replaces it with
 the result.  Variable names consist of any combination of alphanumeric
-characters and the underscore ('"_"').  The dot ('"."') also appears in
-variable sections, although that has a special meaning, as indicated
-below.  Importantly, _you cannot have spaces or punctuation characters
-in variable names._
+characters and the underscore ('"_"').  The dot ('"."') also appears
+in variable sections, although that has a special meaning, as
+indicated below.  Importantly, _you cannot have spaces or punctuation
+characters in variable names._
 
    Use a dot ('.') to access attributes of a variable.
 
@@ -197,9 +202,9 @@ in variable names._
 section.title }}' will be replaced with the 'title' attribute of the
 'section' object.
 
-   Note that "bar" in a template expression like '{{ foo.bar }}' will be
-interpreted as a literal string and not using the value of the variable
-"bar", if one exists in the template context.
+   Note that "bar" in a template expression like '{{ foo.bar }}' will
+be interpreted as a literal string and not using the value of the
+variable "bar", if one exists in the template context.
 
 * Menu:
 
@@ -219,12 +224,13 @@ use getf to add arguments, like this:
 
    And now, you can access '{{ foo }}' in your template.
 
-   This is useful when you have many templates that rely on the same set
-of variables.  Use this variable to refactor your code when appropriate.
+   This is useful when you have many templates that rely on the same
+set of variables.  Use this variable to refactor your code when
+appropriate.
 
    Note that you could also write a function that wraps
-'render-template*' and uses a default list of variables plus other ones
-given as arguments:
+'render-template*' and uses a default list of variables plus other
+ones given as arguments:
 
 (defun my-render-template (template stream &rest args)
   (apply #'djula:render-template* template stream (list* :foo 'some-value args)))
@@ -247,20 +253,20 @@ File: djula.info,  Node: Overview,  Next: List of tags,  Up: Tags
 5.1 Overview
 ============
 
-Tags look like this: '{% tag %}'.  Tags are more complex than variables:
-Some create text in the output, some control flow by performing loops or
-logic, and some load external information into the template to be used
-by later variables.
+Tags look like this: '{% tag %}'.  Tags are more complex than
+variables: Some create text in the output, some control flow by
+performing loops or logic, and some load external information into the
+template to be used by later variables.
 
-   Some tags require beginning and ending tags (i.e.  '{% tag %} ... tag
-contents ... {% endtag %}').
+   Some tags require beginning and ending tags (i.e.  '{% tag %} ...
+tag contents ... {% endtag %}').
 
    Here are some of the more commonly used tags:
 
 'for'
 
-     Loop over each item in an array.  For example, to display a list of
-     athletes provided in 'athlete-list':
+     Loop over each item in an array.  For example, to display a list
+     of athletes provided in 'athlete-list':
 
      <ul>
      {% for athlete in athlete-list %}
@@ -409,8 +415,8 @@ second to 'row2', the third to 'row1' again, and so on for each
 iteration of the loop.
 
    You can use variables, too.  For example, if you have two template
-variables, 'rowvalue1' and 'rowvalue2', you can alternate between their
-values like this:
+variables, 'rowvalue1' and 'rowvalue2', you can alternate between
+their values like this:
 
 {% for o in some-list %}
     <tr class="{% cycle rowvalue1 rowvalue2 %}">
@@ -428,7 +434,8 @@ values like this:
 
    You can use any number of values in a 'cycle' tag, separated by
 spaces.  Values enclosed in double quotes ('"') are treated as string
-literals, while values without quotes are treated as template variables.
+literals, while values without quotes are treated as template
+variables.
 
    debug
 
@@ -448,12 +455,12 @@ File: djula.info,  Node: filter,  Next: firstof,  Prev: debug,  Up: List of tags
 5.2.7 filter
 ------------
 
-Filters the contents of the block through one or more filters.  Multiple
-filters can be specified with pipes and filters can have arguments, just
-as in variable syntax.
+Filters the contents of the block through one or more filters.
+Multiple filters can be specified with pipes and filters can have
+arguments, just as in variable syntax.
 
-   Note that the block includes _all_ the text between the 'filter' and
-'endfilter' tags.
+   Note that the block includes _all_ the text between the 'filter'
+and 'endfilter' tags.
 
    Sample usage:
 
@@ -491,9 +498,9 @@ File: djula.info,  Node: for,  Next: if,  Prev: firstof,  Up: List of tags
 5.2.9 for
 ---------
 
-Loops over each item in an array, making the item available in a context
-variable.  For example, to display a list of athletes provided in
-'athlete-list':
+Loops over each item in an array, making the item available in a
+context variable.  For example, to display a list of athletes provided
+in 'athlete-list':
 
 <ul>
 {% for athlete in athlete-list %}
@@ -502,9 +509,9 @@ variable.  For example, to display a list of athletes provided in
 </ul>
 
    If you need to loop over an association list, you can unpack the
-values in each sublist into individual variables.  For example, if your
-context contains a list of (x .  y) coordinates called 'points', you
-could use the following to output the list of points:
+values in each sublist into individual variables.  For example, if
+your context contains a list of (x .  y) coordinates called 'points',
+you could use the following to output the list of points:
 
 {% for (x . y) in points %}
     There is a point at {{ x }},{{ y }}
@@ -539,9 +546,9 @@ File: djula.info,  Node: if,  Next: Boolean operators,  Prev: for,  Up: List of 
 5.2.10 if
 ---------
 
-The '{% if %}' tag evaluates a variable, and if that variable is "true"
-(i.e.  exists, is not empty, and is not a false boolean value) the
-contents of the block are output:
+The '{% if %}' tag evaluates a variable, and if that variable is
+"true" (i.e.  exists, is not empty, and is not a false boolean value)
+the contents of the block are output:
 
 {% if athlete-list %}
     Number of athletes: {{ athlete-list|length }}
@@ -549,8 +556,9 @@ contents of the block are output:
     No athletes.
 {% endif %}
 
-   In the above, if 'athlete-list' is not empty, the number of athletes
-will be displayed by the '{{ athlete-list|length }}' variable.
+   In the above, if 'athlete-list' is not empty, the number of
+athletes will be displayed by the '{{ athlete-list|length }}'
+variable.
 
 
 File: djula.info,  Node: Boolean operators,  Next: ifchanged,  Prev: if,  Up: List of tags
@@ -558,8 +566,8 @@ File: djula.info,  Node: Boolean operators,  Next: ifchanged,  Prev: if,  Up: Li
 5.2.11 Boolean operators
 ------------------------
 
-'if' tags may use 'and', 'or' or 'not' to test a number of variables or
-to negate a given variable:
+'if' tags may use 'and', 'or' or 'not' to test a number of variables
+or to negate a given variable:
 
 {% if athlete-list and coach-list %}
     Both athletes and coaches are available.
@@ -592,8 +600,8 @@ with 'and' having higher precedence than 'or' e.g.:
 
 (if (or (athlete-list and coach-list) cheerleader-list) ..)
 
-   Use of actual parentheses in the 'if' tag is invalid syntax.  If you
-need them to indicate precedence, you should use nested 'if' tags.
+   Use of actual parentheses in the 'if' tag is invalid syntax.  If
+you need them to indicate precedence, you should use nested 'if' tags.
 
    ifchanged
 
@@ -641,7 +649,8 @@ File: djula.info,  Node: ifequal,  Next: ifnotequal,  Prev: ifchanged,  Up: List
 5.2.13 ifequal
 --------------
 
-Output the contents of the block if the two arguments equal each other.
+Output the contents of the block if the two arguments equal each
+other.
 
    Example:
 
@@ -671,8 +680,8 @@ File: djula.info,  Node: ifnotequal,  Next: include,  Prev: ifequal,  Up: List o
 Just like 'ifequal', except it tests that the two arguments are not
 equal.
 
-   An alternative to the 'ifnotequal' tag is to use the 'if' tag and the
-'!=' operator.
+   An alternative to the 'ifnotequal' tag is to use the 'if' tag and
+the '!=' operator.
 
    include
 
@@ -682,13 +691,14 @@ File: djula.info,  Node: include,  Prev: ifnotequal,  Up: List of tags
 5.2.15 include
 --------------
 
-Loads a template and renders it with the current context.  This is a way
-of "including" other templates within a template.
+Loads a template and renders it with the current context.  This is a
+way of "including" other templates within a template.
 
    The template name can either be a variable or a hard-coded (quoted)
 string, in either single or double quotes.
 
-   This example includes the contents of the template '"foo/bar.html"':
+   This example includes the contents of the template
+'"foo/bar.html"':
 
 {% include "foo/bar.html" %}
 
@@ -712,8 +722,8 @@ File: djula.info,  Node: Comments,  Next: Verbatim,  Prev: Tags,  Up: Top
 6 Comments
 **********
 
-To comment-out part of a line in a template, use the comment syntax: '{#
-#}'.
+To comment-out part of a line in a template, use the comment syntax:
+'{# #}'.
 
    For example, this template would render as ''hello'':
 
@@ -733,10 +743,11 @@ File: djula.info,  Node: Verbatim,  Next: Filters,  Prev: Comments,  Up: Top
 7 Verbatim
 **********
 
-If you want to leave some portion of text unprocessed by Djula, use the
-verbatim syntax: '{$ $}'.
+If you want to leave some portion of text unprocessed by Djula, use
+the verbatim syntax: '{$ $}'.
 
-   For example, this template would render as ''this is {{verbatim}}'':
+   For example, this template would render as ''this is
+{{verbatim}}'':
 
 {$ this is {{verbatim}} $}
 
@@ -760,24 +771,25 @@ File: djula.info,  Node: Overview of filters,  Next: List of filters,  Up: Filte
 
 You can modify variables for display by using *filters*.
 
-   Filters look like this: '{{ name|lower }}'.  This displays the value
-of the '{{ name }}' variable after being filtered through the 'lower'
-filter, which converts text to lowercase.  Use a pipe ('|') to apply a
-filter.
+   Filters look like this: '{{ name|lower }}'.  This displays the
+value of the '{{ name }}' variable after being filtered through the
+'lower' filter, which converts text to lowercase.  Use a pipe ('|') to
+apply a filter.
 
-   Filters can be "chained."  The output of one filter is applied to the
-next.  '{{ text|escape|linebreaks }}' is a common idiom for escaping
-text contents, then converting line breaks to '<p>' tags.
+   Filters can be "chained."  The output of one filter is applied to
+the next.  '{{ text|escape|linebreaks }}' is a common idiom for
+escaping text contents, then converting line breaks to '<p>' tags.
 
-   Some filters take arguments.  A filter argument looks like this: '{{
-bio|truncatewords:30 }}'.  This will display the first 30 words of the
-'bio' variable.
+   Some filters take arguments.  A filter argument looks like this:
+'{{ bio|truncatewords:30 }}'.  This will display the first 30 words of
+the 'bio' variable.
 
-   Filter arguments that contain spaces must be quoted; for example, to
-join a list with commas and spaced you'd use '{{ list|join:", " }}'.
+   Filter arguments that contain spaces must be quoted; for example,
+to join a list with commas and spaced you'd use '{{ list|join:", "
+}}'.
 
-   Djula provides about thirty built-in template filters.  You can read
-all about them in the 'built-in filter reference
+   Djula provides about thirty built-in template filters.  You can
+read all about them in the 'built-in filter reference
 <ref-templates-builtins-filters>'.  To give you a taste of what's
 available, here are some of the more commonly used template filters:
 
@@ -866,8 +878,8 @@ File: djula.info,  Node: capfirst,  Next: cut,  Prev: addslashes,  Up: List of f
 8.2.3 capfirst
 --------------
 
-Capitalizes the first character of the value.  If the first character is
-not a letter, this filter has no effect.
+Capitalizes the first character of the value.  If the first character
+is not a letter, this filter has no effect.
 
    For example:
 
@@ -931,14 +943,15 @@ File: djula.info,  Node: default,  Next: reverse,  Prev: datetime,  Up: List of 
 8.2.7 default
 -------------
 
-If value evaluates to 'False', uses the given default.  Otherwise, uses
-the value.
+If value evaluates to 'False', uses the given default.  Otherwise,
+uses the value.
 
    For example:
 
 {{ value|default "nothing" }}
 
-   If 'value' is '""' (the empty string), the output will be 'nothing'.
+   If 'value' is '""' (the empty string), the output will be
+'nothing'.
 
    default_if_none reverse
 
@@ -1006,8 +1019,8 @@ escaping to be applied immediately, use the 'force-escape' filter.
    Applying 'escape' to a variable that would normally have
 auto-escaping applied to the result will only result in one round of
 escaping being done.  So it is safe to use this function even in
-auto-escaping environments.  If you want multiple escaping passes to be
-applied, use the 'force-escape' filter.
+auto-escaping environments.  If you want multiple escaping passes to
+be applied, use the 'force-escape' filter.
 
    For example, you can apply 'escape' to fields when 'autoescape' is
 off:
@@ -1024,9 +1037,9 @@ File: djula.info,  Node: escapejs,  Next: filesizeformat,  Prev: escape,  Up: Li
 8.2.12 escapejs
 ---------------
 
-Escapes characters for use in JavaScript strings.  This does _not_ make
-the string safe for use in HTML, but does protect you from syntax errors
-when using templates to generate JavaScript/JSON.
+Escapes characters for use in JavaScript strings.  This does _not_
+make the string safe for use in HTML, but does protect you from syntax
+errors when using templates to generate JavaScript/JSON.
 
    For example:
 
@@ -1056,10 +1069,10 @@ Formats the value like a 'human-readable' file size (i.e.  ''13 KB'',
    File sizes and SI units
 
    Strictly speaking, 'filesizeformat' does not conform to the
-International System of Units which recommends using KiB, MiB, GiB, etc.
-when byte sizes are calculated in powers of 1024 (which is the case
-here).  Instead, Djula uses traditional unit names (KB, MB, GB, etc.)
-corresponding to names that are more commonly used.  first
+International System of Units which recommends using KiB, MiB, GiB,
+etc.  when byte sizes are calculated in powers of 1024 (which is the
+case here).  Instead, Djula uses traditional unit names (KB, MB, GB,
+etc.)  corresponding to names that are more commonly used.  first
 
 
 File: djula.info,  Node: first,  Next: join,  Prev: filesizeformat,  Up: List of filters
@@ -1089,8 +1102,8 @@ Joins a list with a string.
 
 {{ value|join:" // " }}
 
-   If 'value' is the list '("a" "b" "c")', the output will be the string
-'"a // b // c"'.
+   If 'value' is the list '("a" "b" "c")', the output will be the
+string '"a // b // c"'.
 
    last
 
@@ -1117,7 +1130,8 @@ File: djula.info,  Node: length,  Next: length_is,  Prev: last,  Up: List of fil
 8.2.17 length
 -------------
 
-Returns the length of the value.  This works for both strings and lists.
+Returns the length of the value.  This works for both strings and
+lists.
 
    For example:
 
@@ -1141,8 +1155,8 @@ otherwise.
 
 {{ value|length_is:"4" }}
 
-   If 'value' is '['a', 'b', 'c', 'd']' or '"abcd"', the output will be
-'True'.
+   If 'value' is '['a', 'b', 'c', 'd']' or '"abcd"', the output will
+be 'True'.
 
      linebreaks
 
@@ -1153,15 +1167,15 @@ File: djula.info,  Node: linebreaks,  Next: linebreaksbr,  Prev: length_is,  Up:
 -----------------
 
 Replaces line breaks in plain text with appropriate HTML; a single
-newline becomes an HTML line break ('<br />') and a new line followed by
-a blank line becomes a paragraph break ('</p>').
+newline becomes an HTML line break ('<br />') and a new line followed
+by a blank line becomes a paragraph break ('</p>').
 
    For example:
 
 {{ value|linebreaks }}
 
-   If 'value' is 'Joel\nis a slug', the output will be '<p>Joel<br />is
-a slug</p>'.
+   If 'value' is 'Joel\nis a slug', the output will be '<p>Joel<br
+/>is a slug</p>'.
 
    linebreaksbr
 
@@ -1171,8 +1185,8 @@ File: djula.info,  Node: linebreaksbr,  Next: lower,  Prev: linebreaks,  Up: Lis
 8.2.20 linebreaksbr
 -------------------
 
-Converts all newlines in a piece of plain text to HTML line breaks ('<br
-/>').
+Converts all newlines in a piece of plain text to HTML line breaks
+('<br />').
 
    For example:
 
@@ -1207,8 +1221,8 @@ File: djula.info,  Node: make_list,  Next: safe escape,  Prev: lower,  Up: List 
 ----------------
 
 Returns the value turned into a list.  For a string, it's a list of
-characters.  For an integer, the argument is cast into an unicode string
-before creating a list.
+characters.  For an integer, the argument is cast into an unicode
+string before creating a list.
 
    For example:
 
@@ -1230,8 +1244,8 @@ Marks a string as not requiring further HTML escaping prior to output.
 When autoescaping is off, this filter has no effect.
 
    Note If you are chaining filters, a filter applied after 'safe' can
-make the contents unsafe again.  For example, the following code prints
-the variable as is, unescaped:
+make the contents unsafe again.  For example, the following code
+prints the variable as is, unescaped:
 
 {{ var|safe|escape }}
 
@@ -1255,8 +1269,8 @@ Returns a slice of a sequence (i.e.  lists, vectors, strings)
 axis.
 
    * A nonnegative integer selects the corresponding index, while a
-     negative integer selects an index counting backwards from the last
-     index:
+     negative integer selects an index counting backwards from the
+     last index:
 
      {{ list | slice: 4 }}
 
@@ -1269,7 +1283,8 @@ rules if applicable, so you can use negative integers:
 {{ string | slice: (0 . 5) }}
 {{ string | slice: (5 . nil) }}
 
-   if the string is '"Hello world"' is will output 'Hello' and 'world'.
+   if the string is '"Hello world"' is will output 'Hello' and
+'world'.
 
    slugify force-escape
 
@@ -1314,8 +1329,8 @@ The 'replace' and the 'with' filters work together:
 
 {{ value | replace:regexp | with:string }}
 
-   This will replace all occurences of the regexp in "value" with a new
-string, using 'ppcre:regex-replace-all'.
+   This will replace all occurences of the regexp in "value" with a
+new string, using 'ppcre:regex-replace-all'.
 
    rest
 
@@ -1414,14 +1429,15 @@ Escapes a value for use in a URL.
 
 {{ value|urlencode }}
 
-   If 'value' is '"http://www.example.org/foo?a=b&c=d"', the output will
-be '"http%3A//www.example.org/foo%3Fa%3Db%26c%3Dd"'.
+   If 'value' is '"http://www.example.org/foo?a=b&c=d"', the output
+will be '"http%3A//www.example.org/foo%3Fa%3Db%26c%3Dd"'.
 
    An optional argument containing the characters which should not be
 escaped can be provided.
 
-   If not provided, the '/' character is assumed safe.  An empty string
-can be provided when _all_ characters should be escaped.  For example:
+   If not provided, the '/' character is assumed safe.  An empty
+string can be provided when _all_ characters should be escaped.  For
+example:
 
 {{ value|urlencode:"" }}
 
@@ -1439,9 +1455,9 @@ Use the 'def-filter' macro.  Its general form is:
 (def-filter :myfilter-name (value arg)
    (body))
 
-   It always takes the variable's value as argument, and it can have one
-required or optional argument.  For example, this is how those built-in
-filters are defined:
+   It always takes the variable's value as argument, and it can have
+one required or optional argument.  For example, this is how those
+built-in filters are defined:
 
 (def-filter :capfirst (val)
   (string-capitalize (princ-to-string val)))
@@ -1474,8 +1490,8 @@ lambda function and chain it with the 'with' filter:
 
 {{ value | replace:foo | with:bar }}
 
-   Errors are handled by the macro, but you can handle them and return a
-'template-error' condition:
+   Errors are handled by the macro, but you can handle them and return
+a 'template-error' condition:
 
 (def-filter :handle-error-filter (it)
    (handler-case
@@ -1489,10 +1505,11 @@ File: djula.info,  Node: Template inheritance,  Next: Internationalization,  Pre
 9 Template inheritance
 **********************
 
-The most powerful - and thus the most complex - part of Djula's template
-engine is template inheritance.  Template inheritance allows you to
-build a base "skeleton" template that contains all the common elements
-of your site and defines *blocks* that child templates can override.
+The most powerful - and thus the most complex - part of Djula's
+template engine is template inheritance.  Template inheritance allows
+you to build a base "skeleton" template that contains all the common
+elements of your site and defines *blocks* that child templates can
+override.
 
    It's easiest to understand template inheritance by starting with an
 example:
@@ -1521,13 +1538,14 @@ example:
 </html>
 
    This template, which we'll call 'base.html', defines a simple HTML
-skeleton document that you might use for a simple two-column page.  It's
-the job of "child" templates to fill the empty blocks with content.
+skeleton document that you might use for a simple two-column page.
+It's the job of "child" templates to fill the empty blocks with
+content.
 
    In this example, the 'block' tag defines three blocks that child
-templates can fill in.  All the 'block' tag does is to tell the template
-engine that a child template may override those portions of the
-template.
+templates can fill in.  All the 'block' tag does is to tell the
+template engine that a child template may override those portions of
+the template.
 
    A child template might look like this:
 
@@ -1542,15 +1560,15 @@ template.
 {% endfor %}
 {% endblock %}
 
-   The 'extends' tag is the key here.  It tells the template engine that
-this template "extends" another template.  When the template system
-evaluates this template, first it locates the parent - in this case,
-"base.html".
+   The 'extends' tag is the key here.  It tells the template engine
+that this template "extends" another template.  When the template
+system evaluates this template, first it locates the parent - in this
+case, "base.html".
 
-   At that point, the template engine will notice the three 'block' tags
-in 'base.html' and replace those blocks with the contents of the child
-template.  Depending on the value of 'blog_entries', the output might
-look like:
+   At that point, the template engine will notice the three 'block'
+tags in 'base.html' and replace those blocks with the contents of the
+child template.  Depending on the value of 'blog_entries', the output
+might look like:
 
 <!DOCTYPE html>
 <html lang="en">
@@ -1577,25 +1595,26 @@ look like:
 </body>
 </html>
 
-   Note that since the child template didn't define the 'sidebar' block,
-the value from the parent template is used instead.  Content within a
-'{% block %}' tag in a parent template is always used as a fallback.
+   Note that since the child template didn't define the 'sidebar'
+block, the value from the parent template is used instead.  Content
+within a '{% block %}' tag in a parent template is always used as a
+fallback.
 
-   You can use as many levels of inheritance as needed.  One common way
-of using inheritance is the following three-level approach:
+   You can use as many levels of inheritance as needed.  One common
+way of using inheritance is the following three-level approach:
 
-   * Create a 'base.html' template that holds the main look-and-feel of
-     your site.
+   * Create a 'base.html' template that holds the main look-and-feel
+     of your site.
    * Create a 'base_SECTIONNAME.html' template for each "section" of
      your site.  For example, 'base_news.html', 'base_sports.html'.
-     These templates all extend 'base.html' and include section-specific
-     styles/design.
+     These templates all extend 'base.html' and include
+     section-specific styles/design.
    * Create individual templates for each type of page, such as a news
      article or blog entry.  These templates extend the appropriate
      section template.
 
-   This approach maximizes code reuse and makes it easy to add items to
-shared content areas, such as section-wide navigation.
+   This approach maximizes code reuse and makes it easy to add items
+to shared content areas, such as section-wide navigation.
 
    Here are some tips for working with inheritance:
 
@@ -1604,21 +1623,21 @@ shared content areas, such as section-wide navigation.
      work, otherwise.
    * More '{% block %}<block>' tags in your base templates are better.
      Remember, child templates don't have to define all parent blocks,
-     so you can fill in reasonable defaults in a number of blocks, then
-     only define the ones you need later.  It's better to have more
-     hooks than fewer hooks.
-   * If you find yourself duplicating content in a number of templates,
-     it probably means you should move that content to a '{% block %}'
-     in a parent template.
+     so you can fill in reasonable defaults in a number of blocks,
+     then only define the ones you need later.  It's better to have
+     more hooks than fewer hooks.
+   * If you find yourself duplicating content in a number of
+     templates, it probably means you should move that content to a
+     '{% block %}' in a parent template.
    * If you need to get the content of the block from the parent
-     template, the '{{ block.super }}' variable will do the trick.  This
-     is useful if you want to add to the contents of a parent block
-     instead of completely overriding it.  Data inserted using '{{
-     block.super }}' will not be automatically escaped (see the next
-     section), since it was already escaped, if necessary, in the parent
-     template.
-   * For extra readability, you can optionally give a _name_ to your '{%
-     endblock %}' tag.  For example:
+     template, the '{{ block.super }}' variable will do the trick.
+     This is useful if you want to add to the contents of a parent
+     block instead of completely overriding it.  Data inserted using
+     '{{ block.super }}' will not be automatically escaped (see the
+     next section), since it was already escaped, if necessary, in the
+     parent template.
+   * For extra readability, you can optionally give a _name_ to your
+     '{% endblock %}' tag.  For example:
 
      {% block content %}
      ...
@@ -1628,12 +1647,12 @@ shared content areas, such as section-wide navigation.
      %}' tags are being closed.
 
    Finally, note that you can't define multiple 'block' tags with the
-same name in the same template.  This limitation exists because a block
-tag works in "both" directions.  That is, a block tag doesn't just
-provide a hole to fill -it also defines the content that fills the hole
-in the _parent_.  If there were two similarly-named 'block' tags in a
-template, that template's parent wouldn't know which one of the blocks'
-content to use.
+same name in the same template.  This limitation exists because a
+block tag works in "both" directions.  That is, a block tag doesn't
+just provide a hole to fill -it also defines the content that fills
+the hole in the _parent_.  If there were two similarly-named 'block'
+tags in a template, that template's parent wouldn't know which one of
+the blocks' content to use.
 
 
 File: djula.info,  Node: Internationalization,  Next: Error handling,  Prev: Template inheritance,  Up: Top
@@ -1704,7 +1723,8 @@ File: djula.info,  Node: Choosing language,  Next: Backends,  Prev: Internationa
 10.4 Choosing language
 ======================
 
-To choose the language to use, set the :cl'*CURRENT-LANGUAGE*' variable.
+To choose the language to use, set the :cl'*CURRENT-LANGUAGE*'
+variable.
 
    For example:
 
@@ -1733,11 +1753,11 @@ File: djula.info,  Node: Error handling,  Next: Automatic HTML escaping,  Prev: 
 Djula catches errors and barfs them to the template output by default.
 
    That is controlled via the :cl'*CATCH-TEMPLATE-ERRORS-P*'.  If
-changed to 'NIL', then errors are not caught anymore and are debuggable
-from the lisp listener.
+changed to 'NIL', then errors are not caught anymore and are
+debuggable from the lisp listener.
 
-   Djula provides more or less verbosity in template errors.  Verbosity
-is controlled via the variable :cl'*VERBOSE-ERRORS-P*'.
+   Djula provides more or less verbosity in template errors.
+Verbosity is controlled via the variable :cl'*VERBOSE-ERRORS-P*'.
 
    Also, there's a fancy page to display errors, which can be disabled
 if desired.  That is controlled via the variable
@@ -1800,15 +1820,16 @@ security exploit is called a Cross Site Scripting
    * One, you can make sure to run each untrusted variable through the
      'escape' filter (documented below), which converts potentially
      harmful HTML characters to unharmful ones.  This was the default
-     solution in Django for its first few years, but the problem is that
-     it puts the onus on _you_, the developer / template author, to
-     ensure you're escaping everything.  It's easy to forget to escape
-     data.
+     solution in Django for its first few years, but the problem is
+     that it puts the onus on _you_, the developer / template author,
+     to ensure you're escaping everything.  It's easy to forget to
+     escape data.
    * Two, you can take advantage of Django's automatic HTML escaping.
      The remainder of this section describes how auto-escaping works.
 
-   By default in Django, every template automatically escapes the output
-of every variable tag.  Specifically, these five characters are escaped:
+   By default in Django, every template automatically escapes the
+output of every variable tag.  Specifically, these five characters are
+escaped:
 
    * '<' is converted to '&lt;'
    * '>' is converted to '&gt;'
@@ -1835,12 +1856,12 @@ If you don't want data to be auto-escaped, on a per-site, per-template
 level or per-variable level, you can turn it off in several ways.
 
    Why would you want to turn it off?  Because sometimes, template
-variables contain data that you _intend_ to be rendered as raw HTML, in
-which case you don't want their contents to be escaped.  For example,
-you might store a blob of HTML in your database and want to embed that
-directly into your template.  Or, you might be using Django's template
-system to produce text that is _not_ HTML - like an email message, for
-instance.
+variables contain data that you _intend_ to be rendered as raw HTML,
+in which case you don't want their contents to be escaped.  For
+example, you might store a blob of HTML in your database and want to
+embed that directly into your template.  Or, you might be using
+Django's template system to produce text that is _not_ HTML - like an
+email message, for instance.
 
 * Menu:
 
@@ -1858,9 +1879,9 @@ filter:
 This will be escaped: {{ data }}
 This will not be escaped: {{ data|safe }}
 
-   Think of _safe_ as shorthand for _safe from further escaping_ or _can
-be safely interpreted as HTML_. In this example, if 'data' contains
-''<b>'', the output will be:
+   Think of _safe_ as shorthand for _safe from further escaping_ or
+_can be safely interpreted as HTML_. In this example, if 'data'
+contains ''<b>'', the output will be:
 
 This will be escaped: &lt;b&gt;
 This will not be escaped: <b>
@@ -1882,9 +1903,9 @@ particular section of the template) in the 'autoescape' tag, like so:
     Hello {{ name }}
 {% endautoescape %}
 
-   The 'autoescape' tag takes either 'on' or 'off' as its argument.  At
-times, you might want to force auto-escaping when it would otherwise be
-disabled.  Here is an example template:
+   The 'autoescape' tag takes either 'on' or 'off' as its argument.
+At times, you might want to force auto-escaping when it would
+otherwise be disabled.  Here is an example template:
 
 Auto-escaping is on by default. Hello {{ name }}
 
@@ -1930,17 +1951,18 @@ File: djula.info,  Node: Notes,  Next: String literals and automatic escaping,  
 12.2 Notes
 ==========
 
-Generally, template authors don't need to worry about auto-escaping very
-much.  Developers on the Python side (people writing views and custom
-filters) need to think about the cases in which data shouldn't be
-escaped, and mark data appropriately, so things Just Work in the
+Generally, template authors don't need to worry about auto-escaping
+very much.  Developers on the Python side (people writing views and
+custom filters) need to think about the cases in which data shouldn't
+be escaped, and mark data appropriately, so things Just Work in the
 template.
 
-   If you're creating a template that might be used in situations where
-you're not sure whether auto-escaping is enabled, then add an 'escape'
-filter to any variable that needs escaping.  When auto-escaping is on,
-there's no danger of the 'escape' filter _double-escaping_ data - the
-'escape' filter does not affect auto-escaped variables.
+   If you're creating a template that might be used in situations
+where you're not sure whether auto-escaping is enabled, then add an
+'escape' filter to any variable that needs escaping.  When
+auto-escaping is on, there's no danger of the 'escape' filter
+_double-escaping_ data - the 'escape' filter does not affect
+auto-escaped variables.
 
 
 File: djula.info,  Node: String literals and automatic escaping,  Prev: Notes,  Up: Automatic HTML escaping
@@ -1954,9 +1976,9 @@ As we mentioned earlier, filter arguments can be strings:
 
    All string literals are inserted *without* any automatic escaping
 into the template - they act as if they were all passed through the
-'safe' filter.  The reasoning behind this is that the template author is
-in control of what goes into the string literal, so they can make sure
-the text is correctly escaped when the template is written.
+'safe' filter.  The reasoning behind this is that the template author
+is in control of what goes into the string literal, so they can make
+sure the text is correctly escaped when the template is written.
 
    This means you would write :
 
@@ -1976,25 +1998,25 @@ File: djula.info,  Node: Custom tag and filter libraries,  Next: Variable Index,
 13 Custom tag and filter libraries
 **********************************
 
-Certain applications provide custom tag and filter libraries.  To access
-them in a template, use the 'load' tag:
+Certain applications provide custom tag and filter libraries.  To
+access them in a template, use the 'load' tag:
 
 {% load comments %}
 
 {% comment_form for blogs.entries entry.id with is_public yes %}
 
-   In the above, the 'load' tag loads the 'comments' tag library, which
-then makes the 'comment_form' tag available for use.  Consult the
-documentation area in your admin to find the list of custom libraries in
-your installation.
+   In the above, the 'load' tag loads the 'comments' tag library,
+which then makes the 'comment_form' tag available for use.  Consult
+the documentation area in your admin to find the list of custom
+libraries in your installation.
 
-   The 'load' tag can take multiple library names, separated by spaces.
-Example:
+   The 'load' tag can take multiple library names, separated by
+spaces.  Example:
 
 {% load comments i18n %}
 
-   See '/howto/custom-template-tags' for information on writing your own
-custom template libraries.
+   See '/howto/custom-template-tags' for information on writing your
+own custom template libraries.
 
 * Menu:
 
@@ -2006,14 +2028,14 @@ File: djula.info,  Node: Custom libraries and template inheritance,  Up: Custom 
 13.1 Custom libraries and template inheritance
 ==============================================
 
-When you load a custom tag or filter library, the tags/filters are only
-made available to the current template - not any parent or child
+When you load a custom tag or filter library, the tags/filters are
+only made available to the current template - not any parent or child
 templates along the template-inheritance path.
 
    For example, if a template 'foo.html' has '{% load comments %}', a
 child template (e.g., one that has '{% extends "foo.html" %}') will
-_not_ have access to the comments template tags and filters.  The child
-template is responsible for its own '{% load comments %}'.
+_not_ have access to the comments template tags and filters.  The
+child template is responsible for its own '{% load comments %}'.
 
    This is a feature for the sake of maintainability and sanity.
 
@@ -2026,7 +2048,7 @@ Variable Index
  [index ]
 * Menu:
 
-* djula:*current-store*:                 Usage.                 (line 6)
+* djula:*current-store*:                 Usage.               (line 6)
 
 
 File: djula.info,  Node: Function Index,  Next: Concept Index,  Prev: Variable Index,  Up: Top
@@ -2037,8 +2059,10 @@ Function Index
  [index ]
 * Menu:
 
-* djula:add-template-directory:          Usage.                 (line 6)
-* djula:compile-template*:               Usage.                 (line 6)
+* alexandria:flatten:                    Introduction.        (line 6)
+* djula:add-template-directory:          Usage.               (line 6)
+* djula:compile-template*:               Usage.               (line 6)
+* flatten:                               Introduction.        (line 6)
 
 
 File: djula.info,  Node: Concept Index,  Prev: Function Index,  Up: Top
@@ -2049,8 +2073,8 @@ Concept Index
  [index ]
 * Menu:
 
-* djula:                                 Top.                   (line 6)
-* variables:                             Variables.             (line 6)
+* djula:                                 Top.                 (line 6)
+* variables:                             Variables.           (line 6)
 
 
 
@@ -2058,177 +2082,178 @@ Tag Table:
 Node: Top187
 Node: Introduction559
 Ref: #introduction668
-Node: Prerequisites1776
-Ref: #prerequisites1895
-Node: Installation1948
-Ref: #installation2065
-Node: Basics2122
-Ref: #basics2221
-Node: Usage2900
-Ref: #usage2994
-Node: Auto-reload4042
-Ref: #auto-reload4139
-Node: API4310
-Ref: #api4391
-Node: Variables4391
-Ref: #variables4491
-Node: Default template variables5474
-Ref: #default-template-variables5608
-Node: Tags6342
-Ref: #tags6435
-Node: Overview6491
-Ref: #overview6587
-Node: List of tags7646
-Ref: #list-of-tags7770
-Node: block7969
-Ref: #block8063
-Node: extends8253
-Ref: #extends8365
-Node: super8440
-Ref: #super8550
-Node: comment8858
-Ref: #comment8970
-Node: cycle9404
-Ref: #cycle9512
-Node: debug10742
-Ref: #debug10849
-Node: filter10907
-Ref: #filter11018
-Node: firstof11582
-Ref: #firstof11693
-Node: for12010
-Ref: #for12109
-Node: if13739
-Ref: #if13848
-Node: Boolean operators14271
-Ref: #boolean-operators14416
-Node: ifchanged15510
-Ref: #ifchanged15644
-Node: ifequal16543
-Ref: #ifequal16666
-Node: ifnotequal17112
-Ref: #ifnotequal17239
-Node: include17416
-Ref: #include17521
-Node: Custom tags18085
-Ref: #custom-tags18190
-Node: Comments18196
-Ref: #comments18296
-Node: Verbatim18653
-Ref: #verbatim18756
-Node: Filters18956
-Ref: #filters19069
-Node: Overview of filters19142
-Ref: #overview-119277
-Node: List of filters20317
-Ref: #list-of-filters20467
-Node: add20907
-Ref: #add21001
-Node: addslashes21137
-Ref: #addslashes21262
-Node: capfirst21475
-Ref: #capfirst21596
-Node: cut21824
-Ref: #cut21929
-Node: date22109
-Ref: #date22216
-Node: datetime22429
-Ref: #datetime22548
-Node: default22625
-Ref: #default22745
-Node: reverse22978
-Ref: #reverse23101
-Node: divisibleby23186
-Ref: #divisibleby23314
-Node: sort23480
-Ref: #sort23595
-Node: escape23686
-Ref: #escape23802
-Node: escapejs24803
-Ref: #escapejs24933
-Node: filesizeformat25375
-Ref: #filesizeformat25516
-Node: first26088
-Ref: #first26207
-Node: join26357
-Ref: #join26464
-Node: last26635
-Ref: #last26743
-Node: length26908
-Ref: #length27025
-Node: length_is27225
-Ref: #length_is27354
-Node: linebreaks27573
-Ref: #linebreaks27710
-Node: linebreaksbr28044
-Ref: #linebreaksbr28181
-Node: lower28405
-Ref: #lower28527
-Node: make_list28695
-Ref: #make_list28824
-Node: safe escape29200
-Ref: #safe-escape29335
-Node: slice29676
-Ref: #slice29800
-Node: force-escape30619
-Ref: #force-escape30752
-Node: format30882
-Ref: #format31010
-Node: replace with31268
-Ref: #replace-...-with31408
-Node: rest31628
-Ref: #rest31742
-Node: scan31907
-Ref: #scan32013
-Node: time32190
-Ref: #time-132305
-Node: truncatechars32407
-Ref: #truncatechars32541
-Node: upper32909
-Ref: #upper33032
-Node: urlencode33198
-Ref: #urlencode33322
-Node: Custom filters33893
-Ref: #custom-filters34013
-Node: Template inheritance35375
-Ref: #template-inheritance35526
-Node: Internationalization40763
-Ref: #internationalization40923
-Node: Syntax41042
-Ref: #syntax41163
-Node: Internationalization tags41279
-Ref: #tags-141475
-Node: Internationalization filters41502
-Ref: #filters-141715
-Node: trans41746
-Ref: #trans-141842
-Node: Choosing language41939
-Ref: #choosing-language42113
-Node: Backends42291
-Ref: #backends42410
-Node: Error handling42674
-Ref: #error-handling42825
-Node: Djula API43364
-Ref: #api-243454
-Node: Automatic HTML escaping43492
-Ref: #automatic-html-escaping43672
-Node: How to turn it off45942
-Ref: #how-to-turn-it-off46082
-Node: For individual variables46692
-Ref: #for-individual-variables46835
-Node: For template blocks47256
-Ref: #for-template-blocks47394
-Node: Notes48749
-Ref: #notes48910
-Node: String literals and automatic escaping49536
-Ref: #string-literals-and-automatic-escaping49736
-Node: Custom tag and filter libraries50532
-Ref: #custom-tag-and-filter-libraries50728
-Node: Custom libraries and template inheritance51425
-Ref: #custom-libraries-and-template-inheritance51628
-Node: Variable Index52149
-Node: Function Index52391
-Node: Concept Index52688
+Ref: alexandria-flatten668
+Node: Prerequisites1910
+Ref: #prerequisites2029
+Node: Installation2082
+Ref: #installation2199
+Node: Basics2256
+Ref: #basics2355
+Node: Usage3034
+Ref: #usage3128
+Node: Auto-reload4176
+Ref: #auto-reload4273
+Node: API4444
+Ref: #api4525
+Node: Variables4525
+Ref: #variables4625
+Node: Default template variables5608
+Ref: #default-template-variables5742
+Node: Tags6476
+Ref: #tags6569
+Node: Overview6625
+Ref: #overview6721
+Node: List of tags7780
+Ref: #list-of-tags7904
+Node: block8103
+Ref: #block8197
+Node: extends8387
+Ref: #extends8499
+Node: super8574
+Ref: #super8684
+Node: comment8992
+Ref: #comment9104
+Node: cycle9538
+Ref: #cycle9646
+Node: debug10876
+Ref: #debug10983
+Node: filter11041
+Ref: #filter11152
+Node: firstof11715
+Ref: #firstof11826
+Node: for12143
+Ref: #for12242
+Node: if13872
+Ref: #if13981
+Node: Boolean operators14404
+Ref: #boolean-operators14549
+Node: ifchanged15643
+Ref: #ifchanged15777
+Node: ifequal16676
+Ref: #ifequal16799
+Node: ifnotequal17245
+Ref: #ifnotequal17372
+Node: include17549
+Ref: #include17654
+Node: Custom tags18218
+Ref: #custom-tags18323
+Node: Comments18329
+Ref: #comments18429
+Node: Verbatim18786
+Ref: #verbatim18889
+Node: Filters19089
+Ref: #filters19202
+Node: Overview of filters19275
+Ref: #overview-119410
+Node: List of filters20450
+Ref: #list-of-filters20600
+Node: add21040
+Ref: #add21134
+Node: addslashes21270
+Ref: #addslashes21395
+Node: capfirst21608
+Ref: #capfirst21729
+Node: cut21957
+Ref: #cut22062
+Node: date22242
+Ref: #date22349
+Node: datetime22562
+Ref: #datetime22681
+Node: default22758
+Ref: #default22878
+Node: reverse23111
+Ref: #reverse23234
+Node: divisibleby23319
+Ref: #divisibleby23447
+Node: sort23613
+Ref: #sort23728
+Node: escape23819
+Ref: #escape23935
+Node: escapejs24936
+Ref: #escapejs25066
+Node: filesizeformat25508
+Ref: #filesizeformat25649
+Node: first26223
+Ref: #first26342
+Node: join26492
+Ref: #join26599
+Node: last26770
+Ref: #last26878
+Node: length27043
+Ref: #length27160
+Node: length_is27360
+Ref: #length_is27489
+Node: linebreaks27708
+Ref: #linebreaks27845
+Node: linebreaksbr28179
+Ref: #linebreaksbr28316
+Node: lower28540
+Ref: #lower28662
+Node: make_list28830
+Ref: #make_list28959
+Node: safe escape29335
+Ref: #safe-escape29470
+Node: slice29811
+Ref: #slice29935
+Node: force-escape30754
+Ref: #force-escape30887
+Node: format31017
+Ref: #format31145
+Node: replace with31403
+Ref: #replace-...-with31543
+Node: rest31763
+Ref: #rest31877
+Node: scan32042
+Ref: #scan32148
+Node: time32325
+Ref: #time-132440
+Node: truncatechars32542
+Ref: #truncatechars32676
+Node: upper33044
+Ref: #upper33167
+Node: urlencode33333
+Ref: #urlencode33457
+Node: Custom filters34028
+Ref: #custom-filters34148
+Node: Template inheritance35510
+Ref: #template-inheritance35661
+Node: Internationalization40896
+Ref: #internationalization41056
+Node: Syntax41175
+Ref: #syntax41296
+Node: Internationalization tags41412
+Ref: #tags-141608
+Node: Internationalization filters41635
+Ref: #filters-141848
+Node: trans41879
+Ref: #trans-141975
+Node: Choosing language42072
+Ref: #choosing-language42246
+Node: Backends42424
+Ref: #backends42543
+Node: Error handling42807
+Ref: #error-handling42958
+Node: Djula API43496
+Ref: #api-243586
+Node: Automatic HTML escaping43624
+Ref: #automatic-html-escaping43804
+Node: How to turn it off46074
+Ref: #how-to-turn-it-off46214
+Node: For individual variables46824
+Ref: #for-individual-variables46967
+Node: For template blocks47388
+Ref: #for-template-blocks47526
+Node: Notes48880
+Ref: #notes49041
+Node: String literals and automatic escaping49667
+Ref: #string-literals-and-automatic-escaping49867
+Node: Custom tag and filter libraries50663
+Ref: #custom-tag-and-filter-libraries50859
+Node: Custom libraries and template inheritance51557
+Ref: #custom-libraries-and-template-inheritance51760
+Node: Variable Index52281
+Node: Function Index52521
+Node: Concept Index52956
 
 End Tag Table
 
