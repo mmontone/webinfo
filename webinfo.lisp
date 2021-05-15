@@ -124,21 +124,26 @@ See FULLTEXT-INDEX-DOCUMENT.
     (:header :class "node-navigation"
              (:ul
               (awhen (node-prev node)
-                (who:htm
-                 (:li :class "node-prev"
-                      (:i :class "bi-arrow-left-circle" :style "margin-right: 5px;")
-                      (:a :href (substitute #\- #\space it) (who:str it)))))
+		(let ((prev-node (find-node *info-document* it)))
+		  (who:htm
+		   (:li :class "node-prev"
+			(:i :class "bi-arrow-left-circle" :style "margin-right: 5px;")
+			(:a :href (hunchentoot:url-encode it)
+			    (who:str (node-title prev-node)))))))
               (awhen (node-up node)
-                (who:htm
-                 (:li :class "node-up"
-                      (:i :class "bi-arrow-up-circle" :style "margin-right: 5px;")
-                      (:a :href (substitute #\- #\space it)
-                          (who:str it)))))
+		(let ((up-node (find-node *info-document* it)))
+		  (who:htm
+		   (:li :class "node-up"
+			(:i :class "bi-arrow-up-circle" :style "margin-right: 5px;")
+			(:a :href (hunchentoot:url-encode it)
+			    (who:str (node-title up-node)))))))
               (awhen (node-next node)
-                (who:htm
-                 (:li :class "node-next"
-                      (:i :class "bi-arrow-right-circle" :style "margin-right: 5px;")
-                      (:a :href (substitute #\- #\space it) (who:str it)))))))))
+		(let ((next-node (find-node *info-document* it)))
+		  (who:htm
+		   (:li :class "node-next"
+			(:i :class "bi-arrow-right-circle" :style "margin-right: 5px;")
+			(:a :href (hunchentoot:url-encode it)
+			    (who:str (node-title next-node)))))))))))
 
 (defmethod find-node ((info-repository file-info-repository) name)
   (find-node (file info-repository) name))
