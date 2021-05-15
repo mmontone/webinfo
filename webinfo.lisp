@@ -444,13 +444,17 @@ p {
   (when (render-navigation-sidebar-p args)
     (render-navigation-sidebar (getf args :document) stream)))
 
+;; The calculation and rendering of table of contents is expensive
+;; for big documents, so we cache it.
+(defparameter *toc-cache* (make-hash-table :test 'equalp))
+
 (defun render-navigation-sidebar (doc stream)
   (who:with-html-output (stream)
     (:div :class "navsidebar"
           (:div :class "search"
                 (:form :action "_s"
                        (:input :name "q" :placeholder "Search ...")))
-          (render-toc (toc doc) stream)
+          (render-toc-cached doc stream)
           (:div :class "settings"
                 (:a :href "/" :alt "Home"
                     (:i :class "bi-house-fill" :style "font-size: 2rem;"))
@@ -459,7 +463,15 @@ p {
                         :name "settings-outline"))
                 ))))
 
-(defun render-toc (toc stream)
+(defun render-toc-cached (doc stream)
+  (when (not (gethash (document-name doc) *toc-cache*))
+    (let ((rendered-toc (with-output-to-string (s)
+			  (render-toc doc s))))
+      (setf (gethash (document-name doc) *toc-cache*)
+	    rendered-toc)))
+  (write-string  (gethash (document-name doc) *toc-cache*) stream))  
+
+(defun render-toc (doc stream)
   (who:with-html-output (stream)
     (labels ((render-toc-level (levels)
                (who:htm
@@ -472,7 +484,7 @@ p {
                                   (render-toc-level (cdr level)))))))))
       (who:htm
        (:ul :class "toc"
-            (loop for level in toc
+            (loop for level in (toc doc)
                   do
                      (who:htm
                       (:li (:a :href (hunchentoot:url-encode (node-name (car level)))
