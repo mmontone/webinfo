@@ -47,7 +47,8 @@
         (when (gethash 'help options)
           (adopt:print-help-and-exit *ui*))
         (when (gethash 'version options)
-          (format t "1.0.0~%")
+          (format t "~a~%"
+		  (asdf:component-version (asdf:find-system "webinfo")))
           (adopt:exit))
         (when (zerop (length arguments))
           (adopt:print-help-and-exit *ui*))
