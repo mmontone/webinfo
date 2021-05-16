@@ -236,7 +236,7 @@ If :error (default), an error is signaled. If :warn, a warning is signaled."
 
 (defmethod find-node ((info-document xml-info-document) node-name)
   (aand (xpath:first-node
-         (xpath:evaluate (format nil "//node[@name='~a']" node-name)
+         (xpath:evaluate (format nil "//node[nodename = '~a']" node-name)
                          (xml-document info-document)))
         (make-xml-info-node it)))
 

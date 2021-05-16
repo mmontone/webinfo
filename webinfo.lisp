@@ -648,8 +648,7 @@ ul.toc, ul.toc ul {
 
 (defun render-webinfo-page (acceptor node document)
   (with-output-to-string (s)
-    (webinfo-html
-     s
+    (webinfo-html s
      (lambda (stream)
        (let ((request-media-type (request-media-type)))
          (render-node node request-media-type stream
@@ -713,7 +712,7 @@ ul.toc, ul.toc ul {
       (_
        ;; TODO: perform a search if a node name is not matched?
        (let ((node-name (hunchentoot:url-decode (subseq (quri:uri-path uri) 1))))
-         (alexandria:when-let ((node (find-node info-repository node-name)))
+	 (alexandria:when-let ((node (find-node info-repository node-name)))
            (awhen (hunchentoot:get-parameter "_n")
              (return-from dispatch-webinfo-request
                (hunchentoot:redirect
