@@ -798,6 +798,9 @@ ul.toc, ul.toc ul {
 (defvar *webinfo-acceptor*)
 
 (defun start-webinfo (&rest args)
+  (when (not (find :port args))
+    ;; When port is zero, the acceptor is bound to a random free port
+    (setf (getf args :port) 0))
   (setf *webinfo-acceptor*
         (hunchentoot:start (apply #'make-instance 'webinfo-acceptor args))))
 
