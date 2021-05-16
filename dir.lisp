@@ -43,12 +43,6 @@ It is similar to FILESYSTEM-DIRECTORY-REPOSITORY, but processes files inside the
 (defmethod direntries ((info-repository filesystem-info-repository))
   (read-direntries-file (merge-pathnames "dir" (working-directory info-repository))))
 
-(defun compile-texinfo-file (file output-pathname)
-  (let ((xmlfile (webinfo/utils:get-temporary-file-pathname)))
-    (uiop/run-program:run-program (list "texi2any" "--no-validate" "--xml" (princ-to-string file)
-                                        "-o" (princ-to-string xmlfile)))
-    (webinfo-user:make-webinfo xmlfile output-pathname)))
-
 (defun compile-texi-files (info-repository)
   (dolist (texi-file (uiop/filesystem:directory-files
                       (source-directory info-repository)
@@ -56,7 +50,7 @@ It is similar to FILESYSTEM-DIRECTORY-REPOSITORY, but processes files inside the
     (let ((target-pathname (merge-pathnames (format nil "~a.winfo" (pathname-name texi-file))
                                             (working-directory info-repository))))
       (format t "Compiling Texinfo file: ~a to ~a~%" texi-file target-pathname)
-      (compile-texinfo-file texi-file target-pathname))))
+      (webinfo/user:compile-texinfo-file texi-file target-pathname))))
 
 (defmethod dir ((info-repository filesystem-info-repository))
   (mapcar (lambda (file)

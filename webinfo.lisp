@@ -67,6 +67,9 @@ See FULLTEXT-INDEX-DOCUMENT.
 (defmethod dir ((info-repository file-info-repository))
   (list  (file info-repository)))
 
+(defmethod info-document ((info-repository file-info-repository))
+  (file info-repository))
+
 (defgeneric dir-category (info-document)
   (:documentation "The category in dir node for INFO-DOCUMENT"))
 (defgeneric dir-entry (info-document)
@@ -642,7 +645,7 @@ ul.toc, ul.toc ul {
   (awhen (app-setting :theme acceptor)
     (initialize-theme it acceptor)))
 
-(defun render-webinfo-page (acceptor node &optional document)
+(defun render-webinfo-page (acceptor node document)
   (with-output-to-string (s)
     (webinfo-html
      s
@@ -689,22 +692,23 @@ ul.toc, ul.toc ul {
 (defgeneric dispatch-webinfo-request (info-repository request acceptor))
 
 (defmethod dispatch-webinfo-request ((info-repository file-info-repository) request acceptor)
-  (let ((uri (quri:uri (hunchentoot:request-uri request))))
+  (let ((uri (quri:uri (hunchentoot:request-uri request)))
+	(doc (info-document info-repository)))
     (trivia:match (quri:uri-path uri)
       ((or nil "" "/")
-       (render-webinfo-page acceptor (home-node info-repository)))
+       (render-webinfo-page acceptor (home-node info-repository) doc))
       ((or "_is" "/_is")
-       (render-webinfo-page acceptor (make-index-search-node info-repository uri)))
+       (render-webinfo-page acceptor (make-index-search-node info-repository uri) doc))
       ((or "_s" "/_s")
-       (render-webinfo-page acceptor (make-search-node info-repository uri)))
+       (render-webinfo-page acceptor (make-search-node info-repository uri) doc))
       ((or "_fts" "/_fts")
-       (render-webinfo-page acceptor (make-fulltext-search-node info-repository uri)))
+       (render-webinfo-page acceptor (make-fulltext-search-node info-repository uri) doc))
       ((or "_settings" "/_settings")
        (trivia:match (hunchentoot:request-method request)
-         (:get (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings")))
+         (:get (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings") doc))
          (:post (save-settings request)
                 (render-webinfo-page acceptor
-                                     (home-node info-repository)))))
+                                     (home-node info-repository) doc))))
       (_
        ;; TODO: perform a search if a node name is not matched?
        (let ((node-name (hunchentoot:url-decode (subseq (quri:uri-path uri) 1))))
@@ -714,7 +718,7 @@ ul.toc, ul.toc ul {
                (hunchentoot:redirect
                 (format nil "/~a"
                         (trivia:match it
-                          ("up" (node-up node))
+			  ("up" (node-up node))
                           ("next" (node-next node))
                           ("prev" (node-prev node))))
                 )))
@@ -726,24 +730,24 @@ ul.toc, ul.toc ul {
                                               :remove-empty-subseqs t)))
     (cond
       ((alexandria:emptyp path)
-       (render-webinfo-page acceptor (home-node info-repository)))
+       (render-webinfo-page acceptor (home-node info-repository) nil))
       ((= (length path) 1)
        ;; Global repository url, or manual root node
        (trivia:match (first path)
          ((or nil "" "/")
-          (render-webinfo-page acceptor (home-node info-repository)))
+          (render-webinfo-page acceptor (home-node info-repository) nil))
          ((or "_is" "/_is")
-          (render-webinfo-page acceptor (make-index-search-node info-repository uri)))
+          (render-webinfo-page acceptor (make-index-search-node info-repository uri) nil))
          ((or "_s" "/_s")
-          (render-webinfo-page acceptor (make-search-node info-repository uri)))
+          (render-webinfo-page acceptor (make-search-node info-repository uri) nil))
          ((or "_fts" "/_fts")
-          (render-webinfo-page acceptor (make-fulltext-search-node info-repository uri)))
+          (render-webinfo-page acceptor (make-fulltext-search-node info-repository uri) nil))
          ((or "_settings" "/_settings")
           (trivia:match (hunchentoot:request-method request)
             (:get
-             (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings")))
+             (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings") nil))
             (:post (save-settings request)
-                   (render-webinfo-page acceptor (home-node info-repository)))))
+                   (render-webinfo-page acceptor (home-node info-repository) nil))))
          (_
           (alexandria:when-let ((doc (find-document info-repository (first path) :errorp nil)))
             (render-webinfo-page acceptor (find-node doc "Top") doc)))))
@@ -752,8 +756,8 @@ ul.toc, ul.toc ul {
        ;; Node url in some doc
        (alexandria:when-let ((doc (find-document info-repository (first path) :errorp nil)))
          (trivia:match (second path)
-           ("_is" (render-webinfo-page acceptor (make-index-search-node doc uri)))
-           ("_s" (render-webinfo-page acceptor (make-search-node doc uri)))
+           ("_is" (render-webinfo-page acceptor (make-index-search-node doc uri) doc))
+           ("_s" (render-webinfo-page acceptor (make-search-node doc uri) doc))
            ("_fts"
             (render-webinfo-page
              acceptor
@@ -761,7 +765,8 @@ ul.toc, ul.toc ul {
                             :name "Fulltext search"
                             :source doc
                             :search-term (aget (quri:uri-query-params uri) "q")
-                            :info-repository info-repository)))
+                            :info-repository info-repository)
+	     doc))
            (_
             ;; TODO: perform a search if a node name is not matched?
             (let ((node-name (hunchentoot:url-decode (second path))))
