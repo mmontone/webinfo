@@ -144,11 +144,12 @@ See FULLTEXT-INDEX-DOCUMENT.
                               (who:str (node-title up-node))))))))
               (awhen (node-next node)
                 (let ((next-node (find-node *info-document* it)))
-                  (who:htm
-                   (:li :class "node-next"
-                        (:i :class "bi-arrow-right-circle" :style "margin-right: 5px;")
-                        (:a :href (hunchentoot:url-encode it)
-                            (who:str (node-title next-node)))))))))))
+		  (when next-node
+		    (who:htm
+                     (:li :class "node-next"
+                          (:i :class "bi-arrow-right-circle" :style "margin-right: 5px;")
+                          (:a :href (hunchentoot:url-encode it)
+                              (who:str (node-title next-node))))))))))))
 
 (defmethod find-node ((info-repository file-info-repository) name)
   (find-node (file info-repository) name))

@@ -15,10 +15,9 @@
     (apply #'webinfo:start-webinfo
      :info-repository
      (make-instance 'webinfo:file-info-repository
-                    :file djula-manual
-		    :fulltext-search t))
-    :app-settings (list (cons :theme (make-instance 'nav-theme)))
-    args))
+                    :file djula-manual)
+     :app-settings (list (cons :theme (make-instance 'nav-theme)))
+     args)))
 
 (defun start-dir-demo (&rest args)
   (let* ((djula-manual (make-instance 'webinfo:xml-info-document
