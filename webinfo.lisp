@@ -224,7 +224,10 @@ where indexes is a list of (<index-term> . <node>), and where
 
 (defmethod search-index ((repo dir-info-repository) term &key index-type)
   (loop for doc in (dir repo)
-        appending (search-index doc term :index-type index-type)))
+        appending (mapcar (lambda (entry)
+                            (destructuring-bind (term . node) entry
+                              (cons term (cons node doc))))
+                          (search-index doc term :index-type index-type))))
 
 (defun print-index (index stream)
   (let ((grouped-index (groupby:groupby (lambda (index)
@@ -247,12 +250,22 @@ where indexes is a list of (<index-term> . <node>), and where
                                (:td)
                                (:td)))
                              (loop for (name . node) in (cadr group) do
-                               (who:htm
-                                (:tr
-                                 (:td)
-                                 (:td  (:a :href (format nil "~a#~a" (node-name node) name)
-                                           (who:str name)))
-                                 (:td (who:str (node-title node))))))
+                               ;; if node is a list, then document is included (node . document)
+                               (let ((node (if (listp node)
+                                               (car node)
+                                               node))
+                                     (doc (when (listp node)
+                                            (cdr node))))
+                                 (who:htm
+                                  (:tr
+                                   (:td)
+                                   (:td  (:a :href (format nil "~a#~a"
+                                                           (if doc
+                                                               (format nil "~a/~a" (document-name doc) (node-name node))
+                                                               (node-name node))
+                                                           name)
+                                             (who:str name)))
+                                   (:td (who:str (node-title node)))))))
                              (who:htm
                               (:tr (:td :colspan "4"
                                         (:hr))))
@@ -325,22 +338,36 @@ where indexes is a list of (<index-term> . <node>), and where
   (who:with-html-output (stream)
     (:div :class "node"
           (render-node-navigation node stream)
-          (:h1 "Index matches")
+          (:h1 (who:fmt "Index matches for: ~a" (search-term node)))
           (if (alexandria:emptyp (index-matches node))
               (who:htm (:p "No matches"))
               (who:htm
                (:div :class "node-content"
                      (:ul :class "index-matches"
                           (loop for (term . indexed-node) in (index-matches node) do
-                            (who:htm (:li (:a :href (format nil "~a#~a" (node-name indexed-node) term)
-                                              (who:str term))
-                                          (who:str (node-title indexed-node)))))))))
+                            ;; indexed-node can be either a node, or a cons with node and document
+                            (let ((node (if (listp indexed-node) (car indexed-node)
+                                            indexed-node))
+                                  (doc (when (listp indexed-node)
+                                         (cdr indexed-node))))
+                              (who:htm (:li (:a :href
+                                                (format nil "~a#~a"
+                                                        (if doc
+                                                            (format nil "~a/~a" (document-name doc)
+                                                                    (node-name node))
+                                                            (node-name node))
+                                                        term)
+                                                (who:str term))
+					    (write-string "&nbsp;&nbsp;-&nbsp;&nbsp;" stream)
+					    (who:str (node-title node))
+					    (when doc
+						  (who:fmt " in ~a" (document-name doc)))))))))))
           (:h1 "Topics matches")
           (if (alexandria:emptyp (topics-matches node))
               (who:htm (:p "No matches"))
               (who:htm
                (:div :class "node-content"
-                     (:ul :class "index-matches"
+                     (:ul :class "topics-matches"
                           (loop for (term . topic-node) in (topics-matches node) do
                             (who:htm (:li (:a :href (node-name topic-node)
                                               (who:str term))
