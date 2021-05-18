@@ -294,7 +294,7 @@ where indexes is a list of (<index-term> . <node>), and where
                (:div :class "node-content"
                      (:ul :class "index-matches"
                           (loop for (term . indexed-node) in (matches node) do
-                            (who:htm (:li (:a :href (node-name indexed-node)
+                            (who:htm (:li (:a :href (format nil "~a#~a" (node-name indexed-node) term)
                                               (who:str term))
                                           (who:str (node-title indexed-node)))))))))
           (render-node-navigation node stream))))
@@ -332,7 +332,7 @@ where indexes is a list of (<index-term> . <node>), and where
                (:div :class "node-content"
                      (:ul :class "index-matches"
                           (loop for (term . indexed-node) in (index-matches node) do
-                            (who:htm (:li (:a :href (node-name indexed-node)
+                            (who:htm (:li (:a :href (format nil "~a#~a" (node-name indexed-node) term)
                                               (who:str term))
                                           (who:str (node-title indexed-node)))))))))
           (:h1 "Topics matches")
