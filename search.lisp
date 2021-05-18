@@ -35,6 +35,7 @@
 	    (list
 	     (cons "node-name"  (node-name node))
 	     (cons "node-title" (node-title node))
+	     (cons "document-name" (document-name doc))
 	     (cons "content" (text-contents node))))))
 
 (defclass fulltext-search-node (info-node)
@@ -44,6 +45,7 @@
 		    :accessor info-repository)
    (matches :accessor matches)
    (source :initarg :source
+	   :initform nil
            :accessor source))
   (:default-initargs
    :name "Fulltext search"))
@@ -53,18 +55,29 @@
   (setf (matches node) nil)
   (montezuma:search-each
    (repository-search-index (info-repository node))
-   (format nil "content:~s" (search-term node))
+   (if (source node)
+       (format nil "document-name:~s and content:~s"
+	       (document-name (source node))
+	       (search-term node))
+       (format nil "content:~s" (search-term node)))
    (lambda (doc score)
      (declare (ignorable score))
      (let ((document (montezuma:get-document (repository-search-index (info-repository node)) doc)))
-       (push (cons (montezuma:document-value document "node-name")
-                   (montezuma:document-value document "node-title"))
+       (push (list (montezuma:document-value document "node-name")
+                   (montezuma:document-value document "node-title")
+		   (montezuma:document-value document "document-name"))
              (matches node))))))
 
 (defmethod render-node-html ((node fulltext-search-node) theme stream &rest args)
   (who:with-html-output (stream)
     (:div :class "node"
-    (:h2 (who:fmt "Full text search matches for: ~a" (search-term node)))
+    (:h1 (who:fmt "Full text search matches for: ~a" (search-term node)))
     (:ul
-     (loop for (node-name . node-title) in (matches node)
-           do (who:htm (:li (:a :href node-name (who:str node-title)))))))))
+     (loop for (node-name node-title document-name) in (matches node)
+           do (who:htm (:li (:a :href
+				(if (not (source node))
+				    (format nil "~a/~a" document-name node-name)
+				    node-name)			    
+				(who:str node-title)
+				(when (not (source node))
+				  (who:fmt " in ~a" document-name))))))))))
