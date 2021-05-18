@@ -26,3 +26,5 @@
 * See Texinfo HTML output generated here: https://www.gnu.org/software/texinfo/manual/texinfo-html/index.html
 * An INFO files parser and renderer. Use it to load the Linux info directory /usr/share/info and experiment with how WebInfo is able to replace normal info reader.
 * Load "hyperspec" library and change the WebInfo dispatcher so that when an index search on a CL symbol is made, redirect to HyperSpec.
+* Fix cross references. First collect the markup that generates new anchors, like @anchor, @deffn, etc. Create a map from <anchor label> to <node>. Store that map in document somehow. Then, render cross references links using some special url, like /xref=<anchor>. Add a dispatcher that redirects to the anchor. Make it go to correct position in page using /<nodename>#<anchor> in the redirect url. Anchors should be rendered with id attribute in html element, something like <div id="<anchor>">.
+* Print indexes correctly. Group index terms by first character first. Sort alphabetically. Render a table with the grouped terms. Render an extra jump table. (See default texi2any HTML output for an example.)
