@@ -87,7 +87,7 @@
                           (:|defdelimiter| (who:str (who:escape-string (text body))))
                           (:|defparam| (who:htm (:span :class "defparam" (who:str (text body)))))
                           ((:|deftp| :|deftpx|) (who:htm (:div :class "deftp" (render))))
-                          (:|defdatatype| (who:htm (:span :class "defdatatype" (who:str (text body)))))
+                          (:|defdatatype| (who:htm (:span :id (text body):class "defdatatype" (who:str (text body)))))
                           (:|top| (render))
                           ((:|unnumbered| :|appendix|) (render))
                           ((:|findex| :|cindex| :|vindex| :|tindex|))
