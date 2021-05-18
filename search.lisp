@@ -64,7 +64,7 @@
 (defmethod render-node-html ((node fulltext-search-node) theme stream &rest args)
   (who:with-html-output (stream)
     (:div :class "node"
-    (:h1 "Full text search matches")
+    (:h2 (who:fmt "Full text search matches for: ~a" (search-term node)))
     (:ul
      (loop for (node-name . node-title) in (matches node)
            do (who:htm (:li (:a :href node-name (who:str node-title)))))))))
