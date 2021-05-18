@@ -1,3 +1,4 @@
+(:NAME "djula" :TITLE "djula" :DESCRIPTION "" :DIRENTRY NIL)
 (:|node| (:|nodetitle| "Top" :|spaces| " " :|name| "Top")
  (:|nodename| NIL "Top") (:|nodenext| (:|automatic| "on") "Introduction"))
 (:|top| (:|spaces| " ") (:|sectiontitle| NIL "Top") "
@@ -96,10 +97,46 @@
 (:|chapter| (:|spaces| " ") (:|sectiontitle| NIL "Introduction") "
 "
  (:|anchor| (:|name| "_0023introduction") "#introduction") "
+
+"
+ (:|cindex| (:|spaces| " " :|index| "cp")
+  (:|indexterm| (:|number| "2" :|index| "cp") "foo"))
+ "
+
+"
+ (:|findex| (:|spaces| " " :|index| "fn")
+  (:|indexterm| (:|number| "1" :|index| "fn") "alexandria:flatten"))
+ "
+"
+ (:|anchor| (:|name| "alexandria_003aflatten-function")
+  "alexandria:flatten function")
+ "
+"
+ (:|deffn| (:|endspaces| " " :|spaces| " ")
+  (:|definitionterm| NIL (:|indexterm| (:|number| "2" :|index| "fn") "flatten")
+   (:|defcategory| (:|automatic| "off") "alexandria") " "
+   (:|deffunction| NIL "flatten") " " (:|defdelimiter| NIL "(")
+   (:|defparam| NIL "x") " " (:|defparam| NIL "y") " " (:|defparam| NIL "z")
+   (:|defdelimiter| NIL ")"))
+  "
+"
+  (:|definitionitem| NIL
+   (:|para| NIL "This is alexandria flatten function
+")))
+ "
+
 "
  (:|para| NIL
   "Djula is an HTML templating system similar to Django templates for
 Common Lisp.
+")
+ "
+"
+ (:|para| NIL "Like the function "
+  (:|ref| (:|label| "alexandria_003aflatten")
+   (:|xrefnodename| NIL "alexandria:flatten ") (:|xrefinfoname| NIL "flatten")
+   (:|xrefprinteddesc| (:|spaces| " ") "flatten"))
+  ".
 ")
  "
 "
@@ -228,6 +265,11 @@ below are supported by default (although you can add
  (:|anchor| (:|name| "_0023basics") "#basics") "
 
 "
+ (:|cindex| (:|spaces| " " :|index| "cp")
+  (:|indexterm| (:|number| "3" :|index| "cp") "foo"))
+ "
+
+"
  (:|para| NIL
   "A template is simply a text file. It can generate any text-based format
 (HTML, XML, CSV, etc.).
@@ -278,7 +320,7 @@ will be explained later in this document.
  (:|anchor| (:|name| "_0023usage") "#usage") "
 "
  (:|findex| (:|spaces| " " :|index| "fn")
-  (:|indexterm| (:|number| "1" :|index| "fn") "djula:add-template-directory"))
+  (:|indexterm| (:|number| "3" :|index| "fn") "djula:add-template-directory"))
  "
 "
  (:|vindex| (:|spaces| " " :|index| "vr")
@@ -286,7 +328,7 @@ will be explained later in this document.
  "
 "
  (:|findex| (:|spaces| " " :|index| "fn")
-  (:|indexterm| (:|number| "2" :|index| "fn") "djula:compile-template*"))
+  (:|indexterm| (:|number| "4" :|index| "fn") "djula:compile-template*"))
  "
 
 "
@@ -428,7 +470,11 @@ change.
  (:|anchor| (:|name| "_0023variables") "#variables") "
 "
  (:|cindex| (:|spaces| " " :|index| "cp")
-  (:|indexterm| (:|number| "2" :|index| "cp") "variables"))
+  (:|indexterm| (:|number| "4" :|index| "cp") "variables"))
+ "
+"
+ (:|cindex| (:|spaces| " " :|index| "cp")
+  (:|indexterm| (:|number| "5" :|index| "cp") "foo"))
  "
 "
  (:|para| NIL "Variables look like this: " (:|code| NIL "{{ variable }}")
@@ -4917,7 +4963,7 @@ need to register it or to import it in your templates.
 "
   (:|verbatim| (:|xml:space| "preserve") "
 (def-filter :datetime (it &optional format)
-  (let ((timestamp …))))
+  (let ((timestamp â¦))))
 ")
   "
 
@@ -7713,7 +7759,7 @@ need to register it or to import it in your templates.
 "
  (:|verbatim| (:|xml:space| "preserve") "
 (def-filter :datetime (it &optional format)
-  (let ((timestamp …))))
+  (let ((timestamp â¦))))
 ")
  "
 
@@ -9555,42 +9601,45 @@ for its own "
 "
  (:|printindex| (:|line| "cp" :|value| "cp")) "
 ")
-((:NODES ("Concept-Index" . 215683) ("Function-Index" . 215297)
-  ("Variable-Index" . 214893)
-  ("Custom-libraries-and-template-inheritance" . 213697)
-  ("Custom-tag-and-filter-libraries" . 211036)
-  ("String-literals-and-automatic-escaping" . 209409) ("Notes" . 208255)
-  ("For-template-blocks" . 206114) ("For-individual-variables" . 203098)
-  ("How-to-turn-it-off" . 199160) ("Automatic-HTML-escaping" . 188513)
-  ("Djula-API" . 188180) ("Error-handling" . 186688) ("Backends" . 185926)
-  ("Choosing-language" . 185190) ("trans" . 184723)
-  ("Internationalization-filters" . 183683)
-  ("Internationalization-tags" . 183005) ("Syntax" . 182448)
-  ("Internationalization" . 178611) ("Template-inheritance" . 171239)
-  ("Custom-filters" . 168946) ("urlencode" . 167640) ("upper" . 166930)
-  ("truncatechars" . 165926) ("time" . 165364) ("scan" . 164724)
-  ("rest" . 163982) ("replace-with" . 163167) ("format" . 162359)
-  ("force_002descape" . 161688) ("slice" . 159865) ("safe-escape" . 159006)
-  ("make_005flist" . 158003) ("lower" . 157296) ("linebreaksbr" . 156474)
-  ("linebreaks" . 155527) ("length_005fis" . 154639) ("length" . 153871)
-  ("last" . 153174) ("join" . 152472) ("first" . 151778)
-  ("filesizeformat" . 150543) ("escapejs" . 149494) ("escape" . 147295)
-  ("sort" . 146752) ("divisibleby" . 146001) ("reverse" . 145464)
-  ("default" . 144663) ("datetime" . 144116) ("date" . 143232) ("cut" . 142528)
-  ("capfirst" . 141748) ("addslashes" . 140970) ("add" . 140358)
-  ("List-of-filters" . 112937) ("Overview-of-filters" . 111179)
-  ("Filters" . 78690) ("Verbatim" . 78006) ("Comments" . 77060)
-  ("Custom-tags" . 76700) ("include" . 75610) ("ifnotequal" . 74923)
-  ("ifequal" . 73799) ("ifchanged" . 72239) ("Boolean-operators" . 70292)
-  ("if" . 69387) ("for" . 65631) ("firstof" . 64743) ("filter" . 63586)
-  ("debug" . 63148) ("cycle" . 61139) ("comment" . 60171) ("super" . 59407)
-  ("extends" . 58870) ("block" . 58234) ("List-of-tags" . 39891)
-  ("Overview" . 37550) ("Tags" . 15788) ("Default-template-variables" . 14424)
-  ("Variables" . 11274) ("API" . 10994) ("Auto_002dreload" . 10383)
-  ("Usage" . 7490) ("Basics" . 6311) ("Installation" . 5837)
-  ("Prerequisites" . 5414) ("Introduction" . 2936) ("Top" . 0))
- (:INDEX (:CP ("variables" . "Variables") ("djula" . "Top"))
-  (:FN ("djula:compile-template*" . "Usage")
-   ("djula:add-template-directory" . "Usage"))
+((:NODES ("Concept Index" . 216938) ("Function Index" . 216552)
+  ("Variable Index" . 216148)
+  ("Custom libraries and template inheritance" . 214952)
+  ("Custom tag and filter libraries" . 212291)
+  ("String literals and automatic escaping" . 210664) ("Notes" . 209510)
+  ("For template blocks" . 207369) ("For individual variables" . 204353)
+  ("How to turn it off" . 200415) ("Automatic HTML escaping" . 189768)
+  ("Djula API" . 189435) ("Error handling" . 187943) ("Backends" . 187181)
+  ("Choosing language" . 186445) ("trans" . 185978)
+  ("Internationalization filters" . 184938)
+  ("Internationalization tags" . 184260) ("Syntax" . 183703)
+  ("Internationalization" . 179866) ("Template inheritance" . 172494)
+  ("Custom filters" . 170198) ("urlencode" . 168892) ("upper" . 168182)
+  ("truncatechars" . 167178) ("time" . 166616) ("scan" . 165976)
+  ("rest" . 165234) ("replace  with" . 164419) ("format" . 163611)
+  ("force-escape" . 162940) ("slice" . 161117) ("safe escape" . 160258)
+  ("make_list" . 159255) ("lower" . 158548) ("linebreaksbr" . 157726)
+  ("linebreaks" . 156779) ("length_is" . 155891) ("length" . 155123)
+  ("last" . 154426) ("join" . 153724) ("first" . 153030)
+  ("filesizeformat" . 151795) ("escapejs" . 150746) ("escape" . 148547)
+  ("sort" . 148004) ("divisibleby" . 147253) ("reverse" . 146716)
+  ("default" . 145915) ("datetime" . 145368) ("date" . 144484) ("cut" . 143780)
+  ("capfirst" . 143000) ("addslashes" . 142222) ("add" . 141610)
+  ("List of filters" . 114189) ("Overview of filters" . 112431)
+  ("Filters" . 79939) ("Verbatim" . 79255) ("Comments" . 78309)
+  ("Custom tags" . 77949) ("include" . 76859) ("ifnotequal" . 76172)
+  ("ifequal" . 75048) ("ifchanged" . 73488) ("Boolean operators" . 71541)
+  ("if" . 70636) ("for" . 66880) ("firstof" . 65992) ("filter" . 64835)
+  ("debug" . 64397) ("cycle" . 62388) ("comment" . 61420) ("super" . 60656)
+  ("extends" . 60119) ("block" . 59483) ("List of tags" . 41140)
+  ("Overview" . 38799) ("Tags" . 17037) ("Default template variables" . 15673)
+  ("Variables" . 12422) ("API" . 12142) ("Auto-reload" . 11531)
+  ("Usage" . 8638) ("Basics" . 7357) ("Installation" . 6883)
+  ("Prerequisites" . 6460) ("Introduction" . 2997) ("Top" . 61))
+ (:INDEX
+  (:CP ("variables" . "Variables") ("foo" . "Variables") ("foo" . "Basics")
+   ("foo" . "Introduction") ("djula" . "Top"))
+  (:FN ("djula:add-template-directory" . "Usage")
+   ("djula:compile-template*" . "Usage")
+   ("alexandria:flatten" . "Introduction"))
   (:VR ("djula:*current-store*" . "Usage")) (:TP)))
-�K
+�P
