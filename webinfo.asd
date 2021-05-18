@@ -3,7 +3,7 @@
 (asdf:defsystem #:webinfo
   :description "Web and desktop Texinfo reader"
   :author "Mariano Montone <marianomontone@gmail.com>"
-  :license  "MIT"
+  :license  "GPL"
   :version "0.0.1"
   :serial t
   :components ((:file "package")
