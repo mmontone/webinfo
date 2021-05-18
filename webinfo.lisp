@@ -250,7 +250,7 @@ where indexes is a list of (<index-term> . <node>), and where
                                (who:htm
                                 (:tr
                                  (:td)
-                                 (:td  (:a :href (node-name node)
+                                 (:td  (:a :href (format nil "~a#~a" (node-name node) name)
                                            (who:str name)))
                                  (:td (who:str (node-title node))))))
                              (who:htm
@@ -583,6 +583,9 @@ ul.toc, ul.toc ul {
 .defcategory {
   color: purple;
   margin-right: 5px;
+}
+.defparam {
+  margin-left: 5px;
 }
 "))))
 
