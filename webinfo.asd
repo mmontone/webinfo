@@ -25,6 +25,7 @@
                :cxml
                :xpath
                :trivia
+	       :groupby
                :access
                :cl-forms
                :cl-forms.who

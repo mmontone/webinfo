@@ -144,8 +144,8 @@ See FULLTEXT-INDEX-DOCUMENT.
                               (who:str (node-title up-node))))))))
               (awhen (node-next node)
                 (let ((next-node (find-node *info-document* it)))
-		  (when next-node
-		    (who:htm
+                  (when next-node
+                    (who:htm
                      (:li :class "node-next"
                           (:i :class "bi-arrow-right-circle" :style "margin-right: 5px;")
                           (:a :href (hunchentoot:url-encode it)
@@ -227,15 +227,36 @@ where indexes is a list of (<index-term> . <node>), and where
         appending (search-index doc term :index-type index-type)))
 
 (defun print-index (index stream)
-  (who:with-html-output (stream)
-    (if (alexandria:emptyp index)
-        (who:htm (:p (who:str "No entries")))
-        (who:htm
-         (:ul :class "menu"
-              (loop for (name . node) in index do
-                (who:htm (:li (:a :href (node-name node)
-                                  (who:str name))
-                              (who:str (node-title node))))))))))
+  (let ((grouped-index (groupby:groupby (lambda (index)
+                                          (aref (first index) 0))
+                                        index)))
+    (setf grouped-index (sort grouped-index '< :key (lambda (x)
+                                                      (char-code (first x)))))
+    (who:with-html-output (stream)
+      (if (alexandria:emptyp index)
+          (who:htm (:p (who:str "No entries")))
+          (who:htm
+           (:table :class "index"
+                   (:tbody
+                    (loop for group in grouped-index
+                          do
+                             (who:htm
+                              (:tr
+                               (:th :id (format nil "index-group-~a" (first group))
+                                    (who:fmt "~a" (first group)))
+                               (:td)
+                               (:td)))
+                             (loop for (name . node) in (cadr group) do
+                               (who:htm
+                                (:tr
+                                 (:td)
+                                 (:td  (:a :href (node-name node)
+                                           (who:str name)))
+                                 (:td (who:str (node-title node))))))
+                             (who:htm
+                              (:tr (:td :colspan "4"
+                                        (:hr))))
+                          ))))))))
 
 (defmethod search-topics ((doc info-document) term)
   (loop for node in (all-nodes doc)
@@ -649,10 +670,10 @@ ul.toc, ul.toc ul {
 (defun render-webinfo-page (acceptor node document)
   (with-output-to-string (s)
     (webinfo-html s
-     (lambda (stream)
-       (let ((request-media-type (request-media-type)))
-         (render-node node request-media-type stream
-                      :document document))))))
+                  (lambda (stream)
+                    (let ((request-media-type (request-media-type)))
+                      (render-node node request-media-type stream
+                                   :document document))))))
 
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor webinfo-acceptor) request)
   (or (dispatch-webinfo-request (info-repository acceptor) request acceptor)
@@ -693,7 +714,7 @@ ul.toc, ul.toc ul {
 
 (defmethod dispatch-webinfo-request ((info-repository file-info-repository) request acceptor)
   (let ((uri (quri:uri (hunchentoot:request-uri request)))
-	(doc (info-document info-repository)))
+        (doc (info-document info-repository)))
     (trivia:match (quri:uri-path uri)
       ((or nil "" "/")
        (render-webinfo-page acceptor (home-node info-repository) doc))
@@ -712,13 +733,13 @@ ul.toc, ul.toc ul {
       (_
        ;; TODO: perform a search if a node name is not matched?
        (let ((node-name (hunchentoot:url-decode (subseq (quri:uri-path uri) 1))))
-	 (alexandria:when-let ((node (find-node info-repository node-name)))
+         (alexandria:when-let ((node (find-node info-repository node-name)))
            (awhen (hunchentoot:get-parameter "_n")
              (return-from dispatch-webinfo-request
                (hunchentoot:redirect
                 (format nil "/~a"
                         (trivia:match it
-			  ("up" (node-up node))
+                          ("up" (node-up node))
                           ("next" (node-next node))
                           ("prev" (node-prev node))))
                 )))
@@ -766,7 +787,7 @@ ul.toc, ul.toc ul {
                             :source doc
                             :search-term (aget (quri:uri-query-params uri) "q")
                             :info-repository info-repository)
-	     doc))
+             doc))
            (_
             ;; TODO: perform a search if a node name is not matched?
             (let ((node-name (hunchentoot:url-decode (second path))))
