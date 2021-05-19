@@ -15,7 +15,9 @@
     (apply #'webinfo:start-webinfo
      :info-repository
      (make-instance 'webinfo:file-info-repository
-                    :file djula-manual)
+                    :file djula-manual
+		    :name "Djula manual"
+		    :about "Djula template system documentation")
      :app-settings (list (cons :theme (make-instance 'nav-theme)))
      args)))
 

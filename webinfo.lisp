@@ -48,7 +48,15 @@ See FULLTEXT-INDEX-DOCUMENT.
 "))
 
 (defclass info-repository ()
-  ())
+  ((name :initarg :name
+	 :accessor info-repository-name
+	 :initform nil
+	 :documentation "The name of the Info repository.")
+   (about :initarg :about
+	  :accessor info-repository-about
+	  :initform nil
+	  :documentation "A text that describes the respository. Appears in Webinfo help node."))
+  (:documentation "The INFO-REPOSITORY superclass."))
 
 (defclass dir-info-repository (info-repository indexable-info-repository)
   ((dir :initarg :dir
@@ -513,8 +521,9 @@ p {
                 (:a :href "/" :alt "Home"
                     (:i :class "bi-house-fill" :style "font-size: 2rem;"))
                 (:a :href "/_settings" :alt "Settings"
-                    (:i :class "bi-gear" :style "font-size: 2rem;"
-                        :name "settings-outline"))
+                    (:i :class "bi-gear" :style "font-size: 2rem;"))
+		(:a :href "/_help" :alt "Help"
+		    (:i :class "bi-question-circle" :style "font-size: 2rem;"))
                 ))))
 
 (defun render-toc-cached (doc stream)
@@ -617,6 +626,31 @@ ul.toc, ul.toc ul {
 "))))
 
 (defparameter *themes* (list (make-instance 'simple-theme)))
+
+(defgeneric make-help-node (info-repository uri)
+  (:documentation "Build a help node for INFO-REPOSITORY."))
+
+(defmethod make-help-node ((info-repository info-repository) uri)
+  "The default help node implementation."
+  (make-instance 'help-node
+		 :info-repository info-repository))
+
+(defclass help-node (info-node)
+  ((info-repository :initarg :info-repository
+		    :accessor info-repository))
+  (:default-initargs
+   :name "Help"
+   :description "Info repository help"))
+
+(defmethod render-node-html ((node help-node) theme stream &rest args)
+  (who:with-html-output (stream)
+    (:div :class "node"
+	  (:h1 (who:str "Help"))
+	  (:h2 (who:str "Navigation"))
+	  (:h2 "Info repository")
+	  (:ul
+	   (:li (:b (who:str "Type: "))
+		(who:fmt "~a" (type-of (info-repository node))))))))
 
 (defgeneric make-search-node (info-repository uri)
   (:documentation "Build a virtual node for searching INFO-REPOSITORY."))
@@ -760,6 +794,8 @@ ul.toc, ul.toc ul {
          (:post (save-settings request)
                 (render-webinfo-page acceptor
                                      (home-node info-repository) doc))))
+      ((or "_help" "/_help")
+       (render-webinfo-page acceptor (make-help-node info-repository uri) doc))
       (_
        ;; TODO: perform a search if a node name is not matched?
        (let ((node-name (hunchentoot:url-decode (subseq (quri:uri-path uri) 1))))
@@ -799,6 +835,8 @@ ul.toc, ul.toc ul {
              (render-webinfo-page acceptor (make-instance 'settings-info-node :name "Settings") nil))
             (:post (save-settings request)
                    (render-webinfo-page acceptor (home-node info-repository) nil))))
+	 ((or "_help" "/_help")
+	  (render-webinfo-page acceptor (make-help-node info-repository uri) nil))
          (_
           (alexandria:when-let ((doc (find-document info-repository (first path) :errorp nil)))
             (render-webinfo-page acceptor (find-node doc "Top") doc)))))
