@@ -1,10 +1,10 @@
 \input texinfo   @c -*-texinfo-*-
 @comment $Id@w{$}
 @comment %**start of header
-@settitle Common Lisp Documentation Weaver
+@settitle Webinfo
 @syncodeindex pg cp
-@setfilename cl-docweaver.info
-@include ../common-lisp.texi
+@setfilename webinfo.info
+@include common-lisp.texi
 
 @copying
 
@@ -21,13 +21,14 @@ Texts.  A copy of the license is included in the section entitled
 @end copying
 
 
-@dircategory Common Lisp
+@dircategory Texinfo documentation system
 @direntry
-* CL-DocWeaver: (cl-docweaver)Common Lisp documentation weaver.
+* Webinfo: (webinfo).         Texinfo documentation server for Web and Desktop.
 @end direntry
 
 @titlepage
-@title Common Lisp Documentation Weaver
+@title Webinfo
+@subtitle Texinfo documentation server for Web and Desktop
 
 @c Setup cl-docweaver
 (@setup :command-prefix #\$ :docsystem :texinfo)
@@ -42,56 +43,70 @@ Texts.  A copy of the license is included in the section entitled
 
 @node Top
 @top Top
-@cindex docweaver
-@cindex cl-docweaver
+@cindex webinfo
 
-@emph{CL-DOCWEAVER} is a document weaver for Common Lisp.
-
-Documentation for a Lisp project is written with the user's tool of choice (like Texinfo, Markdown, etc). Then, Common Lisp definitions are expanded into the documentation source using DocWeaver commands.
+@emph{Webinfo} is a documentation server for Web and Desktop that uses Texinfo model for its documents.
 
 @menu
 * Introduction::
 * Installation::
 * Usage::
+* Concepts::
+* User interface::
 @end menu
 
 @node Introduction
 @chapter Introduction
 @anchor{introduction}
 
-@emph{CL-DOCWEAVER} is a document weaver for Common Lisp.
+@emph{Webinfo} is a documentation server for Web and Desktop that uses Texinfo model for its documents.
 
-Documentation for a Lisp project is written with the user's tool of choice (like Texinfo, Markdown, etc). Then, Common Lisp definitions are expanded into the documentation source using DocWeaver commands.
+@node Why Texinfo?
+@section Why Texinfo?
 
-DocWeaver commands give the user control on how definitions are to be expanded, either via command options or by choosing a different set of commands.
-
-@emph{CL-DOCWEAVER} is easy to extend to support different documentation tools.
-
-Texinfo and Markdown are the ones with best support at this moment.
+@itemize
+@item A good document model formed by trees of nodes.
+@item Access to the document model via XML serialization (@code{--xml} option in @code{texi2any}).
+@item Support for definitions that appear in programming languages, like functions, variables, types, and more.
+@item Lots of documentation already written in Texinfo format.
+@end itemize
 
 @node Installation
 @chapter Installation
 @anchor{installation}
 
-
 @node Usage
 @chapter Usage
 @anchor{usage}
 
-Write documentation for your Common Lisp project in your documentation tool of your choice (either Texinfo or Markdown at this moment). Then invoke @emph{cl-docweaver} commands to expand Lisp definitions for either variables, functions, macros, classes, or even whole packages.
+@node Command line
+@section Command line
 
-Commands have the following syntax: @verb{|(@command-name &rest args)|}.
+@node Concepts
+@chapter Concepts
 
-For example, use @code{(@@clfunction alexandria:flatten)} to expand the definition of @code{ALEXANDRIA:FLATTEN} function.
+@node Repositories
+@section Repositories
 
-The expanded function definition looks like this:
+@node Webinfo file format
+@section Webinfo file format
 
-($clfunction alexandria:flatten)
+@node User interface
+@chapter User interface
 
-Note that commands usually receive options in order to be able to control different aspects of the expanded definition.
+@node Navigation
+@section Navigation
 
-By default, docstrings are interpreted to extract possible references to other parts of the code; then those references are formatted as links that can be used to navigate the definitions documentations.
+@node Search
+@section Search
 
-Finally, use ($clref docweaver:weave-file :function) to weave your documentation system source files.
+@node Search by index
+@subsection Search by index
 
-Have a look at @emph{cl-docweaver} documentation in @code{docs} directory for an example of how all this works.
+@node Fulltext search
+@subsection Fulltext search
+
+@node User interface settings
+@section User interface settings
+
+@bye
