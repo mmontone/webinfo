@@ -22,12 +22,18 @@
                      :help "display help information and exit"
                      :reduce (constantly t)))
 
+(defparameter *option-debug*
+  (adopt:make-option 'debug
+                     :long "debug"
+                     :help "show errors"
+                     :reduce (constantly t)))
+
 (defparameter *ui*
   (adopt:make-interface
    :name "webinfo"
    :summary "WebInfo - A Texinfo documents reader for desktop and Web."
    :usage "[OPTIONS] TEXINFO-FILE"
-   :contents (list *option-version* *option-help*)
+   :contents (list *option-version* *option-help* *option-debug*)
    :help *help-text*))
 
 (defun run (texinfo-file &rest args)
@@ -55,6 +61,9 @@
         (unless (= 1 (length arguments))
           (format t "Invalid syntax.~%")
           (adopt:exit))
+	(when (gethash 'debug options)
+	  (setf hunchentoot:*show-lisp-backtraces-p* t)
+	  (setf hunchentoot:*show-lisp-errors-p* t))
         (destructuring-bind (input-file) arguments
           (run input-file)
 	  (read)))
