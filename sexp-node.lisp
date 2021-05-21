@@ -87,7 +87,9 @@ This can be useful as long as Webinfo renderer is incomplete and doesn't underst
                           (:|definitionterm| (render))
                           (:|defcategory| (who:htm (:span :class "defcategory" (who:fmt "[~a]" (text body)))))
                           (:|indexterm|)
-                          (:|defvariable| (who:htm (:span :class "defvariable" (who:str (text body)))))
+                          (:|defvariable| (who:htm (:span :class "defvariable"
+							  :id (text body)
+							  (who:str (text body)))))
                           (:|definitionitem| (render))
                           (:|deffn| (who:htm (:div :class "deffn" (render))))
 			  (:|defun| (who:htm (:div :class "defun" (render))))
