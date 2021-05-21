@@ -49,6 +49,11 @@
                         (case tag
                           (:|para| (who:htm (:p (render))))
                           (:|@*| (who:htm (:br))) ;; linebreaks
+
+			  (:|titlepage| (render))
+			  (:|title| (who:htm (:h1 (render))))
+			  (:|subtitle| (who:htm (:h2 (render))))
+			  (:|author| (who:htm (:span :class "author" (render))))
                           (:|menu| ;;(render-menu)
                            (who:htm (:ul :class "menu" (render)))
                            )
@@ -180,7 +185,10 @@
 			  (:|samp| (who:htm (:code :class "samp" (render))))
 			  (:|noindent|)
 			  (:|spacecmd|) ;;todo
-			  		  
+
+			  (:|clicksequence| (render))
+			  (:|click| (who:str "=>"))
+			  			  		  
                           (t (error "Malformed node content: ~s" x))
                           )))))))
         (render-element content)))))
