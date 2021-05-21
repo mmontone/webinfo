@@ -75,9 +75,33 @@ Texts.  A copy of the license is included in the section entitled
 @chapter Installation
 @anchor{installation}
 
+@example
+make && sudo make install
+@end example
+
 @node Usage
 @chapter Usage
 @anchor{usage}
+
+@node Webinfo as standalone Texinfo reader
+
+Webinfo can be used as a standalone Texinfo reader.
+
+After building and installing @code{webinfo} command line executable, just run it on a Texinfo file:
+
+@example
+webinfo - WebInfo - A Texinfo documents reader for desktop and Web.
+
+USAGE: webinfo [OPTIONS] TEXINFO-FILE
+
+Open TEXINFO-FILE with WebInfo reader.
+
+Options:
+  --version             display version information and exit
+  -h, --help            display help information and exit
+  --debug               show errors
+  --lenient             ignore unrecognized Texinfo commands
+@end example
 
 @node Command line
 @section Command line

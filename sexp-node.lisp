@@ -1,5 +1,9 @@
 (in-package :webinfo)
 
+(defvar *lenient-mode* nil
+  "In lenient mode, Texinfo commands that are not recognized by the Webinfo renderer, are ignored.
+This can be useful as long as Webinfo renderer is incomplete and doesn't understand all the Texinfo commands.")
+
 (defclass sexp-info-node (info-node)
   ((contents :initarg :contents
              :accessor contents
@@ -95,7 +99,12 @@
                           (:|defdatatype| (who:htm (:span :id (text body):class "defdatatype" (who:str (text body)))))
                           (:|top| (render))
                           ((:|unnumbered| :|appendix|) (render))
+
+			  ;; No rendering for indexing stuff.
+			  ;; These elements are handled by index collecting.
                           ((:|findex| :|cindex| :|vindex| :|tindex|))
+			  (:|subentry|)
+			  
                           (:|printindex| (print-index (get-index (or *info-document*
                                                                      (info-repository *webinfo-acceptor*))
                                                                  (alexandria:make-keyword (string-upcase (getf args :|value|))))
@@ -111,11 +120,17 @@
                           (:|itemformat| (who:htm (:td (render))))
                           (:|itemize| (who:htm
                                        (:ul (render) )))
+			  (:|enumerate| (who:htm
+                                       (:ol (render) )))
                           ((:|itemprepend| :|prepend| :|beforefirstitem|))
                           (:|listitem| (who:htm (:li (render))))
                           (:|strong| (who:htm (:b (render))))
                           (:|emph| (who:htm (:emph (render))))
                           (:|quotation| (who:htm (:quote (render))))
+			  (:|indentedblock| (who:htm (:div :class "indentedblock" (render))))
+			  (:|smallindentedblock| (who:htm (:div :class "smallindentedblock" (render))))
+			  (:|kbd| (who:htm (:span :class "kbd" (render))))
+			  (:|b| (who:htm (:b (render))))
                           (:|sc| (who:htm (:small (who:str (string-upcase (text body)))))) ;; smallcaps
                           (:|url| (let ((url (text body)))
                                     (who:htm (:a :href url (who:str url)))))
@@ -188,8 +203,13 @@
 
 			  (:|clicksequence| (render))
 			  (:|click| (who:str "=>"))
+
+			  ((:|float| :|listoffloats|)) ;; todo
+			  (:|image|) ;; todo
 			  			  		  
-                          (t (error "Malformed node content: ~s" x))
+                          (t
+			   (unless *lenient-mode*
+			     (error "Malformed node content: ~s" x)))
                           )))))))
         (render-element content)))))
 

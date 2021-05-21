@@ -160,6 +160,10 @@ Next: <a href="#Usage" accesskey="n" rel="next">Usage</a>, Previous: <a href="#I
 </div>
 <span id="Installation-1"></span><h2 class="chapter">2 Installation</h2>
 <span id="installation"></span>
+<div class="example">
+<pre class="example">make &amp;&amp; sudo make install
+</pre></div>
+
 <hr>
 <span id="Usage"></span><div class="header">
 <p>
@@ -171,6 +175,31 @@ Next: <a href="#Concepts" accesskey="n" rel="next">Concepts</a>, Previous: <a hr
 <tr><td align="left" valign="top">&bull; <a href="#Command-line" accesskey="1">Command line</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
 </table>
+
+<hr>
+<span id="Webinfo-as-standalone-Texinfo-reader"></span><div class="header">
+<p>
+ &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h4 class="node-heading">Webinfo as standalone Texinfo reader</h4>
+
+<p>Webinfo can be used as a standalone Texinfo reader.
+</p>
+<p>After building and installing <code>webinfo</code> command line executable, just run it on a Texinfo file:
+</p>
+<div class="example">
+<pre class="example">webinfo - WebInfo - A Texinfo documents reader for desktop and Web.
+
+USAGE: webinfo [OPTIONS] TEXINFO-FILE
+
+Open TEXINFO-FILE with WebInfo reader.
+
+Options:
+  --version             display version information and exit
+  -h, --help            display help information and exit
+  --debug               show errors
+  --lenient             ignore unrecognized Texinfo commands
+</pre></div>
 
 <hr>
 <span id="Command-line"></span><div class="header">

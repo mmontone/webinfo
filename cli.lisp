@@ -28,12 +28,21 @@
                      :help "show errors"
                      :reduce (constantly t)))
 
+(defparameter *option-lenient*
+  (adopt:make-option 'lenient
+                     :long "lenient"
+                     :help "ignore unrecognized Texinfo commands"
+                     :reduce (constantly t)))
+
 (defparameter *ui*
   (adopt:make-interface
    :name "webinfo"
    :summary "WebInfo - A Texinfo documents reader for desktop and Web."
    :usage "[OPTIONS] TEXINFO-FILE"
-   :contents (list *option-version* *option-help* *option-debug*)
+   :contents (list *option-version*
+		   *option-help*
+		   *option-debug*
+		   *option-lenient*)
    :help *help-text*))
 
 (defun run (texinfo-file &rest args)
@@ -64,6 +73,8 @@
 	(when (gethash 'debug options)
 	  (setf hunchentoot:*show-lisp-backtraces-p* t)
 	  (setf hunchentoot:*show-lisp-errors-p* t))
+	(when (gethash 'lenient options)
+	  (setf webinfo::*lenient-mode* t))
         (destructuring-bind (input-file) arguments
           (run input-file)
 	  (read)))
