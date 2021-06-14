@@ -134,9 +134,7 @@ This can be useful as long as Webinfo renderer is incomplete and doesn't underst
 			  (:|kbd| (who:htm (:span :class "kbd" (render))))
 			  (:|b| (who:htm (:b (render))))
                           (:|sc| (who:htm (:small (who:str (string-upcase (text body)))))) ;; smallcaps
-                          (:|url| (let ((url (text body)))
-                                    (who:htm (:a :href url (who:str url)))))
-                          ((:|verbatim| :|example| :|lisp|)
+			  ((:|verbatim| :|example| :|lisp|)
                            (render))
 			  ((:|smallverbatim| :|smallexample| :|smalllisp|)
                            (render)) ;; TODO
@@ -159,7 +157,7 @@ This can be useful as long as Webinfo renderer is incomplete and doesn't underst
                           ((:|xrefnodename| :|xrefinfoname|))
                           (:|xrefprinteddesc| (render))
 
-                          (:|uref|
+                          ((:|uref| :|url|)
                            ;; we assume first element is |urefurl| and second |urefdesc|)
                            (let ((href
                                    (with-output-to-string (stream)
