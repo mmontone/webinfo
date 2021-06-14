@@ -606,7 +606,7 @@ ul.toc, ul.toc ul {
   padding-left: 250px;
 }
 
-.deffn, .defvr, .deftp {
+.deffn, .defvr, .deftp, .defmac, .defun {
   background-color: aliceblue;
   padding: 5px 10px 1px 10px;
   margin-bottom: 10px;
