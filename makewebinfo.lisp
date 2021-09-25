@@ -80,6 +80,7 @@
   (sb-ext:save-lisp-and-die "makewebinfo"
                             :save-runtime-options t
                             :executable t
+			    :compression t
                             :toplevel #'toplevel))
 
 (build)
