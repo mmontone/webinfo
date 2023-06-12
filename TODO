@@ -1,3 +1,4 @@
+* Greatest thing would be: Parse .info files and test using /usr/share/info as repository.
 * Different directories views. Different layouts and presentations for 'dir' nodes.
 * Render special HTML for when browsing from particular clients. For example, don't render the TOC when browsing from Emacs. A _client parameter in request could be used for this.
 * An Emacs webinfo-minor-mode, that works over ewww (web browsing mode). Implements key bindings for navigation. Also a custom toolbar with navigation buttons, etc. A mix of remote/web info system, plus a special local client for navigation and more.
