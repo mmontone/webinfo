@@ -85,7 +85,7 @@
   (sb-ext:save-lisp-and-die "webinfo"
                             :save-runtime-options t
                             :executable t
-			    :compression t
+			    :compression (member :sb-core-compression *features*)
                             :toplevel #'toplevel))
 
 (build)

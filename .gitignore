@@ -1,2 +1,5 @@
 *~
 *.fasl
+.qlot/
+/webinfo
+/makewebinfo
