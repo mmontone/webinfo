@@ -138,12 +138,14 @@ This can be useful as long as Webinfo renderer is incomplete and doesn't underst
                            (render))
 			  ((:|smallverbatim| :|smallexample| :|smalllisp|)
                            (render)) ;; TODO
-                          (:|pre| (who:htm (:pre (:code :class "hljs"
-                                                        #+nil(who:str
+                          (:|pre|
+                           ;; prevent rendering empty code sections
+                           (when (and (cddr x) (not (every #'str:blankp (cddr x))))
+                             (who:htm (:pre (:code :class "hljs"
+                                                   #+nil(who:str
                                                          (who:escape-string (text body)))
-							(render)
-							))))
-
+						   (render)
+						   )))))
                           (:|code| (who:htm (:code :class "inline" (render))))
                           (:|verb| (who:htm (:code :class "verb" (render))))
                           (:|var| (who:htm (:code :class "var" (render))))

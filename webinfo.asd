@@ -35,4 +35,5 @@
                :montezuma
                :cl-intbytes
 	       :string-case
-	       :cl-tokyo-cabinet))
+	       :cl-tokyo-cabinet
+               :cl-str))
