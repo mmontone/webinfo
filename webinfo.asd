@@ -36,4 +36,5 @@
                :cl-intbytes
 	       :string-case
 	       :cl-tokyo-cabinet
-               :cl-str))
+               :str
+               :trivial-open-browser))

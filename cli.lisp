@@ -1,5 +1,5 @@
-(require :webinfo)
-(require :adopt)
+(ql:quickload :webinfo)
+(ql:quickload :adopt)
 
 (defpackage :webinfo/cli
   (:use :cl))

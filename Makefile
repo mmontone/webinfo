@@ -1,10 +1,10 @@
 all: webinfo makewebinfo
 
 webinfo:
-	qlot exec sbcl --load cli.lisp
+	sbcl --load webinfo.asd --load cli.lisp
 
 makewebinfo:
-	qlot exec sbcl --load makewebinfo.lisp
+	sbcl --load webinfo.asd --load makewebinfo.lisp
 
 install:
 	cp -f webinfo /usr/local/bin

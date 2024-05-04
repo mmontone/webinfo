@@ -42,9 +42,13 @@ See: texi2any --xml"
   
   (let* ((temporary-file (webinfo/utils:get-temporary-file-pathname))
 	 (document (make-instance 'webinfo:winfo-info-document
-				  :filepath (compile-texinfo-file filepath temporary-file))))
-    (apply #'webinfo:start-webinfo
-	   :info-repository (make-instance 'webinfo:file-info-repository
-					   :file document)
-	   :app-settings (list (cons :theme (make-instance 'webinfo:nav-theme)))
-	   args)))
+				  :filepath (compile-texinfo-file filepath temporary-file)))
+         (acceptor
+           (apply #'webinfo:start-webinfo
+	          :info-repository (make-instance 'webinfo:file-info-repository
+					          :file document)
+	          :app-settings (list (cons :theme (make-instance 'webinfo:nav-theme)))
+	          args)))
+    (trivial-open-browser:open-browser (format nil "http://localhost:~a"
+                                               (hunchentoot:acceptor-port acceptor)))
+    acceptor))
